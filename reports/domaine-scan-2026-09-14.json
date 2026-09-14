@@ -1,0 +1,263 @@
+{
+  "aggregated": [
+    {
+      "lettre": "F",
+      "totalOffres": 54158,
+      "totalMission": 29672,
+      "partMission": 55,
+      "exemples": [
+        "Second oeuvre",
+        "Travaux et gros oeuvre"
+      ]
+    },
+    {
+      "lettre": "N",
+      "totalOffres": 41163,
+      "totalMission": 23888,
+      "partMission": 58,
+      "exemples": [
+        "Magasinage, manutention des charges et déménagement",
+        "Personnel de conduite du transport routier"
+      ]
+    },
+    {
+      "lettre": "J",
+      "totalOffres": 50386,
+      "totalMission": 8972,
+      "partMission": 18,
+      "exemples": [
+        "Soins paramédicaux",
+        "Praticiens médicaux"
+      ]
+    },
+    {
+      "lettre": "G",
+      "totalOffres": 33733,
+      "totalMission": 3813,
+      "partMission": 11,
+      "exemples": [
+        "Production culinaire",
+        "Service"
+      ]
+    }
+  ],
+  "detail": [
+    {
+      "secteur": "F11 — Conception et études",
+      "totalOffres": 7319,
+      "totalMission": 1426,
+      "partMission": 19,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "F12 — Conduite et encadrement de chantier - travaux",
+      "totalOffres": 7837,
+      "totalMission": 2153,
+      "partMission": 27,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "F13 — Engins de chantier",
+      "totalOffres": 3852,
+      "totalMission": 2958,
+      "partMission": 77,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "F14 — Extraction",
+      "totalOffres": 285,
+      "totalMission": 189,
+      "partMission": 66,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "F15 — Montage de structures",
+      "totalOffres": 2862,
+      "totalMission": 1978,
+      "partMission": 69,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "F16 — Second oeuvre",
+      "totalOffres": 20607,
+      "totalMission": 12688,
+      "partMission": 62,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "F17 — Travaux et gros oeuvre",
+      "totalOffres": 11396,
+      "totalMission": 8280,
+      "partMission": 73,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G11 — Accueil et promotion touristique",
+      "totalOffres": 166,
+      "totalMission": 33,
+      "partMission": 20,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G12 — Animation d'activités de loisirs",
+      "totalOffres": 3631,
+      "totalMission": 119,
+      "partMission": 3,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G13 — Conception, commercialisation et vente de produits touristiques",
+      "totalOffres": 474,
+      "totalMission": 30,
+      "partMission": 6,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G14 — Gestion et direction",
+      "totalOffres": 1868,
+      "totalMission": 102,
+      "partMission": 5,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G15 — Personnel d'étage en hôtellerie",
+      "totalOffres": 1985,
+      "totalMission": 387,
+      "partMission": 19,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G16 — Production culinaire",
+      "totalOffres": 17252,
+      "totalMission": 2220,
+      "partMission": 13,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G17 — Accueil en hôtellerie",
+      "totalOffres": 1546,
+      "totalMission": 270,
+      "partMission": 17,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "G18 — Service",
+      "totalOffres": 6811,
+      "totalMission": 652,
+      "partMission": 10,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "J11 — Praticiens médicaux",
+      "totalOffres": 10025,
+      "totalMission": 1324,
+      "partMission": 13,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "J12 — Praticiens médico-techniques",
+      "totalOffres": 2613,
+      "totalMission": 90,
+      "partMission": 3,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "J13 — Professionnels médico-techniques",
+      "totalOffres": 7006,
+      "totalMission": 645,
+      "partMission": 9,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "J14 — Rééducation et appareillage",
+      "totalOffres": 5065,
+      "totalMission": 261,
+      "partMission": 5,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "J15 — Soins paramédicaux",
+      "totalOffres": 25677,
+      "totalMission": 6652,
+      "partMission": 26,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N11 — Magasinage, manutention des charges et déménagement",
+      "totalOffres": 21084,
+      "totalMission": 14730,
+      "partMission": 70,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N12 — Organisation de la circulation des marchandises",
+      "totalOffres": 1606,
+      "totalMission": 558,
+      "partMission": 35,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N13 — Personnel d'encadrement de la logistique",
+      "totalOffres": 1575,
+      "totalMission": 406,
+      "partMission": 26,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N21 — Personnel navigant du transport aérien",
+      "totalOffres": 831,
+      "totalMission": 486,
+      "partMission": 58,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N22 — Personnel sédentaire du transport aérien",
+      "totalOffres": 370,
+      "totalMission": 99,
+      "partMission": 27,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N31 — Personnel navigant du transport maritime et fluvial",
+      "totalOffres": 126,
+      "totalMission": 49,
+      "partMission": 39,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N32 — Personnel sédentaire du transport maritime et fluvial",
+      "totalOffres": 82,
+      "totalMission": 44,
+      "partMission": 54,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N41 — Personnel de conduite du transport routier",
+      "totalOffres": 13807,
+      "totalMission": 6863,
+      "partMission": 50,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N42 — Personnel d'encadrement du transport routier",
+      "totalOffres": 980,
+      "totalMission": 275,
+      "partMission": 28,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N43 — Personnel navigant du transport terrestre",
+      "totalOffres": 363,
+      "totalMission": 188,
+      "partMission": 52,
+      "intitulesEchantillon": []
+    },
+    {
+      "secteur": "N44 — Personnel sédentaire du transport ferroviaire et réseau filo guidé",
+      "totalOffres": 339,
+      "totalMission": 190,
+      "partMission": 56,
+      "intitulesEchantillon": []
+    }
+  ]
+}

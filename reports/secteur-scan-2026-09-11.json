@@ -1,0 +1,67 @@
+[
+  {
+    "secteur": "restauration",
+    "totalOffres": 12264,
+    "totalMission": 1332,
+    "partMission": 11,
+    "intitulesEchantillon": [
+      "Equipier polyvalent / Equipière polyvalente de restauration rapid (H/F)",
+      "Serveur / Serveuse en restauration (H/F)",
+      "5 POSTES D'EQUIPIERS POLYVALENT EN RESTAURATION (H/F)",
+      "Employé polyvalent de restauration Creil  (H/F)",
+      "Chef d'équipe débutant en restauration (H/F)"
+    ]
+  },
+  {
+    "secteur": "BTP",
+    "totalOffres": 10336,
+    "totalMission": 4686,
+    "partMission": 45,
+    "intitulesEchantillon": [
+      "Vendeur Comptoir BTP (H/F)",
+      "Electricien Bâtiment Travaux Publics (F/H)",
+      "Technico-commercial itinérant BTP (H/F)",
+      "Agent trafic BTP (H/F) #REFSTFONS",
+      "Manœuvre du Bâtiment et des Travaux Publics"
+    ]
+  },
+  {
+    "secteur": "logistique",
+    "totalOffres": 6245,
+    "totalMission": 2628,
+    "partMission": 42,
+    "intitulesEchantillon": [
+      "Employé(e) logistique et gestion des stocks (H/F)",
+      "Responsable Logistique (H/F)",
+      "Assistant logistique, achats (f/h) (H/F)",
+      "Technicien logistique (F/H)",
+      "Directeur Entrepôt Logistique (H/F)"
+    ]
+  },
+  {
+    "secteur": "santé",
+    "totalOffres": 5411,
+    "totalMission": 1240,
+    "partMission": 23,
+    "intitulesEchantillon": [
+      "Travailleur social en Equipe Mobile Santé Précarité (H/F)",
+      "Infirmier en Equipe Mobile Santé Précarité CDI 100% ou 80% (H/F)",
+      "Médiateur / Médiatrice en santé (H/F)",
+      "Cadre de santé (H/F)",
+      "Cadre de santé HAD/SSIAD (H/F)"
+    ]
+  },
+  {
+    "secteur": "événementiel",
+    "totalOffres": 609,
+    "totalMission": 87,
+    "partMission": 14,
+    "intitulesEchantillon": [
+      "Traiteur événementiel (H/F)",
+      "Chef de partie -Traiteur événementiel (H/F)",
+      "Hôtesse d'accueil événementiel (H/F)",
+      "Serveur En Évènementiel (H/F)",
+      "Hôte/Hôtesses d'accueil évènementiel Congrès (H/F)"
+    ]
+  }
+]

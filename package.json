@@ -1,0 +1,20 @@
+{
+  "name": "interimatch-secteur-scan",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CLI de comparaison de volumétrie d'offres France Travail par secteur, pour trancher le choix du secteur InterimMatch et servir de base au futur pipeline de nettoyage des données publiques.",
+  "scripts": {
+    "compare": "tsx src/cli.ts compare",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
