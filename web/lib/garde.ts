@@ -18,7 +18,7 @@ export async function exigerSession(role?: RoleCompte): Promise<Session> {
   if (role && session.role !== role) {
     // On renvoie vers SON espace plutôt qu'une page d'erreur : se tromper de porte
     // n'est pas une faute, et le message « accès refusé » n'aide personne.
-    redirect(session.role === "entreprise" ? "/profil/entreprise" : "/profil/interimaire");
+    redirect(session.role === "entreprise" ? "/espace/entreprise" : "/espace/interimaire");
   }
   return session;
 }

@@ -1,12 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useId, useRef, useState } from "react";
-
-interface Probleme {
-  champ: string;
-  message: string;
-}
+import { useId, useState } from "react";
+import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import { envoyerJson, rechargerVers } from "@/lib/client";
 
 interface Props {
   mode: "connexion" | "inscription";
@@ -20,13 +16,11 @@ interface Props {
 const LONGUEUR_MIN_MOT_DE_PASSE = 12;
 
 export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton }: Props) {
-  const router = useRouter();
   const idEmail = useId();
   const idMotDePasse = useId();
   const [problemes, setProblemes] = useState<Probleme[]>([]);
-  const [messageGeneral, setMessageGeneral] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
-  const resume = useRef<HTMLDivElement>(null);
 
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ);
 
@@ -37,35 +31,31 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
     const donnees = new FormData(evenement.currentTarget);
     setEnCours(true);
     setProblemes([]);
-    setMessageGeneral(null);
+    setErreur(null);
 
     try {
-      const reponse = await fetch(`/api/auth/${mode}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { ok, corps } = await envoyerJson<{ etapeSuivante?: string }>(
+        `/api/auth/${mode}`,
+        "POST",
+        {
           email: String(donnees.get("email") ?? ""),
           motDePasse: String(donnees.get("motDePasse") ?? ""),
           ...(role ? { role } : {}),
-        }),
-      });
-      const corps = await reponse.json();
+        }
+      );
 
-      if (!reponse.ok) {
+      if (!ok) {
         setProblemes(corps.problemes ?? []);
-        setMessageGeneral(corps.message ?? "Une erreur est survenue.");
-        // RGAA 7.4 : le résultat d'une soumission doit être porté à la connaissance
-        // de l'utilisateur, y compris au lecteur d'écran. On déplace le focus dessus.
-        requestAnimationFrame(() => resume.current?.focus());
+        setErreur(corps.message ?? "Une erreur est survenue.");
+        setEnCours(false);
         return;
       }
 
-      router.push(corps.etapeSuivante ?? "/");
-      router.refresh();
+      // Rechargement complet : après un changement de compte, le cache du routeur
+      // servirait des pages rendues pour l'utilisateur précédent.
+      rechargerVers(corps.etapeSuivante ?? "/espace");
     } catch {
-      setMessageGeneral("Impossible de joindre le serveur. Vérifiez votre connexion.");
-      requestAnimationFrame(() => resume.current?.focus());
-    } finally {
+      setErreur("Impossible de joindre le serveur. Vérifiez votre connexion.");
       setEnCours(false);
     }
   }
@@ -74,25 +64,6 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
     <form onSubmit={envoyer} noValidate>
       <h1>{titre}</h1>
       <p className="secondaire">{intro}</p>
-
-      {messageGeneral && (
-        <div
-          ref={resume}
-          tabIndex={-1}
-          role="alert"
-          className="carte"
-          style={{ borderColor: "var(--alerte)", marginBottom: "1.5rem" }}
-        >
-          <p style={{ margin: 0, color: "var(--alerte)", fontWeight: 500 }}>{messageGeneral}</p>
-          {problemes.length > 0 && (
-            <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
-              {problemes.map((p) => (
-                <li key={p.champ}>{p.message}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
 
       <div className="champ">
         <label htmlFor={idEmail}>Adresse e-mail</label>
@@ -121,21 +92,20 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
           autoComplete={mode === "connexion" ? "current-password" : "new-password"}
           required
           aria-invalid={problemeDe("motDePasse") ? true : undefined}
-          aria-describedby={
-            mode === "inscription" ? `${idMotDePasse}-aide` : problemeDe("motDePasse") ? `${idMotDePasse}-erreur` : undefined
-          }
+          aria-describedby={mode === "inscription" ? `${idMotDePasse}-aide` : undefined}
         />
         {mode === "inscription" && (
           <p id={`${idMotDePasse}-aide`} className="petit secondaire">
-            {LONGUEUR_MIN_MOT_DE_PASSE} caractères minimum.
+            {LONGUEUR_MIN_MOT_DE_PASSE} caractères minimum. Une phrase dont vous vous
+            souvenez vaut mieux qu&apos;un mot compliqué.
           </p>
         )}
         {problemeDe("motDePasse") && (
-          <p id={`${idMotDePasse}-erreur`} className="petit message-erreur">
-            {problemeDe("motDePasse")!.message}
-          </p>
+          <p className="petit message-erreur">{problemeDe("motDePasse")!.message}</p>
         )}
       </div>
+
+      <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
 
       <button className="bouton" type="submit" disabled={enCours} style={{ width: "100%" }}>
         {enCours ? "Envoi en cours…" : libelleBouton}

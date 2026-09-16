@@ -2,8 +2,10 @@ import { cookies, headers } from "next/headers";
 import { fermerSession, lireSession, ouvrirSession, type Session } from "@interimatch/core";
 import { redis } from "@interimatch/core";
 import type { RoleCompte } from "@interimatch/core";
+import { NOM_COOKIE } from "./cookie";
 
-export const NOM_COOKIE = "interimatch_session";
+export { NOM_COOKIE };
+
 
 /**
  * Cookie de session.
@@ -29,8 +31,17 @@ export async function poserCookieSession(compte: {
   role: RoleCompte;
   email: string;
 }): Promise<void> {
+  const magasin = await cookies();
+
+  // Fermer la session précédente avant d'en ouvrir une autre. Sans ça, se connecter
+  // avec un second compte laisse le premier jeton valide sept jours de plus : sur un
+  // poste partagé — une tablette de chantier, un ordinateur d'agence — la session du
+  // précédent utilisateur reste utilisable par quiconque a recopié son cookie.
+  const precedent = magasin.get(NOM_COOKIE)?.value;
+  if (precedent) await fermerSession(redis(), precedent);
+
   const { jeton, dureeSecondes } = await ouvrirSession(redis(), compte);
-  (await cookies()).set(NOM_COOKIE, jeton, optionsCookie(dureeSecondes));
+  magasin.set(NOM_COOKIE, jeton, optionsCookie(dureeSecondes));
 }
 
 export async function sessionCourante(): Promise<Session | null> {

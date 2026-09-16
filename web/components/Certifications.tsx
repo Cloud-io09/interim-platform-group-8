@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import { envoyerJson } from "@/lib/client";
 
 interface TypeCertification {
   code: string;
@@ -21,11 +23,6 @@ interface Certification {
   dateEcheance: string;
 }
 
-interface Probleme {
-  champ: string;
-  message: string;
-}
-
 const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
 
 /** Jours restants avant échéance. Négatif si le titre est déjà périmé. */
@@ -42,7 +39,8 @@ export default function Certifications() {
   const [liste, setListe] = useState<Certification[]>([]);
   const [typeChoisi, setTypeChoisi] = useState("");
   const [problemes, setProblemes] = useState<Probleme[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = { type: useId(), cat: useId(), org: useId(), num: useId(), obt: useId(), ech: useId() };
 
@@ -58,7 +56,7 @@ export default function Certifications() {
     fetch("/api/referentiel/certifications")
       .then((r) => r.json())
       .then((d) => setTypes(d.types))
-      .catch(() => setMessage("Impossible de charger la liste des certifications."));
+      .catch(() => setErreur("Impossible de charger la liste des certifications."));
     recharger();
   }, []);
 
@@ -68,23 +66,20 @@ export default function Certifications() {
     const donnees = Object.fromEntries(new FormData(formulaire));
     setEnCours(true);
     setProblemes([]);
-    setMessage(null);
+    setErreur(null);
+    setSucces(null);
 
-    const reponse = await fetch("/api/certifications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(donnees),
-    });
-    const corps = await reponse.json();
+    const { ok, corps } = await envoyerJson("/api/certifications", "POST", donnees);
     setEnCours(false);
 
-    if (!reponse.ok) {
+    if (!ok) {
       setProblemes(corps.problemes ?? []);
-      setMessage(corps.message ?? "Enregistrement impossible.");
+      setErreur(corps.message ?? "Enregistrement impossible.");
       return;
     }
     formulaire.reset();
     setTypeChoisi("");
+    setSucces("Certification ajoutée.");
     await recharger();
   }
 
@@ -172,12 +167,6 @@ export default function Certifications() {
       <form onSubmit={ajouter} className="carte" noValidate>
         <h3>Ajouter une certification</h3>
 
-        {message && (
-          <div role="alert" className="encart-erreur">
-            <p style={{ margin: 0, fontWeight: 500 }}>{message}</p>
-          </div>
-        )}
-
         <div className="champ">
           <label htmlFor={ids.type}>Type de titre</label>
           <select
@@ -263,6 +252,8 @@ export default function Certifications() {
             )}
           </div>
         </div>
+
+        <RetourFormulaire erreur={erreur} succes={succes} problemes={problemes} />
 
         <button className="bouton" type="submit" disabled={enCours}>
           {enCours ? "Enregistrement…" : "Ajouter cette certification"}

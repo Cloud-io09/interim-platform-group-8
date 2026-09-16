@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { useRouter } from "next/navigation";
+import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import { envoyerJson, rechargerVers } from "@/lib/client";
 
 interface Domaine {
   domaine: string;
@@ -26,18 +27,12 @@ interface Enrichissement {
   competences: { code: string; libelle: string; occurrences: number; part: number }[];
 }
 
-interface Probleme {
-  champ: string;
-  message: string;
-}
-
 interface Exigence {
   typeCode: string;
   categorieCode: string;
 }
 
 export default function FormulaireMission() {
-  const router = useRouter();
   const [domaines, setDomaines] = useState<Domaine[]>([]);
   const [types, setTypes] = useState<TypeCertification[]>([]);
   const [metierCode, setMetierCode] = useState("");
@@ -46,7 +41,7 @@ export default function FormulaireMission() {
   const [exigences, setExigences] = useState<Exigence[]>([]);
   const [competences, setCompetences] = useState<string[]>([]);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = {
     titre: useId(), metier: useId(), desc: useId(), adresse: useId(), cp: useId(),
@@ -89,12 +84,9 @@ export default function FormulaireMission() {
     const d = new FormData(evenement.currentTarget);
     setEnCours(true);
     setProblemes([]);
-    setMessage(null);
+    setErreur(null);
 
-    const reponse = await fetch("/api/missions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const { ok, corps } = await envoyerJson<{ id: number }>("/api/missions", "POST", {
         titre: d.get("titre"),
         metierCode,
         description: d.get("description"),
@@ -110,35 +102,22 @@ export default function FormulaireMission() {
           categorieCode: e.categorieCode || null,
         })),
         competencesRequises: competences,
-        publier: true,
-      }),
+      publier: true,
     });
-    const corps = await reponse.json();
     setEnCours(false);
 
-    if (!reponse.ok) {
+    if (!ok) {
       setProblemes(corps.problemes ?? []);
-      setMessage(corps.message ?? "Publication impossible.");
+      setErreur(corps.message ?? "Publication impossible.");
       return;
     }
-    router.push(`/missions/${corps.id}`);
+    rechargerVers(`/missions/${corps.id}`);
   }
 
   const typeDe = (code: string) => types.find((t) => t.code === code);
 
   return (
     <form onSubmit={envoyer} noValidate>
-      {message && (
-        <div role="alert" className="encart-erreur">
-          <p style={{ margin: 0, fontWeight: 500 }}>{message}</p>
-          {problemes.length > 0 && (
-            <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
-              {problemes.map((p, i) => <li key={`${p.champ}-${i}`}>{p.message}</li>)}
-            </ul>
-          )}
-        </div>
-      )}
-
       <fieldset>
         <legend>Le poste</legend>
         <div className="champ">
@@ -334,6 +313,8 @@ export default function FormulaireMission() {
           </div>
         </div>
       </fieldset>
+
+      <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
 
       <button className="bouton" type="submit" disabled={enCours}>
         {enCours ? "Publication…" : "Publier la fiche de poste"}

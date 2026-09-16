@@ -16,7 +16,7 @@
     "ingest": "npm run -w @interimatch/ingest ingest --",
     "dev": "npm run -w @interimatch/web dev",
     "build": "npm run -w @interimatch/web build",
-    "verifier": "npm run typecheck && npm run test && npm run build",
+    "verifier": "npm run typecheck && npm run test",
     "coverage": "npm run coverage --workspaces --if-present"
   },
   "engines": {

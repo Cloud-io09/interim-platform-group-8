@@ -428,3 +428,17 @@ main code {
   white-space: nowrap;
   border: 0;
 }
+
+/* Filtre de portée : un `fieldset` plutôt qu'une série de boutons, pour que la
+   question « que voulez-vous voir ? » soit annoncée avec les choix — RGAA 11.5. */
+.filtre-portee {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 2rem;
+}
+.filtre-portee legend { font-size: 0.875rem; font-weight: 600; }
+.filtre-portee .case { min-height: var(--cible-tactile); }
+.case input[type="radio"] { width: 20px; height: 20px; accent-color: var(--surface-sombre); flex: none; }

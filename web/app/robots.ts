@@ -9,7 +9,14 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       // Les espaces connectés et l'API n'ont aucune valeur d'indexation, et les
       // exposer renseignerait gratuitement sur la structure de l'application.
-      disallow: ["/api/", "/profil/", "/missions/", "/mes-missions", "/connexion", "/inscription/"],
+      disallow: [
+        "/api/",
+        "/espace",
+        "/missions",
+        "/mes-missions",
+        "/connexion",
+        "/inscription/",
+      ],
     },
     sitemap: `${SITE}/sitemap.xml`,
   };

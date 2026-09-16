@@ -49,14 +49,14 @@ describe("parcours d'inscription", () => {
     expect(reponse.status).toBe(201);
     expect(corps.compte.role).toBe("interimaire");
     // Le parcours ne s'arrête pas là : le profil est l'étape 2.
-    expect(corps.etapeSuivante).toBe("/profil/interimaire");
+    expect(corps.etapeSuivante).toContain("/espace/interimaire/profil");
     expect(cookie).toContain("interimatch_session=");
   });
 
   it("dirige l'entreprise vers son propre formulaire de profil", async () => {
     const { corps } = await inscrire("entreprise", "entreprise");
     expect(corps.compte.role).toBe("entreprise");
-    expect(corps.etapeSuivante).toBe("/profil/entreprise");
+    expect(corps.etapeSuivante).toContain("/espace/entreprise/profil");
   });
 
   it("pose un cookie de session inaccessible au JavaScript de la page", async () => {

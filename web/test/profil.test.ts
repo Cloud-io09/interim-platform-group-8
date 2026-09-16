@@ -236,7 +236,7 @@ describe("profil entreprise", () => {
 
 describe("pages protégées", () => {
   it("renvoie un visiteur anonyme vers la connexion", async () => {
-    for (const page of ["/profil/interimaire", "/profil/entreprise"]) {
+    for (const page of ["/espace", "/espace/interimaire/profil", "/espace/entreprise/profil"]) {
       const r = await fetch(`${BASE}${page}`, { redirect: "manual" });
       expect([307, 302], page).toContain(r.status);
       expect(r.headers.get("location"), page).toContain("/connexion");
@@ -244,21 +244,51 @@ describe("pages protégées", () => {
   });
 
   it("affiche la page à son titulaire", async () => {
-    const r = await fetch(`${BASE}/profil/interimaire`, { headers: { cookie: interimaire.cookie } });
+    const r = await fetch(`${BASE}/espace/interimaire/profil`, { headers: { cookie: interimaire.cookie } });
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain("Mon profil");
+  });
+
+  it("présente la carte BTP séparément des certifications techniques", async () => {
+    // Le formulaire est rendu côté client après relecture du profil : on vérifie
+    // donc le contenu servi au navigateur, pas le HTML initial.
+    const r = await fetch(`${BASE}/espace/interimaire/certifications`, {
+      headers: { cookie: interimaire.cookie },
+    });
     expect(r.status).toBe(200);
     const html = await r.text();
-    expect(html).toContain("Mon profil");
-    // La carte BTP doit être présentée à part des certifications techniques.
-    expect(html).toContain("Carte BTP");
-    expect(html).toContain("n&#x27;atteste d&#x27;aucune compétence");
+    // La page des certifications ne doit PAS parler de carte BTP : elles sont séparées.
+    expect(html).not.toContain("Carte BTP");
+  });
+
+  it("donne à l'intérimaire une page dédiée par sujet", async () => {
+    for (const page of [
+      "/espace/interimaire",
+      "/espace/interimaire/profil",
+      "/espace/interimaire/certifications",
+      "/espace/interimaire/disponibilites",
+    ]) {
+      const r = await fetch(`${BASE}${page}`, { headers: { cookie: interimaire.cookie } });
+      expect(r.status, page).toBe(200);
+    }
   });
 
   it("renvoie une entreprise vers son propre espace si elle vise celui de l'intérimaire", async () => {
-    const r = await fetch(`${BASE}/profil/interimaire`, {
+    const r = await fetch(`${BASE}/espace/interimaire/profil`, {
       headers: { cookie: entreprise.cookie },
       redirect: "manual",
     });
     expect([307, 302]).toContain(r.status);
-    expect(r.headers.get("location")).toContain("/profil/entreprise");
+    expect(r.headers.get("location")).toContain("/espace/entreprise");
+  });
+
+  it("aiguille chaque rôle vers son propre espace", async () => {
+    for (const [cookie, attendu] of [
+      [interimaire.cookie, "/espace/interimaire"],
+      [entreprise.cookie, "/espace/entreprise"],
+    ] as const) {
+      const r = await fetch(`${BASE}/espace`, { headers: { cookie }, redirect: "manual" });
+      expect(r.headers.get("location"), attendu).toContain(attendu);
+    }
   });
 });

@@ -1,79 +1,81 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import { envoyerJson } from "@/lib/client";
 
-interface Probleme {
-  champ: string;
-  message: string;
+interface Profil {
+  raisonSociale: string;
+  siret: string | null;
+  adresse: string | null;
+  codePostal: string;
+  ville: string;
+  telephone: string | null;
 }
 
-export default function FormulaireProfilEntreprise() {
+export default function FormulaireProfilEntreprise({ apresEnregistrement }: { apresEnregistrement?: string }) {
+  const [profil, setProfil] = useState<Profil | null>(null);
+  const [charge, setCharge] = useState(false);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = { raison: useId(), siret: useId(), adresse: useId(), cp: useId(), ville: useId(), tel: useId() };
 
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ)?.message;
 
+  useEffect(() => {
+    fetch("/api/profil/entreprise")
+      .then((r) => (r.ok ? r.json() : { profil: null }))
+      .then((d) => setProfil(d.profil))
+      .catch(() => setErreur("Impossible de charger votre profil."))
+      .finally(() => setCharge(true));
+  }, []);
+
   async function envoyer(evenement: React.FormEvent<HTMLFormElement>) {
     evenement.preventDefault();
-    const donnees = Object.fromEntries(new FormData(evenement.currentTarget));
+    const d = Object.fromEntries(new FormData(evenement.currentTarget));
     setEnCours(true);
     setProblemes([]);
-    setMessage(null);
+    setErreur(null);
     setSucces(null);
 
-    const reponse = await fetch("/api/profil/entreprise", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(donnees),
-    });
-    const corps = await reponse.json();
+    const { ok, corps } = await envoyerJson<{ position: { libelle: string } }>(
+      "/api/profil/entreprise",
+      "POST",
+      d
+    );
     setEnCours(false);
 
-    if (!reponse.ok) {
+    if (!ok) {
       setProblemes(corps.problemes ?? []);
-      setMessage(corps.message ?? "Enregistrement impossible.");
+      setErreur(corps.message ?? "Enregistrement impossible.");
       return;
     }
     setSucces(`Profil enregistré. Adresse retenue : ${corps.position.libelle}.`);
+    if (apresEnregistrement) setTimeout(() => window.location.assign(apresEnregistrement), 900);
   }
+
+  if (!charge) return <p className="secondaire">Chargement de votre profil…</p>;
 
   return (
     <form onSubmit={envoyer} noValidate>
-      {message && (
-        <div role="alert" className="encart-erreur">
-          <p style={{ margin: 0, fontWeight: 500 }}>{message}</p>
-          {problemes.length > 0 && (
-            <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
-              {problemes.map((p) => <li key={p.champ}>{p.message}</li>)}
-            </ul>
-          )}
-        </div>
-      )}
-      {succes && (
-        <div role="status" className="encart-succes">
-          <p style={{ margin: 0, fontWeight: 500 }}>{succes}</p>
-        </div>
-      )}
-
       <fieldset>
         <legend>Votre entreprise</legend>
         <div className="champ">
           <label htmlFor={ids.raison}>Raison sociale</label>
-          <input id={ids.raison} name="raisonSociale" required maxLength={160} autoComplete="organization" />
+          <input id={ids.raison} name="raisonSociale" required maxLength={160} autoComplete="organization" defaultValue={profil?.raisonSociale ?? ""} />
           {problemeDe("raisonSociale") && <p className="petit message-erreur">{problemeDe("raisonSociale")}</p>}
         </div>
         <div className="champ">
           <label htmlFor={ids.siret}>SIRET</label>
-          <input id={ids.siret} name="siret" inputMode="numeric" maxLength={20} />
+          <input id={ids.siret} name="siret" inputMode="numeric" maxLength={20} defaultValue={profil?.siret ?? ""} />
           <p className="petit secondaire">Facultatif. S&apos;il est renseigné, nous vérifions sa clé de contrôle.</p>
           {problemeDe("siret") && <p className="petit message-erreur">{problemeDe("siret")}</p>}
         </div>
         <div className="champ">
           <label htmlFor={ids.tel}>Téléphone</label>
-          <input id={ids.tel} name="telephone" type="tel" inputMode="tel" autoComplete="tel" />
+          <input id={ids.tel} name="telephone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={profil?.telephone ?? ""} />
           <p className="petit secondaire">Facultatif et chiffré.</p>
         </div>
       </fieldset>
@@ -86,21 +88,23 @@ export default function FormulaireProfilEntreprise() {
         </p>
         <div className="champ">
           <label htmlFor={ids.adresse}>Adresse</label>
-          <input id={ids.adresse} name="adresse" autoComplete="street-address" />
+          <input id={ids.adresse} name="adresse" autoComplete="street-address" defaultValue={profil?.adresse ?? ""} />
         </div>
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.cp}>Code postal</label>
-            <input id={ids.cp} name="codePostal" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" />
+            <input id={ids.cp} name="codePostal" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" defaultValue={profil?.codePostal ?? ""} />
             {problemeDe("codePostal") && <p className="petit message-erreur">{problemeDe("codePostal")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.ville}>Ville</label>
-            <input id={ids.ville} name="ville" required autoComplete="address-level2" />
+            <input id={ids.ville} name="ville" required autoComplete="address-level2" defaultValue={profil?.ville ?? ""} />
             {problemeDe("ville") && <p className="petit message-erreur">{problemeDe("ville")}</p>}
           </div>
         </div>
       </fieldset>
+
+      <RetourFormulaire erreur={erreur} succes={succes} problemes={problemes} />
 
       <button className="bouton" type="submit" disabled={enCours}>
         {enCours ? "Enregistrement…" : "Enregistrer le profil"}

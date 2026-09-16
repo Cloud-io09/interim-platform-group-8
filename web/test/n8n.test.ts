@@ -153,7 +153,7 @@ describe("scénario 2 — notification de mission correspondante", () => {
       rayonMobiliteKm: 50, metiers: ["F1302"],
     }, ecarte.cookie);
 
-    await appel("/api/missions", "POST", {
+    const creee = await appel("/api/missions", "POST", {
       titre: "Mission notifiable", metierCode: "F1302",
       codePostal: "51100", ville: "Reims",
       dateDebut: MISSION_DEBUT, dateFin: MISSION_FIN,
@@ -163,13 +163,16 @@ describe("scénario 2 — notification de mission correspondante", () => {
     }, ent.cookie);
 
     const { corps } = await appelN8n("/api/n8n/missions-a-notifier?heures=1");
-    const noms = corps.notifications.map((n: any) => n.nomComplet);
+    // Restreint à NOTRE mission : d'autres fichiers de test publient des missions
+    // sans exigence, où tout le monde est légitimement conforme.
+    const pourCetteMission = corps.notifications.filter((n: any) => n.missionId === creee.corps.id);
+    const noms = pourCetteMission.map((n: any) => n.nomComplet);
     expect(noms).toContain("Notifiable Conforme");
     // Un profil non conforme ne doit jamais recevoir de notification : ce serait
     // l'inviter sur un chantier où il ne peut pas aller.
     expect(noms).not.toContain("Jamais Notifie");
 
-    const notif = corps.notifications.find((n: any) => n.nomComplet === "Notifiable Conforme");
+    const notif = pourCetteMission.find((n: any) => n.nomComplet === "Notifiable Conforme");
     expect(notif.message).toContain("Mission notifiable");
     expect(notif.message).toContain("€/h");
     expect(notif.score).toBeGreaterThan(0);

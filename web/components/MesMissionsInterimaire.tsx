@@ -39,26 +39,43 @@ function remuneration(m: Resume): string {
 export default function MesMissionsInterimaire() {
   const [accessibles, setAccessibles] = useState<Accessible[]>([]);
   const [bloquees, setBloquees] = useState<Bloquee[]>([]);
+  const [horsMetier, setHorsMetier] = useState<Resume[]>([]);
+  const [toutes, setToutes] = useState(false);
   const [enCours, setEnCours] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/interimaire/missions")
+    setEnCours(true);
+    fetch(`/api/interimaire/missions${toutes ? "?portee=toutes" : ""}`)
       .then(async (r) => {
         const d = await r.json();
         if (!r.ok) throw new Error(d.message ?? "Chargement impossible.");
         setAccessibles(d.accessibles);
         setBloquees(d.bloquees);
+        setHorsMetier(d.horsMetier ?? []);
       })
       .catch((e) => setErreur(e.message))
       .finally(() => setEnCours(false));
-  }, []);
+  }, [toutes]);
 
-  if (enCours) return <p className="secondaire">Recherche des missions correspondantes…</p>;
   if (erreur) return <div role="alert" className="encart-erreur"><p style={{ margin: 0 }}>{erreur}</p></div>;
 
   return (
     <>
+      <fieldset className="filtre-portee">
+        <legend className="petit">Que voulez-vous voir ?</legend>
+        <label className="case">
+          <input type="radio" name="portee" checked={!toutes} onChange={() => setToutes(false)} />
+          <span>Les missions de mes métiers</span>
+        </label>
+        <label className="case">
+          <input type="radio" name="portee" checked={toutes} onChange={() => setToutes(true)} />
+          <span>Toutes les missions ouvertes</span>
+        </label>
+      </fieldset>
+
+      {enCours && <p className="secondaire" role="status">Recherche des missions…</p>}
+
       <section aria-labelledby="titre-accessibles">
         <h2 id="titre-accessibles">Missions pour lesquelles vous êtes conforme</h2>
         {accessibles.length === 0 ? (
@@ -90,6 +107,28 @@ export default function MesMissionsInterimaire() {
           </ul>
         )}
       </section>
+
+      {horsMetier.length > 0 && (
+        <section aria-labelledby="titre-hors-metier" style={{ marginTop: "2.5rem" }}>
+          <h2 id="titre-hors-metier">Autres missions ouvertes</h2>
+          <p className="secondaire">
+            Elles ne relèvent pas des métiers déclarés sur votre profil, donc elles ne
+            sont pas évaluées. Ajoutez le métier à votre profil pour savoir si vous y
+            êtes conforme.
+          </p>
+          <ul className="liste-nue">
+            {horsMetier.map((m) => (
+              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{m.titre}</h3>
+                <p className="petit secondaire" style={{ margin: 0 }}>
+                  {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
+                  {remuneration(m)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {bloquees.length > 0 && (
         <section aria-labelledby="titre-bloquees" style={{ marginTop: "2.5rem" }}>
