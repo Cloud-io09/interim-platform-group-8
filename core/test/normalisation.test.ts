@@ -86,6 +86,21 @@ describe("nettoyerOffre", () => {
     ).toMatchObject({ motif: "intitule_absent" });
   });
 
+  it("retombe sur le libellé normalisé quand l'annonce n'a pas d'intitulé propre", () => {
+    const r = nettoyerOffre(offre({ intitule: undefined }));
+    if ("motif" in r) throw new Error("offre rejetée à tort");
+    expect(r.intituleBrut).toBe("Maçon / Maçonne");
+  });
+
+  it("tolère l'absence de date de publication et d'employeur", () => {
+    const r = nettoyerOffre(offre({ dateCreation: undefined, entreprise: undefined }));
+    if ("motif" in r) throw new Error("offre rejetée à tort");
+    expect(r.dateCreationFt).toBeNull();
+    // L'empreinte reste calculable : elle tolère un employeur inconnu plutôt que
+    // d'écarter l'offre, quitte à dédoublonner un peu moins finement.
+    expect(r.empreinte).toHaveLength(32);
+  });
+
   it("tolère une offre sans salaire, sans coordonnées et sans compétences", () => {
     const r = nettoyerOffre(offre({ salaire: undefined, lieuTravail: undefined, competences: undefined }));
     if ("motif" in r) throw new Error("offre rejetée à tort");
