@@ -17,6 +17,7 @@ export async function GET() {
       libelle: t.libelle,
       validiteMois: t.validiteMois,
       categories: t.categories,
+      verification: t.verification,
     })),
   });
 }
