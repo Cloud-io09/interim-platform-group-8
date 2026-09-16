@@ -1,7 +1,9 @@
 # Plan d'implémentation — InterimMatch BTP
 
-Document opérationnel. Le quoi et le pourquoi sont dans [CLAUDE.md](../CLAUDE.md) ;
-ici c'est le comment et dans quel ordre.
+Document opérationnel : le comment et dans quel ordre. Le quoi et le pourquoi sont dans
+le [cahier des charges](cahier-des-charges-g8.pdf) et dans la spécification produit, qui
+n'est pas versionnée — ce plan reprend donc toutes les règles métier dont il dépend, pour
+rester lisible sans elle.
 
 Statut : **en attente de validation**. Rédigé le 2026-09-16.
 
@@ -199,7 +201,7 @@ interimaire (
 
 Le défaut de 50 km est une valeur de colonne, pas une constante dans le code — l'intérimaire
 la change, et rien dans le moteur ne suppose une valeur particulière. 50 km vient du périmètre
-de mobilité du CDI intérimaire cité par le cahier des charges ; le CLAUDE.md disait 40, la
+de mobilité du CDI intérimaire cité par le cahier des charges ; la spécification produit disait 40, la
 contradiction est tranchée en faveur du document que le jury lira.
 
 ### Certifications — le cœur
@@ -358,7 +360,7 @@ Pondérations en constantes nommées et exportées, pas de nombres magiques dans
 Départ proposé : compétences 0,4 — distance 0,35 — disponibilité 0,25.
 
 > **Question ouverte n° 2** (voir §8) : hors rayon de mobilité, score 0 ou exclusion ?
-> Le CLAUDE.md place le rayon en étape 2, donc score 0 — un profil à 45 km avec un
+> La spécification produit place le rayon en étape 2, donc score 0 — un profil à 45 km avec un
 > rayon de 40 reste visible en bas de liste. À confirmer.
 
 ### Traçabilité Redis
@@ -438,9 +440,9 @@ et « sur 340 offres » ne se lisent pas pareil.
 
 ### Ordre de coupe en cas de retard
 
-Repris de [CLAUDE.md](../CLAUDE.md), appliqué dans cet ordre : suivi de missions réduit à
-une liste sans statistiques → référentiel limité à quatre types de certification → scoring
-ramené à deux critères (compétences + distance, la disponibilité saute en premier).
+Dans cet ordre : suivi de missions réduit à une liste sans statistiques → référentiel
+limité à quatre types de certification → scoring ramené à deux critères (compétences +
+distance, la disponibilité saute en premier).
 
 **Jamais coupés** : le filtre éliminatoire sur certification expirée, l'authentification
 maison, les deux automatisations n8n, le coverage.
@@ -494,7 +496,7 @@ sur blanc ne passe pas le RGAA. Dans la maquette il est décoratif — le garder
 ### La grille de fonctionnalités est refaite
 
 La maquette n'est **qu'une exploration visuelle** : la charte est retenue, le contenu est
-réaligné sur le brief. Sept tuiles promettaient des choses que le [CLAUDE.md](../CLAUDE.md)
+réaligné sur le brief. Sept tuiles promettaient des choses que la spécification produit
 exclut explicitement — et deux d'entre elles contredisaient le moteur de matching.
 
 Retirées, avec le motif :
@@ -608,10 +610,16 @@ Aucune ne bloque le démarrage de J1.
 explo-api/          exploration France Travail (client OAuth2 + CLI Commander + rapports)
                     -> réutilisé tel quel par le pipeline d'ingestion, pas réécrit
 docs/
-  plan-implementation.md   ce plan
-  maquette/                captures de l'exploration front
-CLAUDE.md           spécification produit
+  plan-implementation.md      ce plan
+  cahier-des-charges-g8.pdf   rendu Epitech : étude de marché, modules, chiffrage
+  maquette/                   captures de l'exploration front
+.claude/CLAUDE.md             spécification produit — NON versionnée (.gitignore)
 ```
+
+La spécification produit est volontairement hors du dépôt. Les règles métier qu'elle porte
+sont reprises ici : liste fermée et durées de validité des certifications (§3), carte BTP
+hors matching (§3), filtre éliminatoire comparé à la date de fin de mission (§4), ordre de
+coupe en cas de retard (§6).
 
 L'application Next.js sera créée à J1. Arborescence cible à trancher à ce moment-là :
 `app/` à la racine avec `explo-api/` en dossier frère, ou un vrai workspace npm — le second
