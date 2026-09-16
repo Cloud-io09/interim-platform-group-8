@@ -4,6 +4,7 @@ export * from "./dates.js";
 export * from "./matching.js";
 export * from "./chiffrement.js";
 export * from "./geocodage.js";
+export * from "./referentiel.js";
 export { connexion } from "./db.js";
 export * from "./redis.js";
 export * from "./ingestion/salaire.js";
