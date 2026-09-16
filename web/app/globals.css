@@ -170,3 +170,48 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* --- Formulaires ---------------------------------------------------------
+   Public d'ouvriers, souvent sur téléphone et parfois avec des gants :
+   champs hauts, libellés au-dessus, messages d'erreur liés au champ. */
+
+.colonne--etroite { max-width: 520px; }
+
+.champ { margin-bottom: 1.25rem; }
+
+.champ label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.champ input {
+  width: 100%;
+  min-height: var(--cible-tactile);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface);
+  color: var(--texte);
+  font: inherit;
+  /* 16px minimum : en dessous, iOS zoome à la prise de focus et casse la mise en page. */
+  font-size: 1rem;
+}
+
+.champ input:hover { border-color: var(--texte-secondaire); }
+
+.champ input[aria-invalid="true"] { border-color: var(--alerte); border-width: 2px; }
+
+.message-erreur {
+  color: var(--alerte);
+  margin: 0.4rem 0 0;
+  font-weight: 500;
+}
+
+.champ .secondaire { margin: 0.4rem 0 0; }
+
+.bouton[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* Les liens dans un bloc de texte doivent être identifiables autrement que par
+   la couleur seule — RGAA 3.1. */
+main p a, .pied a { text-decoration: underline; }
