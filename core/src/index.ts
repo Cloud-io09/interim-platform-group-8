@@ -8,3 +8,4 @@ export * from "./referentiel.js";
 export { connexion } from "./db.js";
 export * from "./redis.js";
 export * from "./ingestion/salaire.js";
+export * from "./ingestion/certifications.js";
