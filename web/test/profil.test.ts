@@ -233,3 +233,32 @@ describe("profil entreprise", () => {
     ).toBe(200);
   });
 });
+
+describe("pages protégées", () => {
+  it("renvoie un visiteur anonyme vers la connexion", async () => {
+    for (const page of ["/profil/interimaire", "/profil/entreprise"]) {
+      const r = await fetch(`${BASE}${page}`, { redirect: "manual" });
+      expect([307, 302], page).toContain(r.status);
+      expect(r.headers.get("location"), page).toContain("/connexion");
+    }
+  });
+
+  it("affiche la page à son titulaire", async () => {
+    const r = await fetch(`${BASE}/profil/interimaire`, { headers: { cookie: interimaire.cookie } });
+    expect(r.status).toBe(200);
+    const html = await r.text();
+    expect(html).toContain("Mon profil");
+    // La carte BTP doit être présentée à part des certifications techniques.
+    expect(html).toContain("Carte BTP");
+    expect(html).toContain("n&#x27;atteste d&#x27;aucune compétence");
+  });
+
+  it("renvoie une entreprise vers son propre espace si elle vise celui de l'intérimaire", async () => {
+    const r = await fetch(`${BASE}/profil/interimaire`, {
+      headers: { cookie: entreprise.cookie },
+      redirect: "manual",
+    });
+    expect([307, 302]).toContain(r.status);
+    expect(r.headers.get("location")).toContain("/profil/entreprise");
+  });
+});
