@@ -102,3 +102,35 @@ describe("règles du référentiel", () => {
     expect(DOMAINES_TERRAIN).not.toContain("F12"); // encadrement
   });
 });
+
+describe("liens de vérification auprès des organismes", () => {
+  it("ne déclare que des URL https bien formées", () => {
+    for (const type of TYPES_CERTIFICATION) {
+      if (!type.verification) continue;
+      expect(() => new URL(type.verification!.url), type.code).not.toThrow();
+      expect(type.verification.url.startsWith("https://"), type.code).toBe(true);
+      expect(type.verification.organisme.length, type.code).toBeGreaterThan(3);
+    }
+  });
+
+  it("n'attribue aucun organisme à l'habilitation électrique", () => {
+    // Elle est délivrée par l'employeur lui-même : prétendre qu'un tiers peut la
+    // vérifier serait faux, et c'est exactement ce que le produit refuse de faire.
+    expect(typeCertification("HAB_ELEC")?.verification).toBeNull();
+  });
+
+  it("donne un organisme à tous les autres types", () => {
+    for (const type of TYPES_CERTIFICATION) {
+      if (type.code === "HAB_ELEC") continue;
+      expect(type.verification, type.code).not.toBeNull();
+    }
+  });
+
+  it("ne dérive pas des URL enregistrées en base", () => {
+    for (const type of TYPES_CERTIFICATION) {
+      if (!type.verification) continue;
+      const motif = new RegExp(`'${type.verification.url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}'`);
+      expect(motif.test(seed), `${type.code} : URL absente des migrations`).toBe(true);
+    }
+  });
+});

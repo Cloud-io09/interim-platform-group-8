@@ -7,6 +7,7 @@ interface TypeCertification {
   libelle: string;
   validiteMois: number;
   categories: string[];
+  verification: { url: string; organisme: string } | null;
 }
 
 interface Certification {
@@ -101,6 +102,11 @@ export default function Certifications() {
         expirée avant la fin d&apos;une mission vous en écarte automatiquement — c&apos;est
         pour ça que la date compte autant que le titre.
       </p>
+      <p className="petit secondaire">
+        Intérimatch ne vérifie pas l&apos;authenticité des titres : aucun registre national
+        n&apos;est interrogeable. Nous contrôlons la cohérence des dates, et vous renvoyons
+        vers l&apos;organisme concerné.
+      </p>
 
       {liste.length > 0 && (
         <ul className="liste-nue" style={{ marginBottom: "2rem" }}>
@@ -119,6 +125,20 @@ export default function Certifications() {
                     <p className="petit secondaire" style={{ margin: 0 }}>
                       {c.organismeEmetteur} · n° {c.numero} · obtenu le {enDateFr(c.dateObtention)}
                     </p>
+                    {types.find((t) => t.code === c.typeCode)?.verification && (
+                      <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                        <a
+                          href={types.find((t) => t.code === c.typeCode)!.verification!.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Vérifier auprès de {types.find((t) => t.code === c.typeCode)!.verification!.organisme}
+                        </a>
+                        {" "}
+                        <span aria-hidden="true">↗</span>
+                        <span className="hors-ecran"> (nouvelle fenêtre)</span>
+                      </p>
+                    )}
                     <p className="petit" style={{ margin: "0.4rem 0 0", fontWeight: 500 }}>
                       {perime ? (
                         <span className="etiquette etiquette--alerte">
@@ -179,6 +199,18 @@ export default function Certifications() {
             <p id={`${ids.type}-err`} className="petit message-erreur">{problemeDe("typeCode")}</p>
           )}
         </div>
+
+        {type?.verification && (
+          <p className="petit secondaire" style={{ marginTop: "-0.5rem", marginBottom: "1.25rem" }}>
+            Titre délivré par un organisme accrédité.{" "}
+            <a href={type.verification.url} target="_blank" rel="noopener noreferrer">
+              Consulter {type.verification.organisme}
+            </a>
+            {" "}
+            <span aria-hidden="true">↗</span>
+            <span className="hors-ecran"> (nouvelle fenêtre)</span>
+          </p>
+        )}
 
         {type && type.categories.length > 0 && (
           <div className="champ">

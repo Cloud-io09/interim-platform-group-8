@@ -6,6 +6,14 @@ export interface TypeCertification {
   validiteMois: number;
   /** Catégories autorisées. Vide quand le type n'en prend pas. */
   categories: readonly string[];
+  /**
+   * Où se renseigner auprès de l'organisme.
+   *
+   * Ce n'est jamais un outil de vérification d'un numéro : aucun registre national
+   * n'est interrogeable. `null` quand il n'existe aucun tiers — l'habilitation
+   * électrique est délivrée par l'employeur lui-même.
+   */
+  verification: { url: string; organisme: string } | null;
 }
 
 /**
@@ -18,12 +26,14 @@ export const TYPES_CERTIFICATION: readonly TypeCertification[] = [
     libelle: "CACES R482 — engins de chantier",
     validiteMois: 120,
     categories: ["A", "B1", "B2", "C1", "C2", "C3", "D", "E", "F", "G"],
+    verification: { url: "https://tools.cofrac.fr/fr/easysearch/", organisme: "Cofrac — organismes certificateurs accrédités" },
   },
   {
     code: "AIPR",
     libelle: "AIPR — intervention à proximité des réseaux",
     validiteMois: 60,
     categories: [],
+    verification: { url: "https://www.aipr.fr", organisme: "Plateforme officielle AIPR" },
   },
   {
     code: "HAB_ELEC",
@@ -33,28 +43,51 @@ export const TYPES_CERTIFICATION: readonly TypeCertification[] = [
       "B0", "H0", "H0V", "B1", "B1V", "B2", "B2V", "BR", "BC",
       "H1", "H1V", "H2", "H2V", "HC",
     ],
+    // Délivrée par l'employeur : aucun tiers auprès de qui la vérifier.
+    verification: null,
   },
   {
     code: "CACES_R483",
     libelle: "CACES R483 — grues mobiles",
     validiteMois: 60,
     categories: ["A", "B"],
+    verification: { url: "https://tools.cofrac.fr/fr/easysearch/", organisme: "Cofrac — organismes certificateurs accrédités" },
   },
   {
     code: "CACES_R486",
     libelle: "CACES R486 — plates-formes élévatrices",
     validiteMois: 60,
     categories: ["A", "B", "C"],
+    verification: { url: "https://tools.cofrac.fr/fr/easysearch/", organisme: "Cofrac — organismes certificateurs accrédités" },
   },
   {
     code: "CACES_R487",
     libelle: "CACES R487 — grues à tour",
     validiteMois: 60,
     categories: ["1", "2", "3"],
+    verification: { url: "https://tools.cofrac.fr/fr/easysearch/", organisme: "Cofrac — organismes certificateurs accrédités" },
   },
-  { code: "CACES_R490", libelle: "CACES R490 — grues de chargement", validiteMois: 60, categories: [] },
-  { code: "AMIANTE_SS4", libelle: "Amiante sous-section 4", validiteMois: 36, categories: [] },
-  { code: "SST", libelle: "SST — sauveteur secouriste du travail", validiteMois: 24, categories: [] },
+  {
+    code: "CACES_R490",
+    libelle: "CACES R490 — grues de chargement",
+    validiteMois: 60,
+    categories: [],
+    verification: { url: "https://tools.cofrac.fr/fr/easysearch/", organisme: "Cofrac — organismes certificateurs accrédités" },
+  },
+  {
+    code: "AMIANTE_SS4",
+    libelle: "Amiante sous-section 4",
+    validiteMois: 36,
+    categories: [],
+    verification: { url: "https://www.inrs.fr", organisme: "INRS" },
+  },
+  {
+    code: "SST",
+    libelle: "SST — sauveteur secouriste du travail",
+    validiteMois: 24,
+    categories: [],
+    verification: { url: "https://www.forprev.fr", organisme: "Forprev — réseau Assurance maladie / INRS" },
+  },
 ] as const;
 
 const PAR_CODE = new Map(TYPES_CERTIFICATION.map((t) => [t.code, t]));
