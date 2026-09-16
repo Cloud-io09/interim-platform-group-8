@@ -1,6 +1,8 @@
 import { connexion } from "@interimatch/core/db";
 import {
   compterTentative,
+  MAX_TENTATIVES_EMAIL,
+  MAX_TENTATIVES_IP,
   normaliserEmail,
   oublierTentatives,
   redis,
@@ -44,8 +46,8 @@ export async function POST(requete: Request) {
   // Compteur par IP *et* par email : l'un freine un attaquant unique qui balaie
   // beaucoup de comptes, l'autre protège un compte visé depuis plusieurs adresses.
   const [parIp, parEmail] = await Promise.all([
-    compterTentative(cleIp, cache),
-    compterTentative(cleEmail, cache),
+    compterTentative(cleIp, MAX_TENTATIVES_IP, cache),
+    compterTentative(cleEmail, MAX_TENTATIVES_EMAIL, cache),
   ]);
   if (parIp.bloque || parEmail.bloque) {
     const reste = Math.max(parIp.resteSecondes, parEmail.resteSecondes);
