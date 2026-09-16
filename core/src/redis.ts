@@ -52,6 +52,13 @@ export const MAX_TENTATIVES = 10;
 // Limitation des tentatives de connexion
 // ---------------------------------------------------------------------------
 
+/** Sous-ensemble de Redis utilisé par le compteur — permet d'injecter un faux en test. */
+export interface CompteurRedis {
+  incr(cle: string): Promise<number>;
+  expire(cle: string, secondes: number): Promise<unknown>;
+  ttl(cle: string): Promise<number>;
+}
+
 export interface EtatLimitation {
   bloque: boolean;
   tentatives: number;
@@ -66,8 +73,11 @@ export interface EtatLimitation {
  * ferait glisser la fenêtre indéfiniment et un attaquant persistant ne serait
  * jamais débloqué, ce qui transforme la protection en déni de service sur le compte.
  */
-export async function compterTentative(cleCompteur: string): Promise<EtatLimitation> {
-  const r = redis();
+export async function compterTentative(
+  cleCompteur: string,
+  client: CompteurRedis = redis()
+): Promise<EtatLimitation> {
+  const r = client;
   const tentatives = await r.incr(cleCompteur);
   if (tentatives === 1) {
     await r.expire(cleCompteur, TTL.tentatives);
@@ -81,6 +91,9 @@ export async function compterTentative(cleCompteur: string): Promise<EtatLimitat
 }
 
 /** Remet le compteur à zéro — appelé après une connexion réussie. */
-export async function oublierTentatives(...cles: string[]): Promise<void> {
-  if (cles.length > 0) await redis().del(...cles);
+export async function oublierTentatives(
+  cles: string[],
+  client: { del(...cles: string[]): Promise<unknown> } = redis()
+): Promise<void> {
+  if (cles.length > 0) await client.del(...cles);
 }
