@@ -215,3 +215,102 @@ a { color: inherit; }
 /* Les liens dans un bloc de texte doivent être identifiables autrement que par
    la couleur seule — RGAA 3.1. */
 main p a, .pied a { text-decoration: underline; }
+
+/* --- Formulaires guidés --------------------------------------------------- */
+
+.colonne--formulaire { max-width: 760px; }
+
+fieldset {
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  padding: 1.5rem;
+  margin: 0 0 1.5rem;
+}
+
+/* Le `legend` nomme le groupe pour un lecteur d'écran — RGAA 11.5.
+   Il ne doit donc jamais être remplacé par un simple titre visuel. */
+legend {
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0 0.5rem;
+}
+
+.champ select {
+  width: 100%;
+  min-height: var(--cible-tactile);
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface);
+  color: var(--texte);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.champ input[type="range"] {
+  width: 100%;
+  min-height: var(--cible-tactile);
+  padding: 0;
+  accent-color: var(--surface-sombre);
+}
+
+.groupe-cases { margin-bottom: 1.25rem; }
+.groupe-cases:last-child { margin-bottom: 0; }
+
+.cases { display: grid; gap: 0.25rem; }
+@media (min-width: 640px) { .cases { grid-template-columns: repeat(2, 1fr); } }
+
+/* Toute l'étiquette est cliquable, et la zone fait au moins 44 px de haut :
+   le public cible saisit souvent sur un téléphone, parfois avec des gants. */
+.case {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--cible-tactile);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--rayon-petit);
+  cursor: pointer;
+}
+.case:hover { background: var(--fond); }
+.case input { width: 20px; height: 20px; accent-color: var(--surface-sombre); flex: none; }
+
+.encart-erreur,
+.encart-succes {
+  border: 1px solid;
+  border-radius: var(--rayon);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.encart-erreur { border-color: var(--alerte); color: var(--alerte); background: #fdf5f4; }
+.encart-succes { border-color: var(--succes); color: var(--succes); background: #f3f9f5; }
+
+/* Les états de certification ne reposent pas sur la couleur seule : le texte dit
+   toujours « périmé », « expire le… » ou « valide jusqu'au… » — RGAA 3.1. */
+.etiquette {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+.etiquette--ok { color: var(--succes); }
+.etiquette--attention { color: #8a5a00; }
+.etiquette--alerte { color: var(--alerte); }
+
+.liste-nue { list-style: none; margin: 0; padding: 0; }
+
+.ligne-certification {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.separateur {
+  border: none;
+  border-top: 1px solid var(--bordure);
+  margin: 3rem 0;
+}
