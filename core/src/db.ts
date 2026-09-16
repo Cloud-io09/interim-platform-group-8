@@ -21,5 +21,15 @@ export function connexion(): postgres.Sql {
       "sans pooling). En serverless, utiliser le pooler : aws-0-<region>.pooler.supabase.com:6543\n"
     );
   }
-  return postgres(url, { max: 5, idle_timeout: 20, prepare: false });
+  return postgres(url, {
+    max: 5,
+    idle_timeout: 20,
+    // Le pooler en mode transaction ne supporte pas les requêtes préparées.
+    prepare: false,
+    // Les NOTICE (« already exists, skipping ») ne sont pas des erreurs : on ne
+    // remonte que ce qui mérite l'attention.
+    onnotice: (avis) => {
+      if (avis.severity !== "NOTICE") process.stderr.write(`${avis.severity}: ${avis.message}\n`);
+    },
+  });
 }
