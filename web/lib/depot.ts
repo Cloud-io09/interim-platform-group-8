@@ -7,6 +7,7 @@ import type {
 
 export interface MissionComplete extends MissionAMatcher {
   titre: string;
+  description: string | null;
   metierCode: string;
   ville: string;
   codePostal: string;
@@ -31,13 +32,13 @@ export async function chargerMission(
 ): Promise<MissionComplete | null> {
   const [ligne] = await sql<
     {
-      id: number; titre: string; metier_code: string; lat: number; lon: number;
+      id: number; titre: string; description: string | null; metier_code: string; lat: number; lon: number;
       date_debut: string; date_fin: string; ville: string; code_postal: string;
       statut: string; entreprise_id: number; raison_sociale: string;
       taux_horaire_min: string | null; taux_horaire_max: string | null;
     }[]
   >`
-    select m.id, m.titre, m.metier_code, m.lat, m.lon,
+    select m.id, m.titre, m.description, m.metier_code, m.lat, m.lon,
            m.date_debut::text, m.date_fin::text, m.ville, m.code_postal, m.statut,
            m.entreprise_id, e.raison_sociale, m.taux_horaire_min, m.taux_horaire_max
     from mission m join entreprise e on e.compte_id = m.entreprise_id
@@ -56,6 +57,7 @@ export async function chargerMission(
   return {
     missionId: ligne.id,
     titre: ligne.titre,
+    description: ligne.description,
     metierCode: ligne.metier_code,
     lat: ligne.lat,
     lon: ligne.lon,

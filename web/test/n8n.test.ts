@@ -7,6 +7,8 @@ const MARQUE = `n8n-${Date.now()}`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 const SECRET = process.env.SECRET_N8N ?? "";
 const emails: string[] = [];
+/** Jetons ouverts par la suite, fermés à la fin : sinon ils vivent 7 jours. */
+const cookiesOuverts: string[] = [];
 
 /** Une mission dans un an : les échéances de test restent lisibles. */
 const MISSION_DEBUT = "2027-06-01";

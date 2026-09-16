@@ -442,3 +442,80 @@ main code {
 .filtre-portee legend { font-size: 0.875rem; font-weight: 600; }
 .filtre-portee .case { min-height: var(--cible-tactile); }
 .case input[type="radio"] { width: 20px; height: 20px; accent-color: var(--surface-sombre); flex: none; }
+
+/* --- Espace connecté ------------------------------------------------------ */
+
+.espace-entete { margin-bottom: 2rem; }
+.espace-entete h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: 0.25rem; }
+
+/* Bandeau : ce qui bloque doit se voir avant le reste, pas se découvrir en
+   parcourant une grille de cartes toutes identiques. */
+.bandeau {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--bordure);
+  border-left: 4px solid var(--texte-secondaire);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  padding: 1.1rem 1.35rem;
+  margin-bottom: 2rem;
+}
+.bandeau--attention { border-left-color: #8a5a00; background: #fffaf0; }
+.bandeau--ok { border-left-color: var(--succes); background: #f3f9f5; }
+.bandeau--alerte { border-left-color: var(--alerte); background: #fdf5f4; }
+.bandeau--neutre { border-left-color: var(--texte-secondaire); }
+.bandeau .bouton { flex: none; }
+
+.bandeau-chiffres {
+  display: grid;
+  gap: 1px;
+  background: var(--bordure);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+@media (min-width: 600px) { .bandeau-chiffres { grid-template-columns: repeat(3, 1fr); } }
+.bandeau-chiffres > li { background: var(--surface); }
+.bandeau-chiffres > li > *,
+.chiffre-lien {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1.1rem 1.25rem;
+  min-height: var(--cible-tactile);
+  text-decoration: none;
+}
+.chiffre-lien:hover { background: var(--fond); }
+.chiffre { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+
+.actions { display: grid; gap: 0.75rem; }
+
+/* Une ligne pleine largeur plutôt qu'une tuile : le titre, l'état et l'explication
+   se lisent d'un seul balayage vertical, et la cible tactile couvre toute la carte. */
+.action {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.2rem 1rem;
+  padding: 1.1rem 1.35rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  text-decoration: none;
+}
+.action:hover { border-color: var(--texte-secondaire); }
+.action--a-faire { border-left: 4px solid #8a5a00; }
+.action-titre {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.action .petit { grid-column: 1; }
+.action-fleche { grid-row: 1 / span 2; font-size: 1.2rem; color: var(--texte-secondaire); }

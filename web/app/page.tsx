@@ -62,16 +62,11 @@ export default function Accueil() {
     <>
       <section className="section">
         <div className="colonne">
-          <p className="petit secondaire">
-            {nombre(RELEVE.missionsBtp)} missions d&apos;intérim BTP ouvertes en France
-            <span className="secondaire"> — relevé du {RELEVE.date}</span>
-          </p>
-          <h1>L&apos;intérim du BTP, sur certifications vérifiées.</h1>
-          <p style={{ maxWidth: "52ch", fontSize: "1.125rem" }} className="secondaire">
-            Intérimatch met en relation entreprises du bâtiment et intérimaires. Le
-            rapprochement se fait sur des qualifications réelles — certifications,
-            habilitations, zone, disponibilité — et sur leur validité à la date de la
-            mission.
+          <h1>Sur ce chantier, qui a le droit de monter dans l&apos;engin&nbsp;?</h1>
+          <p style={{ maxWidth: "54ch", fontSize: "1.125rem" }} className="secondaire">
+            Intérimatch écarte d&apos;emblée les profils dont le CACES, l&apos;AIPR ou
+            l&apos;habilitation expire avant la fin de votre chantier. Vous ne recevez que
+            des candidats affectables, classés par proximité et disponibilité.
           </p>
           <p style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "2rem" }}>
             <a className="bouton" href="/inscription/interimaire">
@@ -113,6 +108,12 @@ export default function Accueil() {
               </p>
             </div>
           </div>
+          {/* La source et la date accompagnent les chiffres : sans elles, ils ne sont
+              pas vérifiables — et c'est le reproche qu'on adresse aux concurrents. */}
+          <p className="petit secondaire" style={{ marginTop: "1.5rem" }}>
+            Relevé du {RELEVE.date}, API Offres d&apos;emploi France Travail, agrégation par
+            grand domaine ROME. Le nombre d&apos;offres actives évolue chaque jour.
+          </p>
         </div>
       </section>
 

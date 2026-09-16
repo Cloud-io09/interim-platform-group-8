@@ -90,7 +90,9 @@ export default function MesMissionsInterimaire() {
               <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
                 <div className="ligne-certification">
                   <div>
-                    <h3 style={{ marginBottom: "0.2rem" }}>{m.titre}</h3>
+                    <h3 style={{ marginBottom: "0.2rem" }}>
+                      <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
+                    </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
                       {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
                       {remuneration(m)}
@@ -119,7 +121,9 @@ export default function MesMissionsInterimaire() {
           <ul className="liste-nue">
             {horsMetier.map((m) => (
               <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
-                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{m.titre}</h3>
+                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                  <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
+                </h3>
                 <p className="petit secondaire" style={{ margin: 0 }}>
                   {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
                   {remuneration(m)}
@@ -142,7 +146,9 @@ export default function MesMissionsInterimaire() {
               <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
                 <div className="ligne-certification">
                   <div>
-                    <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>{m.titre}</h3>
+                    <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                      <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
+                    </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
                       {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
                       {remuneration(m)}

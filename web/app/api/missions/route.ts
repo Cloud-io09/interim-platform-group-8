@@ -1,6 +1,6 @@
 import { connexion } from "@interimatch/core/db";
 import { validerMission, type ExigenceSaisie } from "@interimatch/core";
-import { cle, redis } from "@interimatch/core";
+import { cle, redis, sansEchec } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
@@ -134,9 +134,9 @@ export async function POST(requete: Request) {
       return id;
     });
 
-    // Le cache de matching d'une mission qui vient de naître n'existe pas encore,
-    // mais publier invalide ce qui pourrait traîner d'un brouillon homonyme.
-    await redis().del(cle.cacheMatching(missionId));
+    // Invalidation du cache : agrément, pas condition. La mission est déjà créée —
+    // échouer ici renverrait une erreur pour une opération qui a réussi.
+    await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation matching");
 
     return succes({ id: missionId, statut: saisie.publier ? "publiee" : "brouillon" }, 201);
   } catch (e) {

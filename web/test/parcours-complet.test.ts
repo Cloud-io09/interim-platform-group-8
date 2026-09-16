@@ -14,6 +14,8 @@ import { BASE } from "./serveur";
 const MARQUE = `e2e-${Date.now()}`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 const emails: string[] = [];
+/** Jetons ouverts par la suite, fermés à la fin : sinon ils vivent 7 jours. */
+const cookiesOuverts: string[] = [];
 
 /** Mission calibrée pour que les cas limites d'échéance soient démontrables. */
 const MISSION_DEBUT = "2027-03-01";
