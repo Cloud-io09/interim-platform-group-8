@@ -3,7 +3,7 @@ import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { cle, redis } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
-import { resoudreAdresse } from "@/lib/geocoder";
+import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +78,19 @@ export async function POST(requete: Request) {
 
     const codePostal = saisie.codePostal!.trim();
     const ville = saisie.ville!.trim();
-    const position = await resoudreAdresse(saisie.adresse ?? "", codePostal, ville);
+    let position;
+  try {
+    position = await resoudreAdresse(saisie.adresse ?? "", codePostal, ville);
+  } catch (e) {
+    if (e instanceof ServiceGeocodageIndisponible) {
+      // 503 et non 500 : le service tiers est en cause, réessayer a du sens.
+      return erreur(
+        "Le service d'adresses est momentanément indisponible. Réessayez dans quelques instants.",
+        503
+      );
+    }
+    throw e;
+  }
     if (!position) {
       return erreur("Adresse de chantier introuvable.", 422, [
         { champ: "ville", message: "Vérifiez le code postal et la commune du chantier." },

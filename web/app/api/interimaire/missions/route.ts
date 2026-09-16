@@ -18,25 +18,37 @@ const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateStrin
  * éviter. Les missions où il est écarté lui sont donc montrées **à part**, avec le
  * motif : c'est cette information qui rend un renouvellement de titre concret.
  */
-export async function GET() {
+export async function GET(requete: Request) {
   const garde = await sessionOuErreur("interimaire");
   if ("reponse" in garde) return garde.reponse;
   const moi = garde.session.compteId;
 
+  // `portee=toutes` lève la restriction aux métiers déclarés. Un intérimaire doit
+  // pouvoir consulter l'ensemble du marché ouvert, quitte à y voir des postes hors
+  // de ses métiers : lui cacher l'offre reviendrait à décider à sa place.
+  const toutes = new URL(requete.url).searchParams.get("portee") === "toutes";
+
   const sql = connexion();
   try {
-    const candidates = await sql<{ id: number }[]>`
-      select distinct m.id
-      from mission m
-      join interimaire_metier im on im.metier_code = m.metier_code
-      where im.interimaire_id = ${moi}
-        and m.statut = 'publiee'
-        and m.date_fin >= current_date
-      order by m.id desc
-      limit 50`;
+    const candidates = toutes
+      ? await sql<{ id: number }[]>`
+          select m.id from mission m
+          where m.statut = 'publiee' and m.date_fin >= current_date
+          order by m.publiee_le desc nulls last, m.id desc
+          limit 50`
+      : await sql<{ id: number }[]>`
+          select distinct m.id
+          from mission m
+          join interimaire_metier im on im.metier_code = m.metier_code
+          where im.interimaire_id = ${moi}
+            and m.statut = 'publiee'
+            and m.date_fin >= current_date
+          order by m.id desc
+          limit 50`;
 
     const accessibles = [];
     const bloquees = [];
+    const horsMetier = [];
 
     for (const { id } of candidates) {
       const mission = await chargerMission(sql, id);
@@ -47,6 +59,7 @@ export async function GET() {
 
       const resume = {
         id: mission.missionId,
+        metier: mission.metierCode,
         titre: mission.titre,
         ville: mission.ville,
         entreprise: mission.raisonSociale,
@@ -69,6 +82,12 @@ export async function GET() {
       }
 
       const ecarte = resultat.ecartes.find((e) => e.interimaireId === moi);
+      if (!retenu && !ecarte) {
+        // Ni retenu ni écarté : le métier de la mission n'est pas déclaré au profil,
+        // donc le moteur ne l'a pas évalué. On la montre quand même, sans score.
+        horsMetier.push(resume);
+        continue;
+      }
       if (ecarte) {
         const libelle = typeCertification(ecarte.typeCode)?.libelle ?? ecarte.typeCode;
         bloquees.push({
@@ -84,7 +103,7 @@ export async function GET() {
       }
     }
 
-    return succes({ accessibles, bloquees });
+    return succes({ portee: toutes ? "toutes" : "mes-metiers", accessibles, bloquees, horsMetier });
   } finally {
     await sql.end();
   }

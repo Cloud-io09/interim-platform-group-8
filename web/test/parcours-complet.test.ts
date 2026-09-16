@@ -105,7 +105,7 @@ afterAll(async () => {
 describe("parcours entreprise, de l'inscription à la mission", () => {
   it("déroule inscription → profil → mission publiée", async () => {
     const { cookie, corps } = await inscrire("ent-nominal", "entreprise");
-    expect(corps.etapeSuivante).toBe("/profil/entreprise");
+    expect(corps.etapeSuivante).toContain("/espace/entreprise/profil");
 
     // Impasse à vérifier : publier avant d'avoir un profil doit être refusé
     // explicitement, pas planter sur une violation de clé étrangère.
@@ -173,7 +173,7 @@ describe("parcours intérimaire", () => {
 
   it("déroule inscription → profil → certification → relecture", async () => {
     const { cookie, corps } = await inscrire("int-nominal", "interimaire");
-    expect(corps.etapeSuivante).toBe("/profil/interimaire");
+    expect(corps.etapeSuivante).toContain("/espace/interimaire/profil");
 
     expect((await appel("/api/profil/interimaire", "POST", profilInterimaire(), cookie)).statut).toBe(200);
     expect((await appel("/api/certifications", "POST", certification("2034-01-15"), cookie)).statut).toBe(201);

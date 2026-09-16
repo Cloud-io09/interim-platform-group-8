@@ -68,7 +68,7 @@ describe("SEO on-page", () => {
 
   it("interdit aux robots l'API et les espaces connectés", async () => {
     const { html } = await page("/robots.txt");
-    for (const interdit of ["/api/", "/profil/", "/mes-missions", "/connexion"]) {
+    for (const interdit of ["/api/", "/espace", "/mes-missions", "/connexion"]) {
       expect(html, interdit).toContain(`Disallow: ${interdit}`);
     }
     expect(html).toContain("Sitemap:");
@@ -121,5 +121,39 @@ describe("en-têtes de sécurité", () => {
     expect(entetes.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
     // La version du framework est une information gratuite pour un attaquant.
     expect(entetes.get("x-powered-by")).toBeNull();
+  });
+});
+
+describe("aiguillage de la page d'accueil", () => {
+  it("sert la page de présentation à un visiteur anonyme", async () => {
+    const r = await fetch(`${BASE}/`, { redirect: "manual" });
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain("L&#x27;intérim du BTP");
+  });
+
+  it("renvoie un utilisateur connecté vers son espace", async () => {
+    // Un connecté n'a rien à faire sur la page de présentation. La redirection est
+    // faite en middleware pour que « / » reste prérendue, donc indexable.
+    const inscription = await fetch(`${BASE}/api/auth/inscription`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: `accueil-${Date.now()}@exemple.test`,
+        motDePasse: "chantier-de-reims-2026",
+        role: "entreprise",
+      }),
+    });
+    const cookie = inscription.headers.get("set-cookie")?.split(";")[0] ?? "";
+
+    const r = await fetch(`${BASE}/`, { headers: { cookie }, redirect: "manual" });
+    expect([307, 302]).toContain(r.status);
+    expect(r.headers.get("location")).toContain("/espace");
+  });
+
+  it("exclut le nouvel espace privé des robots", async () => {
+    const texte = await (await fetch(`${BASE}/robots.txt`)).text();
+    expect(texte).toContain("Disallow: /espace");
+    // L'ancienne route n'existe plus : la laisser serait une consigne morte.
+    expect(texte).not.toContain("/profil/");
   });
 });

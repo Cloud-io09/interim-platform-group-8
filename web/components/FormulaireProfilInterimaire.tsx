@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import { envoyerJson } from "@/lib/client";
 
 interface Domaine {
   domaine: string;
@@ -8,18 +10,29 @@ interface Domaine {
   metiers: { code: string; libelle: string }[];
 }
 
-interface Probleme {
-  champ: string;
-  message: string;
+interface Profil {
+  prenom: string;
+  nom: string;
+  telephone: string | null;
+  adresse: string | null;
+  codePostal: string;
+  ville: string;
+  rayonMobiliteKm: number;
+  carteBtpNumero: string | null;
+  carteBtpEcheance: string | null;
+  metiers: string[];
 }
 
 const RAYON_DEFAUT_KM = 50;
 
-export default function FormulaireProfilInterimaire() {
+export default function FormulaireProfilInterimaire({ apresEnregistrement }: { apresEnregistrement?: string }) {
   const [domaines, setDomaines] = useState<Domaine[]>([]);
+  const [profil, setProfil] = useState<Profil | null>(null);
+  const [charge, setCharge] = useState(false);
   const [rayon, setRayon] = useState(RAYON_DEFAUT_KM);
+  const [metiers, setMetiers] = useState<string[]>([]);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = {
@@ -30,82 +43,84 @@ export default function FormulaireProfilInterimaire() {
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ)?.message;
 
   useEffect(() => {
-    fetch("/api/referentiel/metiers")
-      .then((r) => r.json())
-      .then((d) => setDomaines(d.domaines))
-      .catch(() => setMessage("Impossible de charger la liste des métiers."));
+    Promise.all([
+      fetch("/api/referentiel/metiers").then((r) => r.json()),
+      fetch("/api/profil/interimaire").then((r) => (r.ok ? r.json() : { profil: null })),
+    ])
+      .then(([ref, mien]) => {
+        setDomaines(ref.domaines);
+        if (mien.profil) {
+          // Sans cette relecture, revenir sur son profil affichait des champs vides,
+          // et enregistrer écrasait silencieusement ce qui avait déjà été saisi.
+          setProfil(mien.profil);
+          setRayon(mien.profil.rayonMobiliteKm);
+          setMetiers(mien.profil.metiers);
+        }
+      })
+      .catch(() => setErreur("Impossible de charger votre profil."))
+      .finally(() => setCharge(true));
   }, []);
 
   async function envoyer(evenement: React.FormEvent<HTMLFormElement>) {
     evenement.preventDefault();
-    const donnees = new FormData(evenement.currentTarget);
+    const d = new FormData(evenement.currentTarget);
     setEnCours(true);
     setProblemes([]);
-    setMessage(null);
+    setErreur(null);
     setSucces(null);
 
-    const reponse = await fetch("/api/profil/interimaire", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prenom: donnees.get("prenom"),
-        nom: donnees.get("nom"),
-        telephone: donnees.get("telephone"),
-        adresse: donnees.get("adresse"),
-        codePostal: donnees.get("codePostal"),
-        ville: donnees.get("ville"),
-        rayonMobiliteKm: Number(donnees.get("rayonMobiliteKm")),
-        carteBtpNumero: donnees.get("carteBtpNumero"),
-        carteBtpEcheance: donnees.get("carteBtpEcheance"),
-        metiers: donnees.getAll("metiers"),
-      }),
-    });
-    const corps = await reponse.json();
+    const { ok, corps } = await envoyerJson<{ position: { libelle: string } }>(
+      "/api/profil/interimaire",
+      "POST",
+      {
+        prenom: d.get("prenom"),
+        nom: d.get("nom"),
+        telephone: d.get("telephone"),
+        adresse: d.get("adresse"),
+        codePostal: d.get("codePostal"),
+        ville: d.get("ville"),
+        rayonMobiliteKm: rayon,
+        carteBtpNumero: d.get("carteBtpNumero"),
+        carteBtpEcheance: d.get("carteBtpEcheance"),
+        metiers,
+      }
+    );
     setEnCours(false);
 
-    if (!reponse.ok) {
+    if (!ok) {
       setProblemes(corps.problemes ?? []);
-      setMessage(corps.message ?? "Enregistrement impossible.");
+      setErreur(corps.message ?? "Enregistrement impossible.");
       return;
     }
     setSucces(`Profil enregistré. Adresse retenue : ${corps.position.libelle}.`);
+    if (apresEnregistrement) setTimeout(() => window.location.assign(apresEnregistrement), 900);
   }
+
+  function basculerMetier(code: string) {
+    setMetiers((a) => (a.includes(code) ? a.filter((x) => x !== code) : [...a, code]));
+  }
+
+  if (!charge) return <p className="secondaire">Chargement de votre profil…</p>;
 
   return (
     <form onSubmit={envoyer} noValidate>
-      {message && (
-        <div role="alert" className="encart-erreur">
-          <p style={{ margin: 0, fontWeight: 500 }}>{message}</p>
-          {problemes.length > 0 && (
-            <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
-              {problemes.map((p) => <li key={p.champ}>{p.message}</li>)}
-            </ul>
-          )}
-        </div>
-      )}
-      {succes && (
-        <div role="status" className="encart-succes">
-          <p style={{ margin: 0, fontWeight: 500 }}>{succes}</p>
-        </div>
-      )}
-
       <fieldset>
         <legend>Qui êtes-vous</legend>
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.prenom}>Prénom</label>
-            <input id={ids.prenom} name="prenom" required autoComplete="given-name" />
+            <input id={ids.prenom} name="prenom" required autoComplete="given-name" defaultValue={profil?.prenom ?? ""} />
             {problemeDe("prenom") && <p className="petit message-erreur">{problemeDe("prenom")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.nom}>Nom</label>
-            <input id={ids.nom} name="nom" required autoComplete="family-name" />
+            <input id={ids.nom} name="nom" required autoComplete="family-name" defaultValue={profil?.nom ?? ""} />
             {problemeDe("nom") && <p className="petit message-erreur">{problemeDe("nom")}</p>}
           </div>
         </div>
         <div className="champ">
           <label htmlFor={ids.tel}>Téléphone</label>
-          <input id={ids.tel} name="telephone" type="tel" autoComplete="tel" inputMode="tel" />
+          <input id={ids.tel} name="telephone" type="tel" autoComplete="tel" inputMode="tel" defaultValue={profil?.telephone ?? ""} />
           <p className="petit secondaire">Facultatif. Chiffré, visible seulement par une entreprise qui vous propose une mission.</p>
         </div>
       </fieldset>
@@ -114,35 +129,26 @@ export default function FormulaireProfilInterimaire() {
         <legend>Où vous pouvez travailler</legend>
         <div className="champ">
           <label htmlFor={ids.adresse}>Adresse</label>
-          <input id={ids.adresse} name="adresse" autoComplete="street-address" />
+          <input id={ids.adresse} name="adresse" autoComplete="street-address" defaultValue={profil?.adresse ?? ""} />
           <p className="petit secondaire">Facultative et chiffrée. Elle sert seulement à calculer les distances.</p>
         </div>
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.cp}>Code postal</label>
-            <input id={ids.cp} name="codePostal" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" />
+            <input id={ids.cp} name="codePostal" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" defaultValue={profil?.codePostal ?? ""} />
             {problemeDe("codePostal") && <p className="petit message-erreur">{problemeDe("codePostal")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.ville}>Ville</label>
-            <input id={ids.ville} name="ville" required autoComplete="address-level2" />
+            <input id={ids.ville} name="ville" required autoComplete="address-level2" defaultValue={profil?.ville ?? ""} />
             {problemeDe("ville") && <p className="petit message-erreur">{problemeDe("ville")}</p>}
           </div>
         </div>
         <div className="champ">
           <label htmlFor={ids.rayon}>Jusqu&apos;où acceptez-vous de vous déplacer ? {rayon} km</label>
-          <input
-            id={ids.rayon}
-            name="rayonMobiliteKm"
-            type="range"
-            min={5}
-            max={200}
-            step={5}
-            value={rayon}
-            onChange={(e) => setRayon(Number(e.target.value))}
-          />
+          <input id={ids.rayon} type="range" min={5} max={200} step={5} value={rayon} onChange={(e) => setRayon(Number(e.target.value))} />
           <p className="petit secondaire">
-            {RAYON_DEFAUT_KM} km par défaut, le périmètre habituel du CDI intérimaire. Ajustez-le à votre situation.
+            {RAYON_DEFAUT_KM} km par défaut, le périmètre habituel du CDI intérimaire.
           </p>
           {problemeDe("rayonMobiliteKm") && <p className="petit message-erreur">{problemeDe("rayonMobiliteKm")}</p>}
         </div>
@@ -157,7 +163,7 @@ export default function FormulaireProfilInterimaire() {
             <div className="cases">
               {d.metiers.map((m) => (
                 <label key={m.code} className="case">
-                  <input type="checkbox" name="metiers" value={m.code} />
+                  <input type="checkbox" checked={metiers.includes(m.code)} onChange={() => basculerMetier(m.code)} />
                   <span>{m.libelle}</span>
                 </label>
               ))}
@@ -167,9 +173,8 @@ export default function FormulaireProfilInterimaire() {
       </fieldset>
 
       <fieldset>
-        {/* Bloc volontairement séparé des certifications : la carte BTP atteste d'une
-            situation d'emploi régulière, pas d'une compétence. Elle n'entre jamais
-            dans le calcul de matching. */}
+        {/* Bloc séparé des certifications : la carte BTP atteste d'une situation
+            d'emploi régulière, pas d'une compétence, et n'entre jamais dans le matching. */}
         <legend>Carte BTP</legend>
         <p className="petit secondaire">
           Obligatoire sur chantier, mais elle n&apos;atteste d&apos;aucune compétence : elle
@@ -179,15 +184,17 @@ export default function FormulaireProfilInterimaire() {
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.carte}>Numéro de carte</label>
-            <input id={ids.carte} name="carteBtpNumero" maxLength={40} />
+            <input id={ids.carte} name="carteBtpNumero" maxLength={40} defaultValue={profil?.carteBtpNumero ?? ""} />
           </div>
           <div className="champ">
             <label htmlFor={ids.carteEch}>Fin de validité</label>
-            <input id={ids.carteEch} name="carteBtpEcheance" type="date" />
+            <input id={ids.carteEch} name="carteBtpEcheance" type="date" defaultValue={profil?.carteBtpEcheance ?? ""} />
             {problemeDe("carteBtpEcheance") && <p className="petit message-erreur">{problemeDe("carteBtpEcheance")}</p>}
           </div>
         </div>
       </fieldset>
+
+      <RetourFormulaire erreur={erreur} succes={succes} problemes={problemes} />
 
       <button className="bouton" type="submit" disabled={enCours}>
         {enCours ? "Enregistrement…" : "Enregistrer mon profil"}

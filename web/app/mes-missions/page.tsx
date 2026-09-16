@@ -21,7 +21,7 @@ export default async function MesMissions() {
         </p>
         <MesMissionsInterimaire />
         <p className="petit secondaire" style={{ marginTop: "2rem" }}>
-          <a href="/profil/interimaire">Modifier mon profil et mes certifications</a>
+          <a href="/espace/interimaire">Mon espace : profil, certifications, disponibilités</a>
         </p>
       </div>
     </section>

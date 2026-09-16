@@ -61,7 +61,10 @@ export async function POST(requete: Request) {
     return succes(
       {
         compte: { id: compte.id, email, role },
-        etapeSuivante: role === "entreprise" ? "/profil/entreprise" : "/profil/interimaire",
+        etapeSuivante:
+          role === "entreprise"
+            ? "/espace/entreprise/profil?suite=premiere-mission"
+            : "/espace/interimaire/profil?suite=certifications",
       },
       201
     );

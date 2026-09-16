@@ -44,12 +44,12 @@ export default function Entete() {
       ? [
           { href: "/missions", libelle: "Mes fiches de poste" },
           { href: "/missions/nouvelle", libelle: "Publier" },
-          { href: "/profil/entreprise", libelle: "Mon entreprise" },
+          { href: "/espace/entreprise", libelle: "Mon espace" },
         ]
       : compte?.role === "interimaire"
         ? [
-            { href: "/mes-missions", libelle: "Mes missions" },
-            { href: "/profil/interimaire", libelle: "Mon profil" },
+            { href: "/mes-missions", libelle: "Les missions" },
+            { href: "/espace/interimaire", libelle: "Mon espace" },
           ]
         : [];
 

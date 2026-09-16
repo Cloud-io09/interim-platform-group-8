@@ -2,9 +2,24 @@ import { connexion } from "@interimatch/core/db";
 import { chiffrerOptionnel, validerProfilInterimaire } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
-import { resoudreAdresse } from "@/lib/geocoder";
+import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
+import { lireProfilInterimaire } from "@/lib/profils";
 
 export const dynamic = "force-dynamic";
+
+/** Relit le profil enregistré, pour préremplir le formulaire. */
+export async function GET() {
+  const garde = await sessionOuErreur("interimaire");
+  if ("reponse" in garde) return garde.reponse;
+
+  const sql = connexion();
+  try {
+    const profil = await lireProfilInterimaire(sql, garde.session.compteId);
+    return succes({ profil });
+  } finally {
+    await sql.end();
+  }
+}
 
 interface Saisie {
   prenom?: string;
@@ -37,7 +52,19 @@ export async function POST(requete: Request) {
 
   const codePostal = saisie.codePostal!.trim();
   const ville = saisie.ville!.trim();
-  const position = await resoudreAdresse(saisie.adresse ?? "", codePostal, ville);
+  let position;
+  try {
+    position = await resoudreAdresse(saisie.adresse ?? "", codePostal, ville);
+  } catch (e) {
+    if (e instanceof ServiceGeocodageIndisponible) {
+      // 503 et non 500 : le service tiers est en cause, réessayer a du sens.
+      return erreur(
+        "Le service d'adresses est momentanément indisponible. Réessayez dans quelques instants.",
+        503
+      );
+    }
+    throw e;
+  }
   if (!position) {
     return erreur("Adresse introuvable.", 422, [
       { champ: "ville", message: "Nous n'avons pas trouvé cette commune. Vérifiez le code postal et la ville." },

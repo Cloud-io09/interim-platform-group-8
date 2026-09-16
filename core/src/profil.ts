@@ -204,3 +204,47 @@ export function validerCertification(saisie: SaisieCertification): Probleme[] {
 
   return problemes.filter((p): p is Probleme => p !== null);
 }
+
+// ---------------------------------------------------------------------------
+// Disponibilités
+// ---------------------------------------------------------------------------
+
+/** Une période déclarée ne peut pas s'étendre au-delà de deux ans. */
+export const DUREE_MAX_DISPONIBILITE_JOURS = 730;
+
+export interface SaisieDisponibilite {
+  dateDebut?: unknown;
+  dateFin?: unknown;
+}
+
+/**
+ * Valide une période de disponibilité.
+ *
+ * Elle pèse dans le score sans jamais exclure : un intérimaire partiellement
+ * disponible reste proposé, plus bas. C'est pourquoi on accepte des périodes
+ * courtes sans les considérer comme une erreur de saisie.
+ */
+export function validerDisponibilite(saisie: SaisieDisponibilite): Probleme[] {
+  const problemes: Probleme[] = [];
+  const pbDebut = dateValide(saisie.dateDebut, "dateDebut", "La date de début");
+  const pbFin = dateValide(saisie.dateFin, "dateFin", "La date de fin");
+  if (pbDebut) problemes.push(pbDebut);
+  if (pbFin) problemes.push(pbFin);
+  if (pbDebut || pbFin) return problemes;
+
+  const debut = enMsUTC(saisie.dateDebut as DateISO);
+  const fin = enMsUTC(saisie.dateFin as DateISO);
+  if (fin < debut) {
+    problemes.push({ champ: "dateFin", message: "La date de fin ne peut pas précéder la date de début." });
+    return problemes;
+  }
+
+  const jours = (fin - debut) / 86_400_000 + 1;
+  if (jours > DUREE_MAX_DISPONIBILITE_JOURS) {
+    problemes.push({
+      champ: "dateFin",
+      message: "Déclarez des périodes d'au plus deux ans, quitte à les renouveler.",
+    });
+  }
+  return problemes;
+}
