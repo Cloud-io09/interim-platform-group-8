@@ -34,6 +34,25 @@ export const TYPES_CERTIFICATION: readonly TypeCertification[] = [
       "H1", "H1V", "H2", "H2V", "HC",
     ],
   },
+  {
+    code: "CACES_R483",
+    libelle: "CACES R483 — grues mobiles",
+    validiteMois: 60,
+    categories: ["A", "B"],
+  },
+  {
+    code: "CACES_R486",
+    libelle: "CACES R486 — plates-formes élévatrices",
+    validiteMois: 60,
+    categories: ["A", "B", "C"],
+  },
+  {
+    code: "CACES_R487",
+    libelle: "CACES R487 — grues à tour",
+    validiteMois: 60,
+    categories: ["1", "2", "3"],
+  },
+  { code: "CACES_R490", libelle: "CACES R490 — grues de chargement", validiteMois: 60, categories: [] },
   { code: "AMIANTE_SS4", libelle: "Amiante sous-section 4", validiteMois: 36, categories: [] },
   { code: "SST", libelle: "SST — sauveteur secouriste du travail", validiteMois: 24, categories: [] },
 ] as const;

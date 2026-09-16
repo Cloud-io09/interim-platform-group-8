@@ -46,18 +46,46 @@ interface Regle {
  * l'habilitation électrique remonterait tous les « BR » du texte ; on exige donc
  * le mot « habilitation » ou une forme non ambiguë comme « H0B0 ».
  */
+/**
+ * Une recommandation CACES se repère par son numéro. La fenêtre de catégories est
+ * toujours close par la mention d'une autre recommandation : « R482 … F et R486 …
+ * (catégorie B) » ne doit pas attribuer B au R482.
+ */
+function regleCaces(numero: string, jeton: RegExp, fenetre = 40): Regle["categories"] {
+  return {
+    ancre: new RegExp(`\\bR\\.?\\s?${numero}\\b`, "gi"),
+    fenetre,
+    jeton,
+    arret: /\bR\.?\s?4\d{2}\b/i,
+  };
+}
+
 const REGLES: Regle[] = [
   {
     typeCode: "CACES_R482",
     motif: /\bR\.?\s?482\b|\bcaces\b[^.!?]{0,60}?\bengins?\s+de\s+chantier\b/i,
-    categories: {
-      ancre: /\bR\.?\s?482\b/gi,
-      fenetre: 40,
-      jeton: /\b([ABCDEFG][123]?)\b/g,
-      // Une autre recommandation CACES ferme la fenêtre : « R482 ... F et R486 ... (B) »
-      // ne doit pas attribuer B au R482.
-      arret: /\bR\.?\s?4\d{2}\b/i,
-    },
+    categories: regleCaces("482", /\b([ABCDEFG][123]?)\b/g),
+  },
+  {
+    typeCode: "CACES_R483",
+    motif: /\bR\.?\s?483\b|\bcaces\b[^.!?]{0,60}?\bgrues?\s+mobiles?\b/i,
+    categories: regleCaces("483", /\b([AB])\b/g),
+  },
+  {
+    typeCode: "CACES_R486",
+    // « PEMP » et « nacelle » sont les termes de chantier ; le numéro n'est pas
+    // toujours cité alors que le besoin, lui, l'est.
+    motif: /\bR\.?\s?486\b|\bPEMP\b|\bcaces\b[^.!?]{0,40}?\bnacelles?\b/i,
+    categories: regleCaces("486", /\b([ABC])\b/g),
+  },
+  {
+    typeCode: "CACES_R487",
+    motif: /\bR\.?\s?487\b|\bcaces\b[^.!?]{0,60}?\bgrues?\s+(?:à|a)\s+tour\b/i,
+    categories: regleCaces("487", /\b([123])\b/g),
+  },
+  {
+    typeCode: "CACES_R490",
+    motif: /\bR\.?\s?490\b|\bgrues?\s+auxiliaires?\b|\bgrues?\s+de\s+chargement\b/i,
   },
   {
     typeCode: "AIPR",
