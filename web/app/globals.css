@@ -367,3 +367,50 @@ legend {
 .jauge-remplie { height: 100%; background: var(--surface-sombre); }
 
 optgroup { font-weight: 600; }
+
+/* --- Navigation ----------------------------------------------------------- */
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+/* Cible tactile de 44 px même pour un lien textuel : la navigation doit rester
+   utilisable sur chantier, au pouce et avec des gants. */
+.lien-navigation {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible-tactile);
+  padding: 0 0.25rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+.lien-navigation:hover { text-decoration: underline; }
+
+/* --- Tableaux de contenu -------------------------------------------------- */
+
+main table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+}
+main caption { text-align: left; margin-bottom: 0.5rem; }
+main th, main td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--bordure);
+}
+main thead th { border-bottom-width: 2px; }
+main tbody th { font-weight: 600; width: 38%; }
+
+main code {
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Entete from "@/components/Entete";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://interimatch.vercel.app"),
@@ -27,20 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Aller au contenu principal
         </a>
 
-        <header className="entete">
-          <div className="colonne">
-            <a href="/" className="marque" aria-label="Intérimatch, accueil">
-              <span className="marque-carre" aria-hidden="true" />
-              Intérimatch
-              <span className="marque-etiquette">BTP</span>
-            </a>
-            <nav aria-label="Navigation principale">
-              <a className="bouton bouton--secondaire" href="/connexion">
-                Se connecter
-              </a>
-            </nav>
-          </div>
-        </header>
+        <Entete />
 
         <main id="contenu">{children}</main>
 
@@ -56,9 +44,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div>
               <h2>Conformité</h2>
               <ul>
-                <li>Mentions légales</li>
-                <li>RGPD — données conservées 24 mois</li>
-                <li>Accessibilité RGAA — partiellement conforme</li>
+                <li><a href="/mentions-legales">Mentions légales</a></li>
+                <li><a href="/confidentialite">Protection des données</a></li>
+                <li><a href="/accessibilite">Accessibilité — partiellement conforme</a></li>
               </ul>
             </div>
             <div>
