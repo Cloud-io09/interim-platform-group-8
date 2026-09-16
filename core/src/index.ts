@@ -11,3 +11,4 @@ export { connexion } from "./db";
 export * from "./redis";
 export * from "./ingestion/salaire";
 export * from "./ingestion/certifications";
+export * from "./ingestion/normalisation";
