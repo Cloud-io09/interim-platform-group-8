@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -10,16 +10,26 @@ import {
   typeCertification,
 } from "../src/referentiel";
 
-const seed = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "..", "migrations", "002_seed_referentiels.sql"),
-  "utf-8"
-);
+/**
+ * Toutes les migrations sont lues, pas seulement le seed initial : sinon le test
+ * cesserait de protéger quoi que ce soit dès qu'un type est ajouté par une migration
+ * ultérieure — ce qui est précisément arrivé avec les CACES de levage.
+ */
+const dossierMigrations = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
+const seed = readdirSync(dossierMigrations)
+  .filter((f) => f.endsWith(".sql"))
+  .sort()
+  .map((f) => readFileSync(join(dossierMigrations, f), "utf-8"))
+  .join("\n");
 
-/** Les catégories ne se lisent que dans les insertions de categorie_certification :
- *  sans ce découpage, le libellé du type passerait lui aussi pour une catégorie. */
-const seedCategories = seed
-  .split("insert into categorie_certification")
-  .slice(1)
+/**
+ * Les catégories ne se lisent que dans les instructions `insert into
+ * categorie_certification`, bornées à leur point-virgule. Un simple découpage sur le
+ * mot-clé laisserait passer les `insert into type_certification` des migrations
+ * suivantes, dont les libellés seraient pris pour des catégories.
+ */
+const seedCategories = [...seed.matchAll(/insert into categorie_certification[\s\S]*?;/g)]
+  .map((m) => m[0])
   .join("\n");
 
 describe("le référentiel TypeScript ne dérive pas du seed SQL", () => {

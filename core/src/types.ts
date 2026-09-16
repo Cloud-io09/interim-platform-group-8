@@ -7,6 +7,10 @@ export type RoleCompte = "entreprise" | "interimaire";
 
 export type CodeTypeCertification =
   | "CACES_R482"
+  | "CACES_R483"
+  | "CACES_R486"
+  | "CACES_R487"
+  | "CACES_R490"
   | "AIPR"
   | "HAB_ELEC"
   | "AMIANTE_SS4"
