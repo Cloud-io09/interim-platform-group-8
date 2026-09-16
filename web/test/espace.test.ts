@@ -214,3 +214,58 @@ describe("portée des missions vues par l'intérimaire", () => {
     expect(large.corps.horsMetier.some((m: { titre: string }) => m.titre === "Chantier hors métier")).toBe(true);
   });
 });
+
+describe("consultation d'une mission par l'intérimaire", () => {
+  it("rend la mission consultable et dit ce qui manque, habilitation par habilitation", async () => {
+    const ent = await inscrire("detail-ent", "entreprise");
+    await appel("/api/profil/entreprise", "POST", {
+      raisonSociale: "Détail SAS", codePostal: "51100", ville: "Reims",
+    }, ent.cookie);
+    const creee = await appel("/api/missions", "POST", {
+      titre: "Mission consultable", metierCode: "F1302",
+      codePostal: "51100", ville: "Reims",
+      dateDebut: "2027-09-01", dateFin: "2027-09-21",
+      certificationsRequises: [{ typeCode: "CACES_R482", categorieCode: "B1" }],
+      publier: true,
+    }, ent.cookie);
+
+    const int = await inscrire("detail-int", "interimaire");
+    await appel("/api/profil/interimaire", "POST", PROFIL, int.cookie);
+
+    const r = await fetch(`${BASE}/mes-missions/${creee.corps.id}`, { headers: { cookie: int.cookie } });
+    expect(r.status).toBe(200);
+    const html = await r.text();
+    expect(html).toContain("Mission consultable");
+    // Sans certification, l'écran doit le dire explicitement plutôt que d'afficher
+    // un simple refus.
+    expect(html).toContain("Manquante");
+  });
+
+  it("ne rend pas consultable une mission en brouillon", async () => {
+    const ent = await inscrire("brouillon-ent", "entreprise");
+    await appel("/api/profil/entreprise", "POST", {
+      raisonSociale: "Brouillon SAS", codePostal: "51100", ville: "Reims",
+    }, ent.cookie);
+    const creee = await appel("/api/missions", "POST", {
+      titre: "Pas encore publiée", metierCode: "F1302",
+      codePostal: "51100", ville: "Reims",
+      dateDebut: "2027-09-01", dateFin: "2027-09-21", publier: false,
+    }, ent.cookie);
+
+    const int = await inscrire("brouillon-int", "interimaire");
+    await appel("/api/profil/interimaire", "POST", PROFIL, int.cookie);
+    const r = await fetch(`${BASE}/mes-missions/${creee.corps.id}`, { headers: { cookie: int.cookie } });
+    expect(r.status).toBe(404);
+  });
+
+  it("affiche l'urgence la plus bloquante sur l'accueil de l'espace", async () => {
+    const { cookie } = await inscrire("urgence", "interimaire");
+    // Sans profil, c'est le profil qu'il faut signaler — pas les certifications.
+    const sansProfil = await (await fetch(`${BASE}/espace/interimaire`, { headers: { cookie } })).text();
+    expect(sansProfil).toContain("Votre profil n&#x27;est pas renseigné");
+
+    await appel("/api/profil/interimaire", "POST", PROFIL, cookie);
+    const avecProfil = await (await fetch(`${BASE}/espace/interimaire`, { headers: { cookie } })).text();
+    expect(avecProfil).toContain("aucune certification");
+  });
+});

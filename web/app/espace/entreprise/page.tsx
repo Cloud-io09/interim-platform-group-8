@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connexion } from "@interimatch/core/db";
-import Sommaire from "@/components/Sommaire";
+import Espace from "@/components/Espace";
 import { exigerSession } from "@/lib/garde";
 import { lireProfilEntreprise } from "@/lib/profils";
 
@@ -13,49 +13,60 @@ export default async function EspaceEntreprise() {
   const sql = connexion();
   try {
     const profil = await lireProfilEntreprise(sql, session.compteId);
-    const [compte] = await sql<{ publiees: number; brouillons: number }[]>`
+    const [c] = await sql<{ publiees: number; brouillons: number; a_venir: number }[]>`
       select
         count(*) filter (where statut = 'publiee')::int as publiees,
-        count(*) filter (where statut = 'brouillon')::int as brouillons
+        count(*) filter (where statut = 'brouillon')::int as brouillons,
+        count(*) filter (where statut = 'publiee' and date_debut >= current_date)::int as a_venir
       from mission where entreprise_id = ${session.compteId}`;
+
+    const urgence = !profil
+      ? { texte: "Renseignez votre entreprise : sans elle, vous ne pouvez pas publier de fiche de poste.", lienTexte: "Renseigner mon entreprise", href: "/espace/entreprise/profil" }
+      : c!.publiees === 0
+        ? { texte: "Vous n'avez publié aucune fiche de poste.", lienTexte: "Publier ma première fiche", href: "/missions/nouvelle" }
+        : c!.brouillons > 0
+          ? { texte: `${c!.brouillons} fiche${c!.brouillons > 1 ? "s" : ""} en brouillon : elles ne reçoivent aucun candidat tant qu'elles ne sont pas publiées.`, lienTexte: "Voir mes fiches", href: "/missions" }
+          : null;
 
     return (
       <section className="section">
         <div className="colonne">
-          <h1>Mon espace</h1>
-          <p className="secondaire">
-            {profil
-              ? `${profil.raisonSociale} — ${profil.ville}`
-              : "Commencez par renseigner votre entreprise : sans elle, vous ne pouvez pas publier de fiche de poste."}
-          </p>
-
-          <Sommaire
-            entrees={[
-              {
-                href: "/espace/entreprise/profil",
-                titre: "Mon entreprise",
-                texte: "Raison sociale, SIRET, adresse de référence servant au calcul des distances.",
-                etat: profil
-                  ? { libelle: "Renseignée", complet: true }
-                  : { libelle: "À compléter", complet: false },
-              },
-              {
-                href: "/missions",
-                titre: "Mes fiches de poste",
-                texte: "Consulter les candidats classés et les profils écartés, avec leur motif.",
-                etat: {
-                  libelle:
-                    compte!.publiees === 0 && compte!.brouillons === 0
-                      ? "Aucune fiche"
-                      : `${compte!.publiees} publiée${compte!.publiees > 1 ? "s" : ""}` +
-                        (compte!.brouillons > 0 ? `, ${compte!.brouillons} en brouillon` : ""),
-                  complet: compte!.publiees > 0,
-                },
-              },
+          <Espace
+            salutation={profil ? profil.raisonSociale : "Bienvenue"}
+            sousTitre={
+              profil
+                ? `${profil.ville}${profil.siret ? ` · SIRET ${profil.siret}` : ""}`
+                : "Renseignez votre entreprise, puis publiez votre première fiche de poste."
+            }
+            urgence={urgence}
+            chiffres={
+              profil
+                ? [
+                    { valeur: String(c!.publiees), legende: "fiches publiées", href: "/missions" },
+                    { valeur: String(c!.a_venir), legende: "chantiers à venir", href: "/missions" },
+                    { valeur: String(c!.brouillons), legende: "brouillons", href: "/missions" },
+                  ]
+                : []
+            }
+            actions={[
               {
                 href: "/missions/nouvelle",
                 titre: "Publier une fiche de poste",
                 texte: "Le formulaire se préremplit depuis les offres publiques du métier choisi.",
+              },
+              {
+                href: "/missions",
+                titre: "Mes fiches de poste",
+                texte: "Candidats classés par compatibilité, et profils écartés avec leur motif.",
+                aFaire: c!.publiees === 0,
+                etat: c!.publiees === 0 ? "Aucune" : `${c!.publiees} publiée${c!.publiees > 1 ? "s" : ""}`,
+              },
+              {
+                href: "/espace/entreprise/profil",
+                titre: "Mon entreprise",
+                texte: "Raison sociale, SIRET, adresse de référence servant au calcul des distances.",
+                aFaire: !profil,
+                etat: profil ? "Renseignée" : "À compléter",
               },
             ]}
           />
