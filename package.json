@@ -5,6 +5,7 @@
   "description": "InterimMatch BTP — mise en relation entreprises du BTP / intérimaires",
   "workspaces": [
     "core",
+    "web",
     "ingest",
     "explo-api"
   ],
@@ -12,7 +13,9 @@
     "migrate": "npm run -w @interimatch/core migrate",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "ingest": "npm run -w @interimatch/ingest ingest --"
+    "ingest": "npm run -w @interimatch/ingest ingest --",
+    "dev": "npm run -w @interimatch/web dev",
+    "build": "npm run -w @interimatch/web build"
   },
   "engines": {
     "node": ">=22"

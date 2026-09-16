@@ -2,8 +2,12 @@ node_modules
 .env
 .env.local
 .next
+out
 dist
+build
 coverage
 *.tsbuildinfo
+next-env.d.ts
+.vercel
 .DS_Store
 .claude
