@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import FormulaireProfilEntreprise from "@/components/FormulaireProfilEntreprise";
+import SupprimerCompte from "@/components/SupprimerCompte";
 import { exigerSession } from "@/lib/garde";
 
 export const metadata: Metadata = { title: "Mon entreprise", robots: { index: false, follow: false } };
@@ -26,6 +27,8 @@ export default async function ProfilEntreprise({
         <FormulaireProfilEntreprise
           apresEnregistrement={suite === "premiere-mission" ? "/missions/nouvelle" : undefined}
         />
+        <hr className="separateur" />
+        <SupprimerCompte />
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { envoyerJson } from "@/lib/client";
 
 interface Score {
   interimaireId: number;
@@ -61,10 +62,42 @@ function Critere({ libelle, valeur, poids, detail }: { libelle: string; valeur: 
   );
 }
 
+const LIBELLE_CANDIDATURE: Record<string, string> = {
+  proposee: "Proposée",
+  acceptee: "Retenue",
+  refusee: "Écartée",
+};
+
 export default function ResultatsMatching({ missionId }: { missionId: number }) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
+  const [candidatures, setCandidatures] = useState<Record<number, string>>({});
+  const [enTraitement, setEnTraitement] = useState<number | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(true);
+
+  async function chargerCandidatures() {
+    const r = await fetch(`/api/missions/${missionId}/candidatures`);
+    if (!r.ok) return;
+    const d = await r.json();
+    setCandidatures(
+      Object.fromEntries(d.candidatures.map((c: { interimaireId: number; statut: string }) => [c.interimaireId, c.statut]))
+    );
+  }
+
+  async function decider(interimaireId: number, statut: "acceptee" | "refusee") {
+    setEnTraitement(interimaireId);
+    setErreur(null);
+    const { ok, corps } = await envoyerJson(`/api/missions/${missionId}/candidatures`, "POST", {
+      interimaireId,
+      statut,
+    });
+    setEnTraitement(null);
+    if (!ok) {
+      setErreur(corps.message ?? "Action impossible.");
+      return;
+    }
+    setCandidatures((a) => ({ ...a, [interimaireId]: statut }));
+  }
 
   async function charger(recalculer = false) {
     setEnCours(true);
@@ -83,6 +116,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
 
   useEffect(() => {
     charger();
+    chargerCandidatures();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [missionId]);
 
@@ -120,6 +154,30 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
                   <p className="petit secondaire" style={{ margin: 0 }}>{s.ville}</p>
                 </div>
                 <span className="score-total">{pourcent(s.total)}</span>
+              </div>
+
+              <div className="actions-candidature">
+                {candidatures[s.interimaireId] ? (
+                  <span
+                    className={`etiquette ${candidatures[s.interimaireId] === "acceptee" ? "etiquette--ok" : "etiquette--alerte"}`}
+                  >
+                    {LIBELLE_CANDIDATURE[candidatures[s.interimaireId]!]}
+                  </span>
+                ) : null}
+                <button
+                  className="bouton"
+                  onClick={() => decider(s.interimaireId, "acceptee")}
+                  disabled={enTraitement === s.interimaireId || candidatures[s.interimaireId] === "acceptee"}
+                >
+                  {enTraitement === s.interimaireId ? "…" : "Retenir ce profil"}
+                </button>
+                <button
+                  className="bouton bouton--secondaire"
+                  onClick={() => decider(s.interimaireId, "refusee")}
+                  disabled={enTraitement === s.interimaireId || candidatures[s.interimaireId] === "refusee"}
+                >
+                  Écarter
+                </button>
               </div>
               {/* Le score est exposé par critère, pas seulement en total : on doit
                   pouvoir expliquer pourquoi ce profil est devant un autre. */}

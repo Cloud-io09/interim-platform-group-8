@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import FormulaireProfilInterimaire from "@/components/FormulaireProfilInterimaire";
+import SupprimerCompte from "@/components/SupprimerCompte";
 import { exigerSession } from "@/lib/garde";
 
 export const metadata: Metadata = { title: "Mon profil", robots: { index: false, follow: false } };
@@ -26,6 +27,8 @@ export default async function ProfilInterimaire({
         <FormulaireProfilInterimaire
           apresEnregistrement={suite === "certifications" ? "/espace/interimaire/certifications" : undefined}
         />
+        <hr className="separateur" />
+        <SupprimerCompte />
       </div>
     </section>
   );

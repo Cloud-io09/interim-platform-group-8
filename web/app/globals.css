@@ -519,3 +519,36 @@ main code {
 }
 .action .petit { grid-column: 1; }
 .action-fleche { grid-row: 1 / span 2; font-size: 1.2rem; color: var(--texte-secondaire); }
+
+.actions-candidature {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.statut-mission {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  margin-bottom: 2rem;
+}
+.statut-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-left: auto; }
+
+/* Zone dangereuse : visuellement distincte, en fin de page, jamais mêlée aux
+   réglages courants. */
+.zone-dangereuse {
+  border: 1px solid var(--alerte);
+  border-radius: var(--rayon);
+  padding: 1.25rem 1.5rem;
+  background: #fdf8f7;
+}
+.bouton--danger { background: var(--alerte); border-color: var(--alerte); }
