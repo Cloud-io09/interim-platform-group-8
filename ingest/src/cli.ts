@@ -10,6 +10,7 @@ import {
 } from "@interimatch/core";
 import { getAccessToken, getReferentiel } from "interimatch-secteur-scan/client";
 import { CHEMIN_BRUT, CHEMIN_NETTOYE, ecrire, lire } from "./cache";
+import { DOMAINE_DEMO, MISSION_DEBUT, MISSION_FIN, MOT_DE_PASSE_DEMO, purgerDemo, semerDemo } from "./demo";
 
 const URL_RECHERCHE = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search";
 /** L'API plafonne à 150 résultats par appel, et impose un throttle. */
@@ -264,6 +265,34 @@ program
         group by type_code order by n desc`;
       console.log("\nCertifications citées :");
       for (const c of parCertif) console.log(`  ${c.type_code.padEnd(14)} ${String(c.n).padStart(5)} offres`);
+    } finally {
+      await sql.end();
+    }
+  });
+
+// ---------------------------------------------------------------------------
+
+program
+  .command("seed-demo")
+  .description("Crée un jeu de démonstration calibré sur les cas limites du moteur")
+  .option("--purge", "supprime le jeu de démonstration sans le recréer")
+  .action(async (opts: { purge?: boolean }) => {
+    const sql = connexion();
+    try {
+      if (opts.purge) {
+        const n = await purgerDemo(sql);
+        return void console.log(`${n} compte(s) de démonstration supprimé(s).`);
+      }
+
+      const { missionId, profils } = await semerDemo(sql);
+      console.log(`Mission de référence n° ${missionId} — du ${MISSION_DEBUT} au ${MISSION_FIN}`);
+      console.log("Exige : CACES R482 catégorie B1\n");
+      console.log(`${profils.length} intérimaires, chacun pour démontrer une règle :\n`);
+      for (const p of profils) {
+        console.log(`  ${p.cle.padEnd(20)} ${p.demontre}`);
+      }
+      console.log(`\nConnexion : <cle>${DOMAINE_DEMO} / ${MOT_DE_PASSE_DEMO}`);
+      console.log(`Entreprise : entreprise${DOMAINE_DEMO}`);
     } finally {
       await sql.end();
     }
