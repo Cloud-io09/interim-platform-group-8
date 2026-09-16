@@ -6,7 +6,7 @@ import {
   oublierTentatives,
   TTL,
   type CompteurRedis,
-} from "../src/redis.js";
+} from "../src/redis";
 
 /** Faux Redis minimal : compte les appels pour vérifier QUAND le TTL est posé. */
 function fauxRedis(): CompteurRedis & { appelsExpire: number; valeurs: Map<string, number> } {

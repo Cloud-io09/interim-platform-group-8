@@ -1,4 +1,4 @@
-import type { DateISO, Periode } from "./types.js";
+import type { DateISO, Periode } from "./types";
 
 const MS_PAR_JOUR = 86_400_000;
 

@@ -8,7 +8,7 @@ import {
   exigeCategorie,
   TYPES_CERTIFICATION,
   typeCertification,
-} from "../src/referentiel.js";
+} from "../src/referentiel";
 
 const seed = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "..", "migrations", "002_seed_referentiels.sql"),

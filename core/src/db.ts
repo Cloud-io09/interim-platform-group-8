@@ -1,4 +1,4 @@
-import { requis } from "./env.js";
+import { requis } from "./env";
 import postgres from "postgres";
 
 /**

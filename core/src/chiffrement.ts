@@ -6,7 +6,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { promisify } from "node:util";
-import { requis } from "./env.js";
+import { requis } from "./env";
 
 const scrypt = promisify(scryptCallback) as (
   motDePasse: string,

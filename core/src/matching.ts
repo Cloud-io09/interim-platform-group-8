@@ -1,5 +1,5 @@
-import { enMsUTC, joursDeChevauchement, nombreDeJours } from "./dates.js";
-import { distanceKm } from "./geo.js";
+import { enMsUTC, joursDeChevauchement, nombreDeJours } from "./dates";
+import { distanceKm } from "./geo";
 import type {
   CertificationDetenue,
   Exclusion,
@@ -8,7 +8,7 @@ import type {
   ProfilInterimaire,
   ResultatMatching,
   ScoreProfil,
-} from "./types.js";
+} from "./types";
 
 /**
  * Pondérations du scoring. Exportées et nommées : aucun nombre magique dans le calcul,

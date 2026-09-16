@@ -1,4 +1,4 @@
-import type { CodeTypeCertification } from "./types.js";
+import type { CodeTypeCertification } from "./types";
 
 export interface TypeCertification {
   code: CodeTypeCertification;

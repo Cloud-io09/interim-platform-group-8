@@ -4,7 +4,7 @@ import {
   geocoder,
   geocoderCodePostal,
   SCORE_MINIMAL,
-} from "../src/geocodage.js";
+} from "../src/geocodage";
 
 /** Fabrique une réponse BAN factice, au format GeoJSON réellement renvoyé par l'API. */
 function fauxFetch(

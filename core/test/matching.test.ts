@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { filtrer, matcher, noter, PONDERATIONS } from "../src/matching.js";
-import type { MissionAMatcher, ProfilInterimaire } from "../src/types.js";
+import { filtrer, matcher, noter, PONDERATIONS } from "../src/matching";
+import type { MissionAMatcher, ProfilInterimaire } from "../src/types";
 
 /** Chantier à Reims, du 1er au 21 mars 2026 (21 jours). */
 function mission(surcharge: Partial<MissionAMatcher> = {}): MissionAMatcher {

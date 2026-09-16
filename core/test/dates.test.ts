@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enMsUTC, joursDeChevauchement, nombreDeJours } from "../src/dates.js";
+import { enMsUTC, joursDeChevauchement, nombreDeJours } from "../src/dates";
 
 describe("nombreDeJours", () => {
   it("compte les bornes incluses — une mission d'un jour vaut 1", () => {

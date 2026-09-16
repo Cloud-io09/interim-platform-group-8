@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { distanceKm } from "../src/geo.js";
+import { distanceKm } from "../src/geo";
 
 const REIMS = { lat: 49.2628, lon: 4.0347 };
 const PARIS = { lat: 48.8566, lon: 2.3522 };

@@ -9,7 +9,7 @@ import {
   hacherMotDePasse,
   oublierCle,
   verifierMotDePasse,
-} from "../src/chiffrement.js";
+} from "../src/chiffrement";
 
 beforeAll(() => {
   process.env.CLE_CHIFFREMENT = randomBytes(32).toString("base64");

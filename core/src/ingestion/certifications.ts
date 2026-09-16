@@ -1,5 +1,5 @@
-import type { CodeTypeCertification } from "../types.js";
-import { typeCertification } from "../referentiel.js";
+import type { CodeTypeCertification } from "../types";
+import { typeCertification } from "../referentiel";
 
 /**
  * Repérage de certifications dans le texte d'une offre France Travail.

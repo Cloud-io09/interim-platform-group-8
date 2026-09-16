@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   extraireCertifications,
   frequenceCertifications,
-} from "../src/ingestion/certifications.js";
+} from "../src/ingestion/certifications";
 
 const types = (texte: string) => extraireCertifications(texte).map((c) => c.typeCode);
 const cats = (texte: string, type: string) =>

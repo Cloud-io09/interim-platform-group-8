@@ -4,7 +4,7 @@ import {
   HEURES_PAR_AN,
   HEURES_PAR_MOIS,
   parserSalaire,
-} from "../src/ingestion/salaire.js";
+} from "../src/ingestion/salaire";
 
 describe("parserSalaire — formats réellement renvoyés par France Travail", () => {
   it("lit un taux horaire simple", () => {

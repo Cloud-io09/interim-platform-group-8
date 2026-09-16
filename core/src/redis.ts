@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { requis } from "./env.js";
+import { requis } from "./env";
 
 /**
  * Client Redis (Upstash).

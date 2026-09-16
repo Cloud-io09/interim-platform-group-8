@@ -6,13 +6,13 @@
  *   npm run migrate            applique les migrations en attente
  *   npm run migrate -- --liste montre l'état sans rien appliquer
  */
-import "../src/env.js";
+import "../src/env";
 import { Command } from "commander";
 import { readdirSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { connexion } from "../src/db.js";
+import { connexion } from "../src/db";
 
 const DOSSIER = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
