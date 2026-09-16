@@ -5,6 +5,7 @@ import {
   PONDERATIONS,
   redis,
   TTL,
+  sansEchec,
   typeCertification,
   type ResultatMatching,
 } from "@interimatch/core";
@@ -69,7 +70,7 @@ export async function GET(requete: Request, contexte: { params: Promise<{ id: st
     }
 
     if (!forcer) {
-      const enCache = await cache.get(cle.cacheMatching(missionId));
+      const enCache = await sansEchec(() => cache.get(cle.cacheMatching(missionId)), "lecture cache matching");
       if (enCache) {
         const corps = typeof enCache === "string" ? JSON.parse(enCache) : enCache;
         return Response.json({ ...corps, depuisCache: true });
@@ -97,9 +98,11 @@ export async function GET(requete: Request, contexte: { params: Promise<{ id: st
 
     // Cache et trace ont des durées différentes : le cache évite de recalculer,
     // la trace sert à expliquer un résultat après coup et vit plus longtemps.
-    await Promise.all([
-      cache.set(cle.cacheMatching(missionId), JSON.stringify(corps), { ex: TTL.cacheMatching }),
-      cache.set(
+    await sansEchec(
+      () =>
+        Promise.all([
+          cache.set(cle.cacheMatching(missionId), JSON.stringify(corps), { ex: TTL.cacheMatching }),
+          cache.set(
         cle.traceMatching(missionId),
         JSON.stringify({
           missionId,
@@ -109,9 +112,11 @@ export async function GET(requete: Request, contexte: { params: Promise<{ id: st
           retenus: resultat.retenus,
           ecartes: resultat.ecartes,
         }),
-        { ex: TTL.traceMatching }
-      ),
-    ]);
+            { ex: TTL.traceMatching }
+          ),
+        ]),
+      "écriture cache et trace matching"
+    );
 
     return Response.json(corps);
   } finally {

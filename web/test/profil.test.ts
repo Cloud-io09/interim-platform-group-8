@@ -6,6 +6,8 @@ import { BASE } from "./serveur";
 const MARQUE = `profil-${Date.now()}`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 const creees: string[] = [];
+/** Jetons ouverts par la suite, fermés à la fin : sinon ils vivent 7 jours. */
+const cookiesOuverts: string[] = [];
 
 async function appel(chemin: string, methode: string, corps?: unknown, cookie?: string) {
   const reponse = await fetch(`${BASE}${chemin}`, {

@@ -9,6 +9,8 @@ const adresse = (suffixe: string) => `${MARQUE}-${suffixe}@exemple.test`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 
 const creees: string[] = [];
+/** Jetons ouverts par la suite, fermés à la fin : sinon ils vivent 7 jours. */
+const cookiesOuverts: string[] = [];
 
 async function poster(chemin: string, corps: unknown, cookie?: string) {
   const reponse = await fetch(`${BASE}${chemin}`, {

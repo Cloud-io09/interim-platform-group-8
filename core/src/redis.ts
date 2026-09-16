@@ -110,3 +110,28 @@ export async function oublierTentatives(
 ): Promise<void> {
   if (cles.length > 0) await client.del(...cles);
 }
+
+/**
+ * Exécute une opération de cache sans jamais faire échouer l'appelant.
+ *
+ * Le cache et les traces sont des agréments : ils évitent un recalcul, ils expliquent
+ * un résultat. Ils ne conditionnent aucune décision métier. Une panne de Redis, un
+ * quota atteint ou une coupure réseau ne doit donc pas transformer une opération
+ * réussie — une mission créée, par exemple — en erreur 500 pour l'utilisateur.
+ *
+ * Les sessions et la limitation de tentatives ne passent PAS par ici : elles
+ * conditionnent l'accès, et les dégrader silencieusement ouvrirait une faille.
+ */
+export async function sansEchec<T>(
+  operation: () => Promise<T>,
+  contexte: string
+): Promise<T | null> {
+  try {
+    return await operation();
+  } catch (erreur) {
+    process.stderr.write(
+      `cache indisponible (${contexte}) : ${erreur instanceof Error ? erreur.message : "inconnu"}\n`
+    );
+    return null;
+  }
+}

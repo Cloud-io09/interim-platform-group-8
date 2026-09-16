@@ -6,6 +6,8 @@ import { BASE } from "./serveur";
 const MARQUE = `espace-${Date.now()}`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 const emails: string[] = [];
+/** Jetons ouverts par la suite, fermés à la fin : sinon ils vivent 7 jours. */
+const cookiesOuverts: string[] = [];
 
 async function appel(chemin: string, methode: string, corps?: unknown, cookie?: string) {
   const r = await fetch(`${BASE}${chemin}`, {
