@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connexion } from "@interimatch/core/db";
 import { typeCertification } from "@interimatch/core";
 import ResultatsMatching from "@/components/ResultatsMatching";
+import StatutMission from "@/components/StatutMission";
 import { exigerSession } from "@/lib/garde";
 import { chargerMission } from "@/lib/depot";
 
@@ -45,6 +46,11 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
               </>
             )}
           </p>
+
+          <StatutMission
+            missionId={missionId}
+            statut={mission.statut as "brouillon" | "publiee" | "pourvue" | "close"}
+          />
 
           {mission.certificationsRequises.length > 0 && (
             <div className="carte" style={{ marginBottom: "2rem" }}>

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   RAYON_DEFAUT_KM,
+  DUREE_MAX_DISPONIBILITE_JOURS,
   siretValide,
+  validerDisponibilite,
   validerCertification,
   validerProfilEntreprise,
   validerProfilInterimaire,
@@ -176,5 +178,35 @@ describe("certification déclarée", () => {
 
   it("refuse une date mal formée plutôt que de l'interpréter", () => {
     expect(champs(validerCertification({ ...caces, dateObtention: "15/03/2024" }))).toContain("dateObtention");
+  });
+});
+
+describe("disponibilités", () => {
+  it("accepte une période cohérente", () => {
+    expect(validerDisponibilite({ dateDebut: "2027-05-01", dateFin: "2027-06-30" })).toEqual([]);
+  });
+
+  it("accepte une période d'un seul jour", () => {
+    expect(validerDisponibilite({ dateDebut: "2027-05-01", dateFin: "2027-05-01" })).toEqual([]);
+  });
+
+  it("exige les deux dates", () => {
+    expect(champs(validerDisponibilite({}))).toEqual(["dateDebut", "dateFin"]);
+    expect(champs(validerDisponibilite({ dateDebut: "2027-05-01" }))).toEqual(["dateFin"]);
+  });
+
+  it("refuse une fin antérieure au début", () => {
+    expect(champs(validerDisponibilite({ dateDebut: "2027-06-30", dateFin: "2027-05-01" }))).toEqual(["dateFin"]);
+  });
+
+  it("refuse une date mal formée plutôt que de l'interpréter", () => {
+    expect(champs(validerDisponibilite({ dateDebut: "01/05/2027", dateFin: "2027-06-30" }))).toContain("dateDebut");
+  });
+
+  it(`refuse une période de plus de ${DUREE_MAX_DISPONIBILITE_JOURS} jours`, () => {
+    // Une disponibilité déclarée pour dix ans n'est pas une information : elle
+    // cesserait de refléter la réalité au bout de quelques semaines.
+    expect(champs(validerDisponibilite({ dateDebut: "2027-01-01", dateFin: "2037-01-01" }))).toEqual(["dateFin"]);
+    expect(validerDisponibilite({ dateDebut: "2027-01-01", dateFin: "2028-12-30" })).toEqual([]);
   });
 });

@@ -5,6 +5,7 @@ import {
   MAX_TENTATIVES_EMAIL,
   MAX_TENTATIVES_IP,
   oublierTentatives,
+  sansEchec,
   TTL,
   type CompteurRedis,
 } from "../src/redis";
@@ -109,5 +110,42 @@ describe("oublierTentatives", () => {
       },
     });
     expect(appele).toBe(false);
+  });
+});
+
+describe("sansEchec — le cache ne doit jamais faire échouer l'appelant", () => {
+  it("rend la valeur quand l'opération réussit", async () => {
+    expect(await sansEchec(async () => "valeur", "lecture")).toBe("valeur");
+  });
+
+  it("rend null et n'émet aucune exception quand l'opération échoue", async () => {
+    // Une mission déjà créée ne doit pas être signalée en erreur parce que
+    // l'invalidation du cache a échoué.
+    const erreurs: string[] = [];
+    const ecrireOriginal = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((m: string) => {
+      erreurs.push(String(m));
+      return true;
+    }) as typeof process.stderr.write;
+
+    const resultat = await sansEchec(async () => {
+      throw new Error("quota atteint");
+    }, "invalidation matching");
+
+    process.stderr.write = ecrireOriginal;
+    expect(resultat).toBeNull();
+    // L'incident doit rester visible dans les journaux, même s'il est absorbé.
+    expect(erreurs.join("")).toContain("invalidation matching");
+    expect(erreurs.join("")).toContain("quota atteint");
+  });
+
+  it("absorbe aussi une exception qui n'est pas une Error", async () => {
+    const ecrireOriginal = process.stderr.write.bind(process.stderr);
+    process.stderr.write = (() => true) as typeof process.stderr.write;
+    const resultat = await sansEchec(async () => {
+      throw "panne";
+    }, "test");
+    process.stderr.write = ecrireOriginal;
+    expect(resultat).toBeNull();
   });
 });
