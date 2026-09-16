@@ -1,0 +1,172 @@
+/* Charte reprise de la maquette d'exploration : fond blanc cassé, cartes blanches,
+   sections d'appui noires, accent ambre strictement décoratif.
+
+   RGAA : l'ambre ne porte jamais seule une information — son contraste sur fond
+   clair ne passe pas le critère 3.2. Tout ce qui informe est en texte foncé. */
+
+:root {
+  --fond: #f7f7f5;
+  --surface: #ffffff;
+  --surface-sombre: #111111;
+  --texte: #1a1a1a;
+  --texte-secondaire: #5c5c57;
+  --texte-sur-sombre: #f4f4f1;
+  --texte-secondaire-sur-sombre: #a8a8a1;
+  --bordure: #e3e3df;
+  --bordure-forte: #1a1a1a;
+  --accent: #b8791f;
+  --succes: #1f6b3a;
+  --alerte: #a4331f;
+
+  --rayon: 10px;
+  --rayon-petit: 8px;
+  --colonne: 1100px;
+  /* Cible tactile minimale : public d'ouvriers, souvent avec des gants. */
+  --cible-tactile: 44px;
+
+  --police: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--police);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 0.5em; }
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 600; }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 600; }
+h3 { font-size: 1.125rem; font-weight: 600; }
+p { margin: 0 0 1rem; }
+
+a { color: inherit; }
+
+/* RGAA 10.7 : la prise de focus doit rester visible partout. */
+:focus-visible {
+  outline: 3px solid var(--bordure-forte);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* RGAA 12.7 : lien d'évitement, visible dès qu'il reçoit le focus. */
+.lien-evitement {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--surface-sombre);
+  color: var(--texte-sur-sombre);
+  padding: 0.75rem 1.25rem;
+  z-index: 100;
+}
+.lien-evitement:focus { left: 0; }
+
+.colonne {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+
+.entete {
+  border-bottom: 1px solid var(--bordure);
+  background: var(--surface);
+}
+.entete .colonne {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+  flex-wrap: wrap;
+}
+
+.marque { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.15rem; }
+.marque-carre { width: 26px; height: 26px; background: var(--surface-sombre); border-radius: 6px; }
+.marque-etiquette {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--bordure);
+  border-radius: 4px;
+  color: var(--texte-secondaire);
+}
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--cible-tactile);
+  padding: 0 1.25rem;
+  border-radius: var(--rayon-petit);
+  border: 1px solid var(--surface-sombre);
+  background: var(--surface-sombre);
+  color: var(--texte-sur-sombre);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+.bouton:hover { opacity: 0.88; }
+.bouton--secondaire {
+  background: var(--surface);
+  color: var(--texte);
+  border-color: var(--bordure);
+}
+
+.sur-titre {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.carte {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 1.5rem;
+}
+
+.grille { display: grid; gap: 1rem; }
+@media (min-width: 720px) {
+  .grille--2 { grid-template-columns: repeat(2, 1fr); }
+  .grille--3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+.section { padding-block: clamp(3rem, 7vw, 5rem); }
+.section--sombre {
+  background: var(--surface-sombre);
+  color: var(--texte-sur-sombre);
+}
+.section--sombre .sur-titre { color: var(--accent); }
+.section--sombre .secondaire { color: var(--texte-secondaire-sur-sombre); }
+
+.secondaire { color: var(--texte-secondaire); }
+.petit { font-size: 0.875rem; }
+
+.statistique { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 600; letter-spacing: -0.03em; }
+
+.pied {
+  background: var(--surface-sombre);
+  color: var(--texte-secondaire-sur-sombre);
+  padding-block: 3rem;
+  font-size: 0.875rem;
+}
+.pied h2 { color: var(--texte-sur-sombre); font-size: 1rem; margin-bottom: 0.75rem; }
+.pied ul { list-style: none; margin: 0; padding: 0; }
+.pied li { margin-bottom: 0.35rem; }
+
+/* RGESN / RGAA : respecter le réglage système de réduction des animations. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
