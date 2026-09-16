@@ -1,0 +1,21 @@
+{
+  "name": "@interimatch/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pipeline d'ingestion France Travail : collecte, nettoyage, normalisation, chargement",
+  "scripts": {
+    "ingest": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@interimatch/core": "*",
+    "interimatch-secteur-scan": "*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

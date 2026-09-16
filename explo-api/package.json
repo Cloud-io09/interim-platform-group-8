@@ -16,5 +16,9 @@
     "@types/node": "^22.7.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
+  },
+  "exports": {
+    ".": "./src/franceTravailClient.ts",
+    "./client": "./src/franceTravailClient.ts"
   }
 }
