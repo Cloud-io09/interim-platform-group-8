@@ -314,3 +314,56 @@ legend {
   border-top: 1px solid var(--bordure);
   margin: 3rem 0;
 }
+
+/* --- Fiche de poste enrichie et résultats de matching --------------------- */
+
+.encart-enrichi {
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--rayon-petit);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.champ textarea {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface);
+  color: var(--texte);
+  font: inherit;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.score-total {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  flex: none;
+}
+
+.critere { margin-bottom: 1rem; }
+.critere:last-child { margin-bottom: 0; }
+
+.critere-entete {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.9375rem;
+}
+
+/* La jauge est décorative : la valeur chiffrée est toujours écrite à côté, donc
+   l'information ne dépend ni de la couleur ni de la largeur — RGAA 3.1 et 1.2. */
+.jauge {
+  height: 6px;
+  background: var(--bordure);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.jauge-remplie { height: 100%; background: var(--surface-sombre); }
+
+optgroup { font-weight: 600; }

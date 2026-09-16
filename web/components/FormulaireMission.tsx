@@ -1,0 +1,343 @@
+"use client";
+
+import { useEffect, useId, useState } from "react";
+import { useRouter } from "next/navigation";
+
+interface Domaine {
+  domaine: string;
+  libelle: string;
+  metiers: { code: string; libelle: string }[];
+}
+
+interface TypeCertification {
+  code: string;
+  libelle: string;
+  categories: string[];
+}
+
+interface Enrichissement {
+  metier: { libelle: string };
+  portee: "departement" | "national";
+  departement: string | null;
+  effectif: number;
+  intitulesFrequents: string[];
+  remuneration: { mediane: number; q1: number; q3: number; effectif: number } | null;
+  certifications: { typeCode: string; libelle: string; occurrences: number; part: number }[];
+  competences: { code: string; libelle: string; occurrences: number; part: number }[];
+}
+
+interface Probleme {
+  champ: string;
+  message: string;
+}
+
+interface Exigence {
+  typeCode: string;
+  categorieCode: string;
+}
+
+export default function FormulaireMission() {
+  const router = useRouter();
+  const [domaines, setDomaines] = useState<Domaine[]>([]);
+  const [types, setTypes] = useState<TypeCertification[]>([]);
+  const [metierCode, setMetierCode] = useState("");
+  const [codePostal, setCodePostal] = useState("");
+  const [enrichissement, setEnrichissement] = useState<Enrichissement | null>(null);
+  const [exigences, setExigences] = useState<Exigence[]>([]);
+  const [competences, setCompetences] = useState<string[]>([]);
+  const [problemes, setProblemes] = useState<Probleme[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+  const ids = {
+    titre: useId(), metier: useId(), desc: useId(), adresse: useId(), cp: useId(),
+    ville: useId(), debut: useId(), fin: useId(), min: useId(), max: useId(),
+  };
+
+  const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ)?.message;
+
+  useEffect(() => {
+    fetch("/api/referentiel/metiers").then((r) => r.json()).then((d) => setDomaines(d.domaines)).catch(() => {});
+    fetch("/api/referentiel/certifications").then((r) => r.json()).then((d) => setTypes(d.types)).catch(() => {});
+  }, []);
+
+  // La fiche s'enrichit dès que le métier est connu ; le département affine la
+  // rémunération sans être obligatoire.
+  useEffect(() => {
+    if (!metierCode) return void setEnrichissement(null);
+    const departement = /^\d{5}$/.test(codePostal) ? codePostal.slice(0, 2) : "";
+    const url = `/api/enrichissement?metier=${metierCode}${departement ? `&departement=${departement}` : ""}`;
+    let annule = false;
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => !annule && setEnrichissement(d))
+      .catch(() => {});
+    return () => {
+      annule = true;
+    };
+  }, [metierCode, codePostal]);
+
+  function basculerExigence(typeCode: string) {
+    setExigences((actuelles) => {
+      const existe = actuelles.some((e) => e.typeCode === typeCode);
+      if (existe) return actuelles.filter((e) => e.typeCode !== typeCode);
+      return [...actuelles, { typeCode, categorieCode: "" }];
+    });
+  }
+
+  async function envoyer(evenement: React.FormEvent<HTMLFormElement>) {
+    evenement.preventDefault();
+    const d = new FormData(evenement.currentTarget);
+    setEnCours(true);
+    setProblemes([]);
+    setMessage(null);
+
+    const reponse = await fetch("/api/missions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        titre: d.get("titre"),
+        metierCode,
+        description: d.get("description"),
+        adresse: d.get("adresse"),
+        codePostal: d.get("codePostal"),
+        ville: d.get("ville"),
+        dateDebut: d.get("dateDebut"),
+        dateFin: d.get("dateFin"),
+        tauxHoraireMin: d.get("tauxHoraireMin") ? Number(d.get("tauxHoraireMin")) : null,
+        tauxHoraireMax: d.get("tauxHoraireMax") ? Number(d.get("tauxHoraireMax")) : null,
+        certificationsRequises: exigences.map((e) => ({
+          typeCode: e.typeCode,
+          categorieCode: e.categorieCode || null,
+        })),
+        competencesRequises: competences,
+        publier: true,
+      }),
+    });
+    const corps = await reponse.json();
+    setEnCours(false);
+
+    if (!reponse.ok) {
+      setProblemes(corps.problemes ?? []);
+      setMessage(corps.message ?? "Publication impossible.");
+      return;
+    }
+    router.push(`/missions/${corps.id}`);
+  }
+
+  const typeDe = (code: string) => types.find((t) => t.code === code);
+
+  return (
+    <form onSubmit={envoyer} noValidate>
+      {message && (
+        <div role="alert" className="encart-erreur">
+          <p style={{ margin: 0, fontWeight: 500 }}>{message}</p>
+          {problemes.length > 0 && (
+            <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
+              {problemes.map((p, i) => <li key={`${p.champ}-${i}`}>{p.message}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <fieldset>
+        <legend>Le poste</legend>
+        <div className="champ">
+          <label htmlFor={ids.metier}>Métier</label>
+          <select id={ids.metier} value={metierCode} onChange={(e) => setMetierCode(e.target.value)} required>
+            <option value="">Choisissez le métier…</option>
+            {domaines.map((d) => (
+              <optgroup key={d.domaine} label={d.libelle}>
+                {d.metiers.map((m) => <option key={m.code} value={m.code}>{m.libelle}</option>)}
+              </optgroup>
+            ))}
+          </select>
+          {problemeDe("metierCode") && <p className="petit message-erreur">{problemeDe("metierCode")}</p>}
+        </div>
+
+        {enrichissement && enrichissement.effectif > 0 && (
+          <div className="encart-enrichi" role="status">
+            <p className="sur-titre" style={{ marginBottom: "0.5rem" }}>
+              D&apos;après les offres publiques
+            </p>
+            <p className="petit" style={{ margin: 0 }}>
+              {enrichissement.effectif} offre{enrichissement.effectif > 1 ? "s" : ""} de{" "}
+              {enrichissement.metier.libelle.toLowerCase()}
+              {enrichissement.portee === "departement"
+                ? ` dans le département ${enrichissement.departement}`
+                : " en France"}
+              {enrichissement.remuneration && (
+                <>
+                  {" "}· rémunération médiane <strong>{enrichissement.remuneration.mediane.toFixed(2)} €/h</strong>{" "}
+                  (moitié centrale : {enrichissement.remuneration.q1.toFixed(2)} à{" "}
+                  {enrichissement.remuneration.q3.toFixed(2)} €/h, sur {enrichissement.remuneration.effectif} offres)
+                </>
+              )}
+              .
+            </p>
+          </div>
+        )}
+
+        <div className="champ">
+          <label htmlFor={ids.titre}>Intitulé de la fiche de poste</label>
+          <input
+            id={ids.titre}
+            name="titre"
+            required
+            maxLength={160}
+            defaultValue=""
+            placeholder={enrichissement?.intitulesFrequents[0] ?? ""}
+          />
+          {enrichissement && enrichissement.intitulesFrequents.length > 0 && (
+            <p className="petit secondaire">
+              Intitulés les plus courants : {enrichissement.intitulesFrequents.join(", ")}.
+            </p>
+          )}
+          {problemeDe("titre") && <p className="petit message-erreur">{problemeDe("titre")}</p>}
+        </div>
+
+        <div className="champ">
+          <label htmlFor={ids.desc}>Description du chantier</label>
+          <textarea id={ids.desc} name="description" rows={4} maxLength={2000} />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Habilitations exigées</legend>
+        <p className="petit secondaire">
+          Un profil qui ne les détient pas, ou dont le titre expire avant la fin de la
+          mission, n&apos;apparaîtra pas dans vos candidats. C&apos;est volontaire.
+        </p>
+
+        {enrichissement && enrichissement.certifications.length > 0 && (
+          <div className="encart-enrichi">
+            <p className="petit" style={{ margin: "0 0 0.5rem" }}>
+              Sur ce métier, les offres publiques citent :
+            </p>
+            <ul className="liste-nue petit" style={{ margin: 0 }}>
+              {enrichissement.certifications.map((c) => (
+                <li key={c.typeCode}>
+                  <strong>{c.libelle}</strong> — {c.part} % des offres ({c.occurrences} sur{" "}
+                  {enrichissement.effectif})
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {problemeDe("certificationsRequises") && (
+          <p className="petit message-erreur">{problemeDe("certificationsRequises")}</p>
+        )}
+
+        <div className="cases">
+          {types.map((t) => {
+            const choisie = exigences.find((e) => e.typeCode === t.code);
+            return (
+              <div key={t.code}>
+                <label className="case">
+                  <input type="checkbox" checked={Boolean(choisie)} onChange={() => basculerExigence(t.code)} />
+                  <span>{t.libelle}</span>
+                </label>
+                {choisie && t.categories.length > 0 && (
+                  <div className="champ" style={{ marginLeft: "2.1rem", marginBottom: "0.75rem" }}>
+                    <label htmlFor={`cat-${t.code}`} className="petit">Catégorie exigée</label>
+                    <select
+                      id={`cat-${t.code}`}
+                      value={choisie.categorieCode}
+                      required
+                      onChange={(e) =>
+                        setExigences((a) =>
+                          a.map((x) => (x.typeCode === t.code ? { ...x, categorieCode: e.target.value } : x))
+                        )
+                      }
+                    >
+                      <option value="">Choisissez…</option>
+                      {t.categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      {enrichissement && enrichissement.competences.length > 0 && (
+        <fieldset>
+          <legend>Compétences attendues</legend>
+          <p className="petit secondaire">
+            Les plus citées sur ce métier. Elles comptent dans le score, jamais dans
+            l&apos;exclusion.
+          </p>
+          <div className="cases">
+            {enrichissement.competences.map((c) => (
+              <label key={c.code} className="case">
+                <input
+                  type="checkbox"
+                  checked={competences.includes(c.code)}
+                  onChange={() =>
+                    setCompetences((a) => (a.includes(c.code) ? a.filter((x) => x !== c.code) : [...a, c.code]))
+                  }
+                />
+                <span>{c.libelle} <span className="secondaire">— {c.part} %</span></span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
+      <fieldset>
+        <legend>Lieu et dates</legend>
+        <div className="champ">
+          <label htmlFor={ids.adresse}>Adresse du chantier</label>
+          <input id={ids.adresse} name="adresse" />
+        </div>
+        <div className="grille grille--2">
+          <div className="champ">
+            <label htmlFor={ids.cp}>Code postal</label>
+            <input
+              id={ids.cp} name="codePostal" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5}
+              value={codePostal} onChange={(e) => setCodePostal(e.target.value)}
+            />
+            {problemeDe("codePostal") && <p className="petit message-erreur">{problemeDe("codePostal")}</p>}
+          </div>
+          <div className="champ">
+            <label htmlFor={ids.ville}>Commune</label>
+            <input id={ids.ville} name="ville" required />
+            {problemeDe("ville") && <p className="petit message-erreur">{problemeDe("ville")}</p>}
+          </div>
+        </div>
+        <div className="grille grille--2">
+          <div className="champ">
+            <label htmlFor={ids.debut}>Début</label>
+            <input id={ids.debut} name="dateDebut" type="date" required />
+            {problemeDe("dateDebut") && <p className="petit message-erreur">{problemeDe("dateDebut")}</p>}
+          </div>
+          <div className="champ">
+            <label htmlFor={ids.fin}>Fin</label>
+            <input id={ids.fin} name="dateFin" type="date" required />
+            <p className="petit secondaire">
+              C&apos;est contre cette date que la validité des habilitations est vérifiée.
+            </p>
+            {problemeDe("dateFin") && <p className="petit message-erreur">{problemeDe("dateFin")}</p>}
+          </div>
+        </div>
+        <div className="grille grille--2">
+          <div className="champ">
+            <label htmlFor={ids.min}>Taux horaire minimum</label>
+            <input id={ids.min} name="tauxHoraireMin" type="number" step="0.01" min="0" inputMode="decimal" />
+            {problemeDe("tauxHoraireMin") && <p className="petit message-erreur">{problemeDe("tauxHoraireMin")}</p>}
+          </div>
+          <div className="champ">
+            <label htmlFor={ids.max}>Taux horaire maximum</label>
+            <input id={ids.max} name="tauxHoraireMax" type="number" step="0.01" min="0" inputMode="decimal" />
+            {problemeDe("tauxHoraireMax") && <p className="petit message-erreur">{problemeDe("tauxHoraireMax")}</p>}
+          </div>
+        </div>
+      </fieldset>
+
+      <button className="bouton" type="submit" disabled={enCours}>
+        {enCours ? "Publication…" : "Publier la fiche de poste"}
+      </button>
+    </form>
+  );
+}
