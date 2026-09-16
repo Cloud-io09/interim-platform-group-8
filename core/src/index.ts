@@ -7,6 +7,7 @@ export * from "./geocodage";
 export * from "./referentiel";
 export * from "./auth";
 export * from "./profil";
+export * from "./mission";
 export { connexion } from "./db";
 export * from "./redis";
 export * from "./ingestion/salaire";
