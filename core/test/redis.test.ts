@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   cle,
   compterTentative,
-  MAX_TENTATIVES,
+  MAX_TENTATIVES_EMAIL,
+  MAX_TENTATIVES_IP,
   oublierTentatives,
   TTL,
   type CompteurRedis,
@@ -45,13 +46,18 @@ describe("conventions de clés", () => {
 });
 
 describe("limitation des tentatives", () => {
+  it("protège un compte plus strictement qu'une adresse IP", () => {
+    // Une IP n'identifie pas une personne : partage de 4G sur chantier, CGNAT opérateur.
+    expect(MAX_TENTATIVES_IP).toBeGreaterThan(MAX_TENTATIVES_EMAIL * 5);
+  });
+
   it("laisse passer sous le seuil et bloque au-delà", async () => {
     const r = fauxRedis();
     const k = cle.tentativesEmail("a@b.fr");
-    for (let i = 1; i <= MAX_TENTATIVES; i++) {
-      expect((await compterTentative(k, r)).bloque, `tentative ${i}`).toBe(false);
+    for (let i = 1; i <= MAX_TENTATIVES_EMAIL; i++) {
+      expect((await compterTentative(k, MAX_TENTATIVES_EMAIL, r)).bloque, `tentative ${i}`).toBe(false);
     }
-    expect((await compterTentative(k, r)).bloque).toBe(true);
+    expect((await compterTentative(k, MAX_TENTATIVES_EMAIL, r)).bloque).toBe(true);
   });
 
   it("ne pose le TTL qu'à la première tentative", async () => {
@@ -59,25 +65,25 @@ describe("limitation des tentatives", () => {
     // qui frappe en boucle garderait le compte bloqué pour toujours.
     const r = fauxRedis();
     const k = cle.tentativesIp("10.0.0.1");
-    for (let i = 0; i < 5; i++) await compterTentative(k, r);
+    for (let i = 0; i < 5; i++) await compterTentative(k, MAX_TENTATIVES_IP, r);
     expect(r.appelsExpire).toBe(1);
   });
 
   it("remonte le compteur et le temps restant", async () => {
     const r = fauxRedis();
-    const etat = await compterTentative(cle.tentativesIp("10.0.0.2"), r);
+    const etat = await compterTentative(cle.tentativesIp("10.0.0.2"), MAX_TENTATIVES_IP, r);
     expect(etat).toEqual({ bloque: false, tentatives: 1, resteSecondes: 900 });
   });
 
   it("retombe sur la durée de fenêtre si Redis ne rend pas de TTL", async () => {
     const r = { ...fauxRedis(), ttl: async () => -1 };
-    expect((await compterTentative("rl:ip:x", r)).resteSecondes).toBe(TTL.tentatives);
+    expect((await compterTentative("rl:ip:x", MAX_TENTATIVES_IP, r)).resteSecondes).toBe(TTL.tentatives);
   });
 
   it("compte séparément deux identités différentes", async () => {
     const r = fauxRedis();
-    await compterTentative(cle.tentativesEmail("a@b.fr"), r);
-    const autre = await compterTentative(cle.tentativesEmail("c@d.fr"), r);
+    await compterTentative(cle.tentativesEmail("a@b.fr"), MAX_TENTATIVES_EMAIL, r);
+    const autre = await compterTentative(cle.tentativesEmail("c@d.fr"), MAX_TENTATIVES_EMAIL, r);
     expect(autre.tentatives).toBe(1);
   });
 });

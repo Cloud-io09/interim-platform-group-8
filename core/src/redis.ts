@@ -45,8 +45,20 @@ export const TTL = {
   traceMatching: 3600,
 } as const;
 
-/** Seuil au-delà duquel les tentatives de connexion sont bloquées sur la fenêtre. */
-export const MAX_TENTATIVES = 10;
+/**
+ * Deux seuils distincts, parce que les deux compteurs ne protègent pas de la même chose.
+ *
+ * Par email : protège UN compte visé. Strict, car un utilisateur légitime ne se trompe
+ * pas dix fois de suite sur son propre mot de passe.
+ *
+ * Par IP : freine un attaquant qui balaie BEAUCOUP de comptes. Le seuil doit rester
+ * large, car une IP n'identifie pas une personne — plusieurs intérimaires d'un même
+ * chantier partagent souvent une connexion 4G, et les opérateurs mobiles placent des
+ * milliers d'abonnés derrière la même adresse. Un seuil serré ici transformerait la
+ * protection en panne collective pour une équipe entière.
+ */
+export const MAX_TENTATIVES_EMAIL = 10;
+export const MAX_TENTATIVES_IP = 100;
 
 // ---------------------------------------------------------------------------
 // Limitation des tentatives de connexion
@@ -75,6 +87,7 @@ export interface EtatLimitation {
  */
 export async function compterTentative(
   cleCompteur: string,
+  seuil: number,
   client: CompteurRedis = redis()
 ): Promise<EtatLimitation> {
   const r = client;
@@ -84,7 +97,7 @@ export async function compterTentative(
   }
   const resteSecondes = await r.ttl(cleCompteur);
   return {
-    bloque: tentatives > MAX_TENTATIVES,
+    bloque: tentatives > seuil,
     tentatives,
     resteSecondes: resteSecondes > 0 ? resteSecondes : TTL.tentatives,
   };
