@@ -79,7 +79,8 @@ create table interimaire (
   ville                    text not null,
   lat                      double precision not null,
   lon                      double precision not null,
-  rayon_mobilite_km        int  not null default 40 check (rayon_mobilite_km between 5 and 200),
+  -- 50 km : périmètre de mobilité du CDI intérimaire (cf. cahier des charges, §I.4).
+  rayon_mobilite_km        int  not null default 50 check (rayon_mobilite_km between 5 and 200),
   -- La carte BTP n'atteste d'aucune compétence : champ séparé, jamais dans le matching.
   carte_btp_numero_chiffre text,
   carte_btp_echeance       date,

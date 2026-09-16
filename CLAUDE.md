@@ -71,7 +71,7 @@ Obligatoire sur chantier, mais **elle n'atteste d'aucune compétence** : elle do
 
 ### Rayon de mobilité
 
-Paramétrable par l'intérimaire, jamais codé en dur. Valeur par défaut : 40 km, alignée sur le plafond conventionnel du CDI intérimaire.
+Paramétrable par l'intérimaire, jamais codé en dur. Valeur par défaut : 50 km, alignée sur le périmètre de mobilité du CDI intérimaire (généralement 50 km ou 1h30 de trajet depuis le domicile).
 
 ### Référentiel métiers
 

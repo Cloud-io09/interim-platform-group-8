@@ -190,15 +190,17 @@ interimaire (
   telephone_chiffre text, adresse_chiffree text,
   code_postal text not null, ville text not null,
   lat double precision not null, lon double precision not null,
-  rayon_mobilite_km int not null default 40 check (rayon_mobilite_km between 5 and 200),
+  rayon_mobilite_km int not null default 50 check (rayon_mobilite_km between 5 and 200),
   carte_btp_numero_chiffre text,          -- champ séparé, hors certifications
   carte_btp_echeance date,
   webhook_discord text
 )
 ```
 
-Le défaut de 40 km est une valeur de colonne, pas une constante dans le code — l'intérimaire
-la change, et rien dans le moteur ne suppose 40.
+Le défaut de 50 km est une valeur de colonne, pas une constante dans le code — l'intérimaire
+la change, et rien dans le moteur ne suppose une valeur particulière. 50 km vient du périmètre
+de mobilité du CDI intérimaire cité par le cahier des charges ; le CLAUDE.md disait 40, la
+contradiction est tranchée en faveur du document que le jury lira.
 
 ### Certifications — le cœur
 
@@ -514,7 +516,7 @@ démontrable en soutenance :
    Aucun profil non conforme ne remonte, même excellent par ailleurs.
 2. **Certifications à date d'échéance** — comparées à la **date de fin de mission**, pas
    à la date du jour. Une habilitation qui expire pendant le chantier écarte le profil.
-3. **Missions à proximité** — rayon de mobilité réglable par l'intérimaire, 40 km par défaut.
+3. **Missions à proximité** — rayon de mobilité réglable par l'intérimaire, 50 km par défaut.
 4. **Alerte avant expiration** — prévenu en amont, avec le nombre de missions ouvertes
    qu'un renouvellement débloquerait.
 5. **Notification de mission correspondante** — dès qu'une mission publiée matche le profil.
