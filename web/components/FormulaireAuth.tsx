@@ -127,8 +127,7 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
         />
         {mode === "inscription" && (
           <p id={`${idMotDePasse}-aide`} className="petit secondaire">
-            {LONGUEUR_MIN_MOT_DE_PASSE} caractères minimum. Une phrase dont vous vous
-            souvenez vaut mieux qu&apos;un mot compliqué.
+            {LONGUEUR_MIN_MOT_DE_PASSE} caractères minimum.
           </p>
         )}
         {problemeDe("motDePasse") && (
