@@ -1,0 +1,30 @@
+{
+  "name": "@interimatch/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Domaine métier partagé : schéma, accès base, chiffrement, géocodage, moteur de matching",
+  "exports": {
+    ".": "./src/index.ts",
+    "./matching": "./src/matching.ts",
+    "./db": "./src/db.ts"
+  },
+  "scripts": {
+    "migrate": "tsx bin/migrate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@vitest/coverage-v8": "^5.0.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.1"
+  }
+}
