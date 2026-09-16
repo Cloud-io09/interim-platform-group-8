@@ -5,6 +5,7 @@ export * from "./matching";
 export * from "./chiffrement";
 export * from "./geocodage";
 export * from "./referentiel";
+export * from "./auth";
 export { connexion } from "./db";
 export * from "./redis";
 export * from "./ingestion/salaire";
