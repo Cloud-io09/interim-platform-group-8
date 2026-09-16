@@ -1,0 +1,91 @@
+import { connexion } from "@interimatch/core/db";
+import { matcher, typeCertification } from "@interimatch/core";
+import { succes } from "@/lib/reponses";
+import { sessionOuErreur } from "@/lib/garde";
+import { chargerMission, chargerProfils } from "@/lib/depot";
+
+export const dynamic = "force-dynamic";
+
+/** Les dates affichées à l'utilisateur sont au format français, jamais en ISO. */
+const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
+
+/**
+ * Missions correspondant au profil connecté.
+ *
+ * Le moteur est rejoué du point de vue de l'intérimaire, sur les missions publiées de
+ * ses métiers. Afficher une mission pour laquelle il serait écarté reviendrait à lui
+ * proposer un chantier où il ne peut pas aller — exactement ce que le produit veut
+ * éviter. Les missions où il est écarté lui sont donc montrées **à part**, avec le
+ * motif : c'est cette information qui rend un renouvellement de titre concret.
+ */
+export async function GET() {
+  const garde = await sessionOuErreur("interimaire");
+  if ("reponse" in garde) return garde.reponse;
+  const moi = garde.session.compteId;
+
+  const sql = connexion();
+  try {
+    const candidates = await sql<{ id: number }[]>`
+      select distinct m.id
+      from mission m
+      join interimaire_metier im on im.metier_code = m.metier_code
+      where im.interimaire_id = ${moi}
+        and m.statut = 'publiee'
+        and m.date_fin >= current_date
+      order by m.id desc
+      limit 50`;
+
+    const accessibles = [];
+    const bloquees = [];
+
+    for (const { id } of candidates) {
+      const mission = await chargerMission(sql, id);
+      if (!mission) continue;
+
+      const profils = await chargerProfils(sql, mission.metierCode);
+      const resultat = matcher(mission, profils);
+
+      const resume = {
+        id: mission.missionId,
+        titre: mission.titre,
+        ville: mission.ville,
+        entreprise: mission.raisonSociale,
+        dateDebut: mission.dateDebut,
+        dateFin: mission.dateFin,
+        tauxHoraireMin: mission.tauxHoraireMin,
+        tauxHoraireMax: mission.tauxHoraireMax,
+      };
+
+      const retenu = resultat.retenus.find((r) => r.interimaireId === moi);
+      if (retenu) {
+        accessibles.push({
+          ...resume,
+          score: Math.round(retenu.total * 100),
+          distanceKm: retenu.detail.distanceKm,
+          joursCouverts: retenu.detail.joursChevauchement,
+          joursMission: retenu.detail.joursMission,
+        });
+        continue;
+      }
+
+      const ecarte = resultat.ecartes.find((e) => e.interimaireId === moi);
+      if (ecarte) {
+        const libelle = typeCertification(ecarte.typeCode)?.libelle ?? ecarte.typeCode;
+        bloquees.push({
+          ...resume,
+          motif: ecarte.motif,
+          certificationManquante: `${libelle}${ecarte.categorieCode ? ` catégorie ${ecarte.categorieCode}` : ""}`,
+          dateEcheance: ecarte.dateEcheance ?? null,
+          explication:
+            ecarte.motif === "certification_expiree"
+              ? `Votre titre expire le ${enDateFr(ecarte.dateEcheance!)}, avant la fin de cette mission.`
+              : `Cette mission exige un titre que vous n'avez pas déclaré.`,
+        });
+      }
+    }
+
+    return succes({ accessibles, bloquees });
+  } finally {
+    await sql.end();
+  }
+}
