@@ -81,7 +81,15 @@ export default function DepotCv() {
     setSuggestions(null);
 
     const reponse = await fetch("/api/cv", { method: "POST", body: donnees });
-    const corps = await reponse.json().catch(() => ({ message: "Réponse illisible." }));
+    // Une passerelle qui coupe la requête répond en HTML : `json()` échoue alors, et
+    // un message générique laisserait l'utilisateur sans piste.
+    const corps = await reponse.json().catch(() => ({
+      message:
+        reponse.status === 504 || reponse.status === 502
+          ? "La lecture a pris trop de temps et a été interrompue. Réessayez — ou déposez un PDF contenant du texte plutôt qu'un scan."
+          : `Le serveur a répondu ${reponse.status} sans message exploitable.`,
+      problemes: [],
+    }));
     setEnCours(false);
 
     if (!reponse.ok) {
