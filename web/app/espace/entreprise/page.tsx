@@ -93,6 +93,7 @@ export default async function EspaceEntreprise() {
     const onglets = [
       { href: "/espace/entreprise", libelle: "Tableau de bord", actif: true },
       { href: "/missions", libelle: "Mes fiches" },
+      { href: "/candidatures", libelle: "Candidatures" },
       { href: "/missions/nouvelle", libelle: "Publier" },
       { href: "/espace/entreprise/profil", libelle: "Mon entreprise" },
     ];

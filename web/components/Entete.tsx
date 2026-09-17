@@ -43,7 +43,8 @@ export default function Entete() {
   const liens =
     compte?.role === "entreprise"
       ? [
-          { href: "/missions", libelle: "Mes fiches de poste" },
+          { href: "/missions", libelle: "Mes fiches" },
+          { href: "/candidatures", libelle: "Candidatures" },
           { href: "/missions/nouvelle", libelle: "Publier" },
           { href: "/espace/entreprise", libelle: "Mon espace" },
         ]

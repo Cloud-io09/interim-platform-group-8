@@ -158,7 +158,14 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
             <li key={s.interimaireId} className="carte" style={{ marginBottom: "1rem" }}>
               <div className="ligne-certification" style={{ marginBottom: "1rem" }}>
                 <div>
-                  <h3 style={{ marginBottom: "0.15rem" }}>{s.prenom} {s.nom}</h3>
+                  {/* Le lien porte le nom de la personne : une fiche s'ouvre, pas
+                      une URL. Elle rend la validité des titres au regard de cette
+                      mission-ci, la seule qui ait un sens ici. */}
+                  <h3 style={{ marginBottom: "0.15rem" }}>
+                    <a className="lien-bloc" href={`/missions/${missionId}/profils/${s.interimaireId}`}>
+                      {s.prenom} {s.nom}
+                    </a>
+                  </h3>
                   <p className="petit secondaire" style={{ margin: 0 }}>{s.ville}</p>
                 </div>
                 <span className="score-total">{pourcent(s.total)}</span>

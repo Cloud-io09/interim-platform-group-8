@@ -106,7 +106,9 @@ export default async function EspaceInterimaire() {
 
     const onglets = [
       { href: "/espace/interimaire", libelle: "Tableau de bord", actif: true },
-      { href: "/mes-missions", libelle: "Missions" },
+      { href: "/opportunites", libelle: "Opportunités" },
+      { href: "/mes-candidatures", libelle: "Mes candidatures" },
+      { href: "/mes-missions", libelle: "Mes missions" },
       { href: "/espace/interimaire/certifications", libelle: "Habilitations" },
       { href: "/espace/interimaire/cv", libelle: "Profil & CV" },
     ];
