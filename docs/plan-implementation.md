@@ -547,10 +547,12 @@ Ce que ça implique, et qui doit être assumé devant le jury :
   type du titre, presque jamais son numéro, son organisme ni sa date d'échéance — or
   c'est cette date qui décide de l'éligibilité. Les détections ouvrent le formulaire,
   l'intérimaire complète ce qui compte.
-- **La suggestion de missions depuis le texte sort du périmètre initial.** Le
-  CLAUDE.md classe le « matching sémantique sur CV » hors périmètre, et le cahier des
-  charges en fait l'élément différenciateur inversé. Les deux documents doivent être
-  amendés avant la soutenance, sinon la contradiction sera relevée.
+- **La suggestion de missions depuis le texte** a été réglée le 2026-09-17, en
+  relisant le cahier des charges de plus près. Il écrit : « … tout en évitant de se
+  baser **seulement** sur des mots-clés extraits d'un CV. » Le mot « seulement »
+  rend le produit conforme à sa propre description : le CV aide à découvrir et à
+  saisir, il ne décide jamais. C'est le CLAUDE.md qui était plus strict que le
+  document de rendu ; il a été aligné, pas l'inverse.
 
 Garde-fou retenu dans le code : **chaque suggestion issue du CV porte le verdict du
 vrai moteur** — conforme, habilitation manquante, ou métier non déclaré. Sans ça, un
@@ -606,6 +608,36 @@ La maquette écrit deux fois « haché avec **bcrypt** ». Le plan retient `scry
 « est-ce une librairie d'authentification ? ». bcrypt conviendrait aussi — c'est une
 primitive de hachage, pas une solution d'authentification. Une fois tranché, **aligner le
 texte de l'interface sur le code** : une mention fausse dans l'UI est un point perdu gratuitement.
+
+---
+
+## 7 bis. Ce que la base non relationnelle fait, et ce qu'elle ne fera pas
+
+Le sujet cite « cache, logs de matching, recherche full-text » comme exemples
+d'usage complémentaire. Redis en couvre **cinq** : sessions, limitation de
+tentatives, cache de matching, traces de calcul, cache de géocodage — dont deux
+figurent littéralement dans la parenthèse du sujet.
+
+**La recherche full-text sur les CV est écartée, et c'est un choix**, pas un oubli.
+Elle reviendrait à chercher des candidats par mots-clés extraits de leur CV,
+c'est-à-dire exactement le contre-modèle que l'étude de marché oppose aux
+concurrents : « les plateformes existantes traitent les certifications comme du
+texte, nous les traitons comme des données avec une date de péremption ». L'ajouter
+donnerait au jury une contradiction écrite dans notre propre document, pour un gain
+nul — l'exigence étant déjà satisfaite deux fois.
+
+## 7 ter. À reprendre dans le cahier des charges
+
+Le document de rendu ne décrit plus exactement le produit. Trois points :
+
+1. **Le dépôt de CV n'y figure pas.** Il est à ajouter au périmètre, avec la
+   distinction qui le rend conforme : le CV propose, il ne décide pas. Le tableau de
+   chiffrage doit recevoir la ligne correspondante.
+2. **Le référentiel compte neuf types de certification**, pas cinq. Les quatre CACES
+   de levage ont été ajoutés après mesure : un grutier relève du R487 ou du R490,
+   presque jamais du R482. Sans eux, le produit ignorait ce métier.
+3. **Le rayon de mobilité par défaut est de 50 km**, aligné sur le périmètre du CDI
+   intérimaire que cite l'étude de marché.
 
 ---
 
