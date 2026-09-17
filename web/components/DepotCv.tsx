@@ -143,7 +143,7 @@ export default function DepotCv() {
 
   return (
     <section aria-labelledby="titre-cv">
-      <h2 id="titre-cv">Mon CV</h2>
+      <h2 id="titre-cv">Dépôt du CV</h2>
       <p className="secondaire">
         Déposez votre CV pour préremplir votre profil. Nous en extrayons vos métiers, vos
         compétences et les habilitations citées — vous validez chaque élément avant qu&apos;il

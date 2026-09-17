@@ -10,6 +10,10 @@ export default async function PageCv() {
     <section className="section">
       <div className="colonne colonne--formulaire">
         <p className="petit secondaire"><a href="/espace/interimaire">← Mon espace</a></p>
+        {/* Chaque page porte son propre h1 : sans lui, la navigation par titres
+            d'un lecteur d'écran n'a aucun point d'entrée. */}
+        <h1>Mon CV</h1>
+        <p className="secondaire">Déposez-le pour préremplir votre profil et repérer des missions proches.</p>
         <DepotCv />
       </div>
     </section>
