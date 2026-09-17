@@ -6,7 +6,9 @@ import {
   LONGUEUR_MIN_CV,
   motsSignifiants,
   normaliser,
+  raciniser,
   rapprocherMissions,
+  termesDistinctifs,
   variantesLibelle,
 } from "../src/cv";
 
@@ -23,7 +25,27 @@ const COMPETENCES = [
   { code: "300265", libelle: "Charger, décharger, manutentionner des produits" },
   { code: "400288", libelle: "Déblayer, remblayer un terrain" },
   { code: "400290", libelle: "Positionner des éléments d'armature de béton" },
+  { code: "100596", libelle: "Techniques de maçonnerie" },
+  { code: "103777", libelle: "Techniques de ferraillage" },
+  { code: "103771", libelle: "Coffrer des ouvrages en béton" },
+  { code: "101506", libelle: "Règles et consignes de sécurité" },
+  { code: "100017", libelle: "Règles de sécurité" },
+  { code: "105734", libelle: "Réaliser une opération de câblage électrique" },
 ];
+
+/**
+ * CV réel, lu par reconnaissance de caractères — ponctuation abîmée comprise.
+ *
+ * Il ne contient pas un seul libellé du référentiel écrit tel quel : c'est le cas
+ * normal, et c'est ce que la détection doit savoir traiter.
+ */
+const CV_SCANNE = `Maçon assidu, 20 années d'expérience dans des postes du secteur de la
+maçonnerie. Construction de fondations en béton. Assemblage des éléments d'armature
+avec contrôle du niveau. Conduite des travaux de maçonnerie conformément aux consignes
+de chantier, application des règles d'hygiène et de sécurité, port des EPI.
+Intervention sur des chantiers de construction (maisons, bâtiments), réalisation de
+diverses missions (coffrages, coulage de béton, ferraillage, pose d'agglos, montage de
+murs). Prise en charge d'un ouvrier maçon junior pour le former sur le métier.`;
 
 /** CV de chantier plausible, écrit comme un intérimaire l'écrirait. */
 const CV = `
@@ -112,6 +134,33 @@ describe("détection des métiers", () => {
   });
 });
 
+describe("racinisation", () => {
+  it("rapproche les formes d'un même mot", () => {
+    expect(raciniser("coffrages")).toBe(raciniser("coffrer"));
+    expect(raciniser("ferraillage")).toBe(raciniser("ferrailles"));
+    expect(raciniser("maconnerie")).toBe("macon");
+    expect(raciniser("terrassement")).toBe(raciniser("terrasses"));
+  });
+
+  it("ne coupe pas au point de confondre deux mots distincts", () => {
+    // « ouvrier » est un métier, « ouvrage » une réalisation : les confondre ferait
+    // valider « Coffrer des ouvrages en béton » à qui a seulement encadré un ouvrier.
+    expect(raciniser("ouvrier")).not.toBe(raciniser("ouvrages"));
+    // Une racine trop courte ne distingue plus rien : on garde le mot entier.
+    expect(raciniser("mur")).toBe("mur");
+  });
+});
+
+describe("termes distinctifs d'un libellé du référentiel", () => {
+  it("écarte les mots qui classent au lieu de décrire", () => {
+    // Aucun CV n'écrit « techniques de maçonnerie » : exiger ce mot ferait tout manquer.
+    expect(termesDistinctifs("Techniques de maçonnerie")).toEqual(["macon"]);
+    expect(termesDistinctifs("Coffrer des ouvrages en béton")).toEqual(["coffr", "beton"]);
+    // « Maçon » et « maçonnerie » se rejoignent malgré la consonne doublée.
+    expect(termesDistinctifs("Techniques de maçonnerie")).toEqual(termesDistinctifs("Maçon"));
+  });
+});
+
 describe("détection des compétences", () => {
   it("reconnaît une compétence citée mot pour mot", () => {
     expect(detecterCompetences(CV, COMPETENCES).map((c) => c.code)).toContain("400288");
@@ -119,6 +168,48 @@ describe("détection des compétences", () => {
 
   it("n'invente pas une compétence absente", () => {
     expect(detecterCompetences(CV, COMPETENCES).map((c) => c.code)).not.toContain("400290");
+  });
+
+  it("reconnaît une compétence que le CV formule avec ses propres mots", () => {
+    // Le CV écrit « maçonnerie », « ferraillage », « coffrages, coulage de béton » ;
+    // le référentiel écrit « Techniques de maçonnerie », « Techniques de ferraillage »,
+    // « Coffrer des ouvrages en béton ». C'est le cas courant, pas l'exception.
+    const codes = detecterCompetences(CV_SCANNE, COMPETENCES).map((c) => c.code);
+    expect(codes).toContain("100596");
+    expect(codes).toContain("103777");
+    expect(codes).toContain("103771");
+  });
+
+  it("n'attribue pas la compétence d'un autre métier", () => {
+    // « Réaliser une opération de câblage électrique » ne doit pas suivre d'un CV de
+    // maçon : une suggestion fausse coûte plus cher qu'une suggestion manquante.
+    expect(detecterCompetences(CV_SCANNE, COMPETENCES).map((c) => c.code)).not.toContain("105734");
+  });
+
+  it("ne répète pas la même idée sous deux libellés voisins", () => {
+    // « Règles de sécurité » n'apporte rien de plus que « Règles et consignes de
+    // sécurité », déjà retenu : la liste à cocher doit rester lisible.
+    const codes = detecterCompetences(CV_SCANNE, COMPETENCES).map((c) => c.code);
+    expect(codes).toContain("101506");
+    expect(codes).not.toContain("100017");
+  });
+
+  it("rend le passage qui a déclenché chaque détection", () => {
+    const ferraillage = detecterCompetences(CV_SCANNE, COMPETENCES).find((c) => c.code === "103777");
+    // Le terme rare est plus parlant que le verbe du libellé, qui revient partout.
+    expect(ferraillage?.extrait).toContain("ferraillage");
+  });
+
+  it("ne propose rien sur un CV d'un autre secteur", () => {
+    const boulangere = `Boulangère pâtissière, 12 ans en fournil artisanal.
+      Pétrissage, façonnage, cuisson des pains spéciaux et viennoiseries.
+      Gestion des stocks de farine, respect de la chaîne du froid, accueil de la clientèle.`;
+    expect(detecterCompetences(boulangere, COMPETENCES)).toEqual([]);
+    expect(detecterMetiers(boulangere, METIERS)).toEqual([]);
+  });
+
+  it("borne le nombre de suggestions", () => {
+    expect(detecterCompetences(CV_SCANNE, COMPETENCES, 2)).toHaveLength(2);
   });
 });
 
