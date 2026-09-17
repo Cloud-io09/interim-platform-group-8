@@ -36,6 +36,8 @@ export interface OffreNettoyee {
   domaine: string;
   codePostal: string | null;
   communeCode: string | null;
+  /** Nom de commune lisible, tiré du libellé « 51 - Reims ». */
+  communeLibelle: string | null;
   departement: string | null;
   lat: number | null;
   lon: number | null;
@@ -67,6 +69,36 @@ export interface RejetOffre {
 function intituleNormalise(offre: OffreBrute): string | null {
   const libelle = offre.appellationlibelle?.trim() || offre.romeLibelle?.trim();
   return libelle && libelle.length > 0 ? libelle : null;
+}
+
+/**
+ * Normalise un libellé de lieu France Travail.
+ *
+ * L'API rend « 51 - Reims », « 51 - REIMS » ou « 973 - Saint-Laurent-du-Maroni » :
+ * un préfixe de département, un tiret, puis la commune dans une casse variable.
+ * On retire le préfixe et on remet la casse en forme, en respectant les particules
+ * et les traits d'union — « SAINT-LAURENT-DU-MARONI » doit redevenir
+ * « Saint-Laurent-du-Maroni », pas « Saint-Laurent-Du-Maroni ».
+ */
+export function nettoyerCommune(brut: string | undefined): string | null {
+  if (!brut) return null;
+  // La Corse s'écrit 2A / 2B, les départements d'outre-mer sur trois chiffres :
+  // n'accepter que des chiffres laissait « 2b - Bastia » tel quel.
+  const sansPrefixe = brut.replace(/^\s*(?:\d{3}|\d[AB]|\d{2})\s*-\s*/i, "").trim();
+  if (sansPrefixe.length === 0) return null;
+
+  const particules = new Set(["de", "du", "des", "la", "le", "les", "sur", "sous", "en", "aux", "et", "lès", "l"]);
+  return sansPrefixe
+    .toLocaleLowerCase("fr-FR")
+    .split(/([ \-'])/)
+    .map((morceau, i) => {
+      if (/^[ \-']$/.test(morceau)) return morceau;
+      // Le premier mot est toujours capitalisé, même s'il ressemble à une particule
+      // (« Le Havre », « La Rochelle »).
+      if (i > 0 && particules.has(morceau)) return morceau;
+      return morceau.charAt(0).toLocaleUpperCase("fr-FR") + morceau.slice(1);
+    })
+    .join("");
 }
 
 /** Retire les mentions de genre et la ponctuation décorative des intitulés. */
@@ -124,6 +156,7 @@ export function nettoyerOffre(offre: OffreBrute): OffreNettoyee | RejetOffre {
     domaine,
     codePostal,
     communeCode: offre.lieuTravail?.commune?.trim() || null,
+    communeLibelle: nettoyerCommune(offre.lieuTravail?.libelle),
     // Le département se déduit du code postal ; la Corse s'écrit 2A/2B mais ses
     // codes postaux commencent par 20, d'où un simple préfixe à deux chiffres.
     departement: codePostal ? codePostal.slice(0, 2) : null,

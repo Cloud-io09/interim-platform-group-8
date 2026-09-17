@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   empreinteOffre,
+  nettoyerCommune,
   nettoyerIntitule,
   nettoyerLot,
   nettoyerOffre,
@@ -166,5 +167,48 @@ describe("nettoyerLot", () => {
 
   it("rend un lot vide sans planter", () => {
     expect(nettoyerLot([])).toMatchObject({ retenues: [], rejets: [], bilan: { retenues: 0 } });
+  });
+});
+
+describe("nettoyerCommune", () => {
+  it("retire le préfixe de département", () => {
+    expect(nettoyerCommune("51 - Reims")).toBe("Reims");
+    expect(nettoyerCommune("973 - Cayenne")).toBe("Cayenne");
+  });
+
+  it("gère la Corse, dont le code n'est pas numérique", () => {
+    // Sans ça, le produit affichait « 2b - Bastia » comme nom de commune.
+    expect(nettoyerCommune("2B - BASTIA")).toBe("Bastia");
+    expect(nettoyerCommune("2A - AJACCIO")).toBe("Ajaccio");
+  });
+
+  it("remet une commune tout en majuscules dans une casse lisible", () => {
+    // Cas réel : l'API alterne « 29 - QUIMPERLE » et « 29 - Quimperlé ».
+    expect(nettoyerCommune("29 - QUIMPERLE")).toBe("Quimperle");
+    expect(nettoyerCommune("29 - CLOHARS CARNOET")).toBe("Clohars Carnoet");
+  });
+
+  it("respecte les particules et les traits d'union", () => {
+    expect(nettoyerCommune("973 - SAINT-LAURENT-DU-MARONI")).toBe("Saint-Laurent-du-Maroni");
+    expect(nettoyerCommune("85 - TRANCHE-SUR-MER")).toBe("Tranche-sur-Mer");
+    expect(nettoyerCommune("17 - LA ROCHELLE")).toBe("La Rochelle");
+  });
+
+  it("capitalise le premier mot même s'il ressemble à une particule", () => {
+    expect(nettoyerCommune("76 - LE HAVRE")).toBe("Le Havre");
+  });
+
+  it("gère les apostrophes", () => {
+    expect(nettoyerCommune("34 - L'ISLE-SUR-LA-SORGUE")).toBe("L'Isle-sur-la-Sorgue");
+  });
+
+  it("rend null quand le libellé est absent ou vide", () => {
+    expect(nettoyerCommune(undefined)).toBeNull();
+    expect(nettoyerCommune("")).toBeNull();
+    expect(nettoyerCommune("51 - ")).toBeNull();
+  });
+
+  it("laisse intact un libellé déjà propre et sans préfixe", () => {
+    expect(nettoyerCommune("Reims")).toBe("Reims");
   });
 });

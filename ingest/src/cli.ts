@@ -11,6 +11,7 @@ import {
 import { getAccessToken, getReferentiel } from "interimatch-secteur-scan/client";
 import { CHEMIN_BRUT, CHEMIN_NETTOYE, ecrire, lire } from "./cache";
 import { DOMAINE_DEMO, MISSION_DEBUT, MISSION_FIN, MOT_DE_PASSE_DEMO, purgerDemo, semerDemo } from "./demo";
+import { DOMAINE_DEMO_ENTREPRISE, purgerMissionsDemo, semerMissions } from "./missions-demo";
 
 const URL_RECHERCHE = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search";
 /** L'API plafonne à 150 résultats par appel, et impose un throttle. */
@@ -182,6 +183,7 @@ program
         rome_code: o.romeCode,
         code_postal: o.codePostal,
         commune_code: o.communeCode,
+        commune_libelle: o.communeLibelle,
         departement: o.departement,
         lat: o.lat,
         lon: o.lon,
@@ -195,11 +197,13 @@ program
         await sql`
           insert into offre_ft ${sql(
             lot, "id_ft", "intitule_brut", "intitule_normalise", "metier_code", "rome_code",
-            "code_postal", "commune_code", "departement", "lat", "lon",
+            "code_postal", "commune_code", "commune_libelle", "departement", "lat", "lon",
             "taux_horaire_min", "taux_horaire_max", "date_creation_ft", "empreinte"
           )}
           on conflict (id_ft) do update set
             intitule_normalise = excluded.intitule_normalise,
+            commune_libelle = excluded.commune_libelle,
+            departement = excluded.departement,
             taux_horaire_min = excluded.taux_horaire_min,
             taux_horaire_max = excluded.taux_horaire_max,
             ingere_le = now()`;
@@ -293,6 +297,40 @@ program
       }
       console.log(`\nConnexion : <cle>${DOMAINE_DEMO} / ${MOT_DE_PASSE_DEMO}`);
       console.log(`Entreprise : entreprise${DOMAINE_DEMO}`);
+    } finally {
+      await sql.end();
+    }
+  });
+
+// ---------------------------------------------------------------------------
+
+program
+  .command("seed-missions")
+  .description("Génère des missions pour tous les métiers, à partir des offres réelles ingérées")
+  .option("--purge", "supprime les entreprises de démonstration et leurs missions")
+  .action(async (opts: { purge?: boolean }) => {
+    const sql = connexion();
+    try {
+      if (opts.purge) {
+        const n = await purgerMissionsDemo(sql);
+        return void console.log(`${n} entreprise(s) de démonstration supprimée(s).`);
+      }
+
+      const [offres] = await sql<{ n: number }[]>`select count(*)::int n from offre_ft`;
+      if ((offres?.n ?? 0) === 0) {
+        throw new Error(
+          "Aucune offre France Travail en base : les missions sont générées à partir d'elles.\n" +
+          "Lancez d'abord : npm run ingest -- fetch && npm run ingest -- clean && npm run ingest -- load"
+        );
+      }
+
+      const bilan = await semerMissions(sql);
+      console.log(`${bilan.entreprises} entreprises, ${bilan.missions} missions publiées.`);
+      console.log(`  ${bilan.metiersCouverts} métiers couverts, tous avec au moins une mission`);
+      console.log(`  ${bilan.sansExigence} sans habilitation exigée — garantit un résultat à tout profil`);
+      console.log(`  ${bilan.avecExigence} avec habilitations, pour éprouver le filtre éliminatoire`);
+      console.log(`\nConnexion entreprise : <ville>${DOMAINE_DEMO_ENTREPRISE} / ${MOT_DE_PASSE_DEMO}`);
+      console.log("Villes : reims, lyon, nantes, toulouse");
     } finally {
       await sql.end();
     }
