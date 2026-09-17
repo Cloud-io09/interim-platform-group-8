@@ -635,3 +635,15 @@ details > summary {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Progression d'une lecture longue : l'utilisateur doit voir qu'il se passe quelque
+   chose, sinon il croit l'outil bloqué et recharge la page. */
+.progression {
+  border: 1px solid var(--bordure);
+  border-left: 3px solid var(--texte-secondaire);
+  border-radius: var(--rayon-petit);
+  background: var(--fond);
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+.progression .jauge { margin-top: 0.5rem; }

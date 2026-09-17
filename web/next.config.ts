@@ -5,10 +5,9 @@ import type { NextConfig } from "next";
 /**
  * Racine du monorepo.
  *
- * Sans cette indication, Next trace les fichiers relativement à `web/` et tout ce qui
- * vit au-dessus — ici `node_modules/tesseract.js` et son cœur WASM, hoistés par npm
- * workspaces — n'est pas embarqué dans la fonction déployée. Le worker attend alors
- * un fichier absent, et la passerelle coupe : un 504 sans le moindre message.
+ * npm workspaces hisse les dépendances au-dessus de `web/`. Sans cette indication,
+ * Next trace les fichiers relativement à `web/`, ne trouve pas ce qui vit plus haut,
+ * et signale plusieurs verrous de dépendances concurrents.
  */
 const racineMonorepo = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -48,7 +47,9 @@ const enTetesSecurite = [
       "default-src 'self'",
       // Next injecte les données d'hydratation en ligne : 'unsafe-inline' est
       // nécessaire tant qu'on n'a pas de nonce par requête via middleware.
-      `script-src 'self' 'unsafe-inline'${sourcesVercel}`,
+      // `wasm-unsafe-eval` : la reconnaissance de caractères s'exécute en WebAssembly
+      // dans le navigateur. C'est le prix de ne pas envoyer le document à un serveur.
+      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${sourcesVercel}`,
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${sourcesVercel}`,
       "font-src 'self'",
@@ -58,6 +59,9 @@ const enTetesSecurite = [
       "frame-ancestors 'none'",
       `frame-src 'self'${sourcesVercel}`,
       "object-src 'none'",
+      // Les workers de pdf.js et de Tesseract sont servis depuis nos fichiers ;
+      // Tesseract en instancie certains via une URL blob.
+      "worker-src 'self' blob:",
     ].join("; "),
   },
 ];
@@ -72,24 +76,9 @@ const nextConfig: NextConfig = {
   images: { formats: ["image/avif", "image/webp"] },
 
   // Le pilote PostgreSQL ne doit pas être embarqué dans le bundle client.
-  serverExternalPackages: ["postgres", "tesseract.js", "tesseract.js-core", "unpdf"],
+  serverExternalPackages: ["postgres"],
 
-  // Le modèle de langue vit dans public/, que Next ne trace pas dans le bundle des
-  // fonctions : sans cette inclusion explicite, l'OCR échouerait en production sur
-  // un fichier introuvable — alors qu'il fonctionne en local.
   outputFileTracingRoot: racineMonorepo,
-
-  outputFileTracingIncludes: {
-    "/api/cv": [
-      "./public/ocr/**",
-      // tesseract.js lance un `worker_threads` qui charge son cœur WASM depuis
-      // node_modules. Déclarer le paquet « externe » suffit à ne pas le bundler,
-      // mais pas à l'embarquer : sans ces deux lignes, le worker attend un fichier
-      // absent et la fonction expire — un 504 sans le moindre message.
-      "../node_modules/tesseract.js/**",
-      "../node_modules/tesseract.js-core/**",
-    ],
-  },
 
   // Masque la version du framework : une information gratuite pour un attaquant.
   poweredByHeader: false,

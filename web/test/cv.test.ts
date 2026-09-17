@@ -1,6 +1,4 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { connexion } from "@interimatch/core/db";
 import { cle, redis } from "@interimatch/core";
 import { BASE } from "./serveur";
@@ -8,8 +6,6 @@ import { BASE } from "./serveur";
 const MARQUE = `cv-${Date.now()}`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 const emails: string[] = [];
-
-const PDF = readFileSync(join(import.meta.dirname, "fixtures", "cv-essai.pdf"));
 
 /** Même contenu que le PDF, en texte brut : éprouve l'autre chemin d'extraction. */
 const CV_TEXTE = `CURRICULUM VITAE - Karim Benali
@@ -36,10 +32,18 @@ async function appel(chemin: string, methode: string, corps?: unknown, cookie?: 
   return { statut: r.status, corps: t ? JSON.parse(t) : null };
 }
 
-async function deposer(cookie: string, fichier: Blob, nom: string) {
-  const formulaire = new FormData();
-  formulaire.append("cv", fichier, nom);
-  const r = await fetch(`${BASE}/api/cv`, { method: "POST", headers: { cookie }, body: formulaire });
+/**
+ * Le navigateur lit le document et n'envoie que son texte : les tests d'API
+ * envoient donc du texte, comme le vrai client. La lecture elle-même — couche
+ * texte, reconnaissance de caractères — s'exécute côté navigateur et n'est pas
+ * couverte ici.
+ */
+async function deposer(cookie: string, texte: string, nomFichier: string) {
+  const r = await fetch(`${BASE}/api/cv`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie },
+    body: JSON.stringify({ texte, nomFichier }),
+  });
   const t = await r.text();
   return { statut: r.status, corps: t ? JSON.parse(t) : null };
 }
@@ -78,63 +82,63 @@ afterAll(async () => {
 });
 
 describe("dépôt du CV", () => {
-  it("lit un PDF et en tire métiers, compétences et habilitations", async () => {
-    const { cookie } = await interimairePret("pdf");
-    const r = await deposer(cookie, new Blob([PDF], { type: "application/pdf" }), "cv.pdf");
+  it("analyse le texte lu et en tire métiers, compétences et habilitations", async () => {
+    const { cookie } = await interimairePret("analyse");
+    const r = await deposer(cookie, CV_TEXTE, "cv.pdf");
     expect(r.statut).toBe(201);
 
     const a = r.corps.analyse;
-    // Le PDF encode une apostrophe typographique : la normalisation doit la traiter
-    // comme un séparateur, sinon « Conducteur d'engins » ne correspondrait à rien.
     expect(a.metiers.map((m: { code: string }) => m.code)).toContain("F1302");
     expect(a.metiers.map((m: { code: string }) => m.code)).toContain("F1703");
     expect(a.certifications.map((c: { typeCode: string }) => c.typeCode)).toContain("CACES_R482");
     expect(a.certifications.find((c: { typeCode: string }) => c.typeCode === "CACES_R482").categorieCode).toBe("B1");
   });
 
-  it("lit aussi un fichier texte brut", async () => {
-    const { cookie } = await interimairePret("txt");
-    const r = await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
-    expect(r.statut).toBe(201);
-    expect(r.corps.analyse.metiers.length).toBeGreaterThanOrEqual(2);
+  it("accompagne chaque détection du passage qui l'a déclenchée", async () => {
+    const { cookie } = await interimairePret("extraits");
+    const r = await deposer(cookie, CV_TEXTE, "cv.pdf");
+    for (const m of r.corps.analyse.metiers) {
+      expect(m.extrait.length, `métier ${m.code} sans extrait`).toBeGreaterThan(0);
+    }
   });
 
-  it("refuse un format non pris en charge", async () => {
-    const { cookie } = await interimairePret("format");
-    const r = await deposer(cookie, new Blob(["x".repeat(500)], { type: "image/png" }), "cv.png");
-    expect(r.statut).toBe(422);
-    expect(r.corps.problemes[0].message).toMatch(/PDF|Word|texte/i);
+  it("rend le texte lu, pour que l'utilisateur vérifie ce qui a été compris", async () => {
+    const { cookie } = await interimairePret("relire");
+    const r = await deposer(cookie, CV_TEXTE, "cv.pdf");
+    expect(r.corps.cv.texte).toBe(CV_TEXTE);
   });
 
-  it("refuse un fichier dont la signature ne correspond pas au type déclaré", async () => {
-    // Un exécutable renommé en .pdf ne doit pas passer : le type vient du client.
-    const { cookie } = await interimairePret("signature");
-    const r = await deposer(cookie, new Blob(["MZ" + "x".repeat(500)], { type: "application/pdf" }), "faux.pdf");
-    expect(r.statut).toBe(422);
-    expect(r.corps.problemes[0].message).toMatch(/PDF valide/i);
+  it("refuse un texte vide", async () => {
+    const { cookie } = await interimairePret("vide");
+    expect((await deposer(cookie, "", "vide.pdf")).statut).toBe(422);
+    expect((await deposer(cookie, "   ", "blanc.pdf")).statut).toBe(422);
   });
 
-  it("refuse un document sans texte exploitable", async () => {
-    // Un scan sans couche texte tombe ici : on le dit plutôt que d'appeler un OCR tiers.
+  it("refuse un texte trop court pour être exploitable", async () => {
+    // Un scan illisible produit quelques caractères de bruit : on le dit.
     const { cookie } = await interimairePret("court");
-    const r = await deposer(cookie, new Blob(["Karim, macon."], { type: "text/plain" }), "court.txt");
+    const r = await deposer(cookie, "Karim, macon.", "court.pdf");
     expect(r.statut).toBe(422);
     expect(r.corps.message).toMatch(/scan|texte/i);
   });
 
-  it("refuse un fichier vide", async () => {
-    const { cookie } = await interimairePret("vide");
-    expect((await deposer(cookie, new Blob([], { type: "text/plain" }), "vide.txt")).statut).toBe(422);
+  it("refuse un texte démesuré", async () => {
+    // Le texte vient du client : sa taille doit être bornée côté serveur.
+    const { cookie } = await interimairePret("enorme");
+    expect((await deposer(cookie, "a".repeat(200_001), "gros.pdf")).statut).toBe(422);
   });
 
   it("exige un profil avant de déposer un CV", async () => {
     const { cookie } = await inscrire("sans-profil");
-    const r = await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
-    expect(r.statut).toBe(409);
+    expect((await deposer(cookie, CV_TEXTE, "cv.pdf")).statut).toBe(409);
   });
 
-  it("refuse le dépôt sans session, et à une entreprise", async () => {
-    const r = await fetch(`${BASE}/api/cv`, { method: "POST", body: new FormData() });
+  it("refuse le dépôt sans session", async () => {
+    const r = await fetch(`${BASE}/api/cv`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texte: CV_TEXTE, nomFichier: "cv.pdf" }),
+    });
     expect(r.status).toBe(401);
   });
 });
@@ -142,7 +146,7 @@ describe("dépôt du CV", () => {
 describe("conservation et effacement du texte", () => {
   it("stocke le texte chiffré, jamais en clair", async () => {
     const { email, cookie } = await interimairePret("chiffre");
-    await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
+    await deposer(cookie, CV_TEXTE, "cv.txt");
 
     const sql = connexion();
     try {
@@ -160,7 +164,7 @@ describe("conservation et effacement du texte", () => {
 
   it("relit l'analyse sans redemander le fichier", async () => {
     const { cookie } = await interimairePret("relecture");
-    await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
+    await deposer(cookie, CV_TEXTE, "cv.txt");
     const { corps } = await appel("/api/cv", "GET", undefined, cookie);
     expect(corps.cv.nomFichier).toBe("cv.txt");
     expect(corps.analyse.metiers.length).toBeGreaterThan(0);
@@ -168,7 +172,7 @@ describe("conservation et effacement du texte", () => {
 
   it("efface le texte à la demande", async () => {
     const { email, cookie } = await interimairePret("retrait");
-    await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
+    await deposer(cookie, CV_TEXTE, "cv.txt");
     expect((await appel("/api/cv", "DELETE", undefined, cookie)).statut).toBe(200);
     expect((await appel("/api/cv", "GET", undefined, cookie)).corps.cv).toBeNull();
 
@@ -187,7 +191,7 @@ describe("conservation et effacement du texte", () => {
 describe("application au profil", () => {
   it("ajoute les métiers et compétences retenus, sans écraser l'existant", async () => {
     const { email, cookie } = await interimairePret("appliquer");
-    const depot = await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
+    const depot = await deposer(cookie, CV_TEXTE, "cv.txt");
 
     const r = await appel("/api/cv/appliquer", "POST", {
       metiers: depot.corps.analyse.metiers.map((m: { code: string }) => m.code),
@@ -249,7 +253,7 @@ describe("suggestions de missions depuis le CV", () => {
     }, cookieEnt);
 
     const { cookie } = await interimairePret("suggestions");
-    await deposer(cookie, new Blob([CV_TEXTE], { type: "text/plain" }), "cv.txt");
+    await deposer(cookie, CV_TEXTE, "cv.txt");
 
     const { statut, corps } = await appel("/api/cv/missions", "GET", undefined, cookie);
     expect(statut).toBe(200);

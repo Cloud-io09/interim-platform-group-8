@@ -1,20 +1,15 @@
 import { connexion } from "@interimatch/core/db";
 import { analyserCv, chiffrer, dechiffrerOptionnel } from "@interimatch/core";
-import { erreur, succes } from "@/lib/reponses";
+import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
-import { extraireTexte, FichierRefuse } from "@/lib/extraction-cv";
-import { OcrTropLong } from "@/lib/ocr";
 
 export const dynamic = "force-dynamic";
 
 /**
- * La reconnaissance de caractères d'un CV scanné prend une à deux secondes, mais le
- * chargement initial du moteur WASM s'y ajoute au premier appel d'une instance. La
- * limite par défaut d'une fonction serverless ne suffit pas : sans cette déclaration,
- * la requête est coupée sans message et l'utilisateur voit une lecture qui n'aboutit
- * jamais.
+ * La route ne fait plus que valider et enregistrer du texte : elle n'a plus besoin
+ * d'un budget de temps particulier. La lecture — et la reconnaissance de caractères —
+ * se fait dans le navigateur.
  */
-export const maxDuration = 60;
 
 /** Référentiels nécessaires à l'analyse, lus une fois par requête. */
 async function referentiels(sql: ReturnType<typeof connexion>) {
@@ -59,39 +54,36 @@ export async function GET() {
   }
 }
 
+/** Un CV dépassant cette longueur n'est plus un CV : on refuse plutôt que de stocker. */
+const LONGUEUR_MAX_TEXTE = 200_000;
+
+interface Saisie {
+  nomFichier?: string;
+  texte?: string;
+}
+
+/**
+ * Enregistre le texte lu **par le navigateur**.
+ *
+ * Le fichier n'est jamais transmis : la lecture, y compris la reconnaissance de
+ * caractères, se fait sur le poste de l'utilisateur. Le serveur ne reçoit que du
+ * texte, qu'il traite comme toute saisie utilisateur — borné, chiffré, et jamais
+ * interprété autrement que par rapprochement lexical.
+ */
 export async function POST(requete: Request) {
   const garde = await sessionOuErreur("interimaire");
   if ("reponse" in garde) return garde.reponse;
 
-  let fichier: File | null = null;
-  try {
-    const formulaire = await requete.formData();
-    const champ = formulaire.get("cv");
-    fichier = champ instanceof File ? champ : null;
-  } catch {
-    return erreur("Envoi illisible.", 400);
-  }
-  if (!fichier) return erreur("Aucun fichier reçu.", 422, [{ champ: "cv", message: "Choisissez un fichier." }]);
+  const saisie = await corpsJson<Saisie>(requete);
+  const texte = typeof saisie?.texte === "string" ? saisie.texte.trim() : "";
+  const nomFichier = typeof saisie?.nomFichier === "string" ? saisie.nomFichier.slice(0, 160) : "document";
 
-  let texte: string;
-  try {
-    texte = await extraireTexte(fichier);
-  } catch (e) {
-    if (e instanceof FichierRefuse) {
-      return erreur(e.message, 422, [{ champ: "cv", message: e.message }]);
-    }
-    if (e instanceof OcrTropLong) {
-      // 503 et non 500 : réessayer a du sens, l'instance suivante sera chaude.
-      return erreur(
-        "La lecture de ce document a pris trop de temps. Réessayez, ou déposez un PDF contenant du texte plutôt qu'un scan.",
-        503,
-        [{ champ: "cv", message: "Lecture interrompue." }]
-      );
-    }
-    // Un PDF corrompu ou protégé fait échouer la bibliothèque : on l'explique
-    // plutôt que de renvoyer une erreur serveur opaque.
-    return erreur("Ce document n'a pas pu être lu. Essayez un autre export.", 422, [
-      { champ: "cv", message: "Document illisible." },
+  if (texte.length === 0) {
+    return erreur("Aucun texte reçu.", 422, [{ champ: "cv", message: "Le document n'a produit aucun texte." }]);
+  }
+  if (texte.length > LONGUEUR_MAX_TEXTE) {
+    return erreur("Document trop volumineux.", 422, [
+      { champ: "cv", message: "Ce document contient bien plus de texte qu'un CV." },
     ]);
   }
 
@@ -102,16 +94,16 @@ export async function POST(requete: Request) {
 
     if (analyse.tropCourt) {
       return erreur(
-        "Aucun texte exploitable dans ce document. S'il s'agit d'un scan, exportez plutôt un PDF contenant du texte.",
+        "Trop peu de texte exploitable dans ce document. S'il s'agit d'un scan de mauvaise qualité, un export depuis un traitement de texte donnera un bien meilleur résultat.",
         422,
-        [{ champ: "cv", message: "Document sans texte lisible." }]
+        [{ champ: "cv", message: "Texte insuffisant." }]
       );
     }
 
     const misAJour = await sql`
       update interimaire
       set cv_texte_chiffre = ${chiffrer(texte)},
-          cv_nom_fichier = ${fichier.name.slice(0, 160)},
+          cv_nom_fichier = ${nomFichier},
           cv_depose_le = now()
       where compte_id = ${garde.session.compteId}
       returning compte_id`;
@@ -122,10 +114,7 @@ export async function POST(requete: Request) {
       ]);
     }
 
-    return succes(
-      { cv: { nomFichier: fichier.name, longueur: texte.length, texte }, analyse },
-      201
-    );
+    return succes({ cv: { nomFichier, longueur: texte.length, texte }, analyse }, 201);
   } finally {
     await sql.end();
   }

@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
 import { envoyerJson } from "@/lib/client";
+import { lireCv, LectureImpossible, type EtapeLecture } from "@/lib/lecture-cv";
 
 interface Analyse {
   metiers: { code: string; libelle: string; declencheur: string; extrait: string }[];
@@ -50,6 +51,7 @@ export default function DepotCv() {
   const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [charge, setCharge] = useState(false);
+  const [progression, setProgression] = useState<EtapeLecture | null>(null);
 
   function accueillirAnalyse(a: Analyse) {
     setAnalyse(a);
@@ -73,28 +75,47 @@ export default function DepotCv() {
   async function deposer(evenement: React.FormEvent<HTMLFormElement>) {
     evenement.preventDefault();
     const formulaire = evenement.currentTarget;
-    const donnees = new FormData(formulaire);
+    const fichier = (new FormData(formulaire).get("cv") as File | null) ?? null;
+    if (!fichier || fichier.size === 0) {
+      setErreur("Choisissez un fichier.");
+      return;
+    }
+
     setEnCours(true);
     setErreur(null);
     setSucces(null);
     setProblemes([]);
     setSuggestions(null);
+    setProgression({ etape: "lecture", message: "Ouverture du document…" });
 
-    const reponse = await fetch("/api/cv", { method: "POST", body: donnees });
-    // Une passerelle qui coupe la requête répond en HTML : `json()` échoue alors, et
-    // un message générique laisserait l'utilisateur sans piste.
-    const corps = await reponse.json().catch(() => ({
-      message:
-        reponse.status === 504 || reponse.status === 502
-          ? "La lecture a pris trop de temps et a été interrompue. Réessayez — ou déposez un PDF contenant du texte plutôt qu'un scan."
-          : `Le serveur a répondu ${reponse.status} sans message exploitable.`,
-      problemes: [],
-    }));
+    let texte: string;
+    try {
+      // La lecture se fait ici, dans le navigateur : le fichier ne part pas.
+      texte = await lireCv(fichier, setProgression);
+    } catch (e) {
+      setEnCours(false);
+      setProgression(null);
+      // Le message affiché reste compréhensible ; la cause exacte va dans la console,
+      // sans quoi un échec de lecture est indiagnosticable à distance.
+      console.error("Lecture du CV impossible :", e);
+      setErreur(
+        e instanceof LectureImpossible
+          ? e.message
+          : "Ce document n'a pas pu être lu. Essayez un autre export, ou un PDF contenant du texte."
+      );
+      return;
+    }
+
+    setProgression(null);
+    const { ok, corps } = await envoyerJson<{ cv: Cv; analyse: Analyse }>("/api/cv", "POST", {
+      nomFichier: fichier.name,
+      texte,
+    });
     setEnCours(false);
 
-    if (!reponse.ok) {
+    if (!ok) {
       setProblemes(corps.problemes ?? []);
-      setErreur(corps.message ?? "Dépôt impossible.");
+      setErreur(corps.message ?? "Enregistrement impossible.");
       return;
     }
     setCv(corps.cv);
@@ -159,9 +180,10 @@ export default function DepotCv() {
         soit ajouté.
       </p>
       <p className="petit secondaire">
-        Le fichier n&apos;est pas conservé : seul son texte est enregistré, chiffré, et
-        effacé si vous retirez votre CV ou supprimez votre compte. Aucun service externe
-        n&apos;est appelé.
+        <strong>Votre document ne quitte pas cet appareil.</strong> Il est lu ici même,
+        dans votre navigateur ; seul le texte qui en est extrait nous est transmis, puis
+        chiffré. Il est effacé si vous retirez votre CV ou supprimez votre compte, et
+        aucun service externe n&apos;est appelé.
       </p>
 
       {cv && (
@@ -177,15 +199,42 @@ export default function DepotCv() {
       <form onSubmit={deposer} className="carte" noValidate style={{ marginBottom: "2rem" }}>
         <div className="champ">
           <label htmlFor={idFichier}>{cv ? "Remplacer par un autre fichier" : "Votre CV"}</label>
-          <input id={idFichier} name="cv" type="file" accept=".pdf,.docx,.txt" required />
+          <input
+            id={idFichier}
+            name="cv"
+            type="file"
+            accept=".pdf,.docx,.txt,.png,.jpg,.jpeg"
+            required
+          />
           <p className="petit secondaire">
-            PDF, Word (.docx) ou texte, 4 Mo maximum. Un PDF scanné sans texte ne pourra pas
-            être lu.
+            PDF, Word (.docx), texte, ou une photo de votre CV. 12 Mo maximum. Un document
+            scanné est lu par reconnaissance de caractères : comptez quelques dizaines de
+            secondes.
           </p>
         </div>
+        {progression && (
+          <div className="progression" role="status">
+            <p style={{ margin: 0 }}>{progression.message}</p>
+            {progression.etape === "reconnaissance" && (
+              <>
+                <div className="jauge">
+                  <div
+                    className="jauge-remplie"
+                    style={{ width: `${Math.round(progression.progression * 100)}%` }}
+                  />
+                </div>
+                <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                  {Math.round(progression.progression * 100)} % — ce document est un scan,
+                  sa lecture demande un peu plus de temps.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
         <RetourFormulaire erreur={erreur} succes={succes} problemes={problemes} />
         <button className="bouton" type="submit" disabled={enCours}>
-          {enCours ? "Lecture…" : cv ? "Remplacer le CV" : "Déposer mon CV"}
+          {enCours ? "Lecture en cours…" : cv ? "Remplacer le CV" : "Déposer mon CV"}
         </button>
       </form>
 
