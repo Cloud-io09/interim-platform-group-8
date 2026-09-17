@@ -12,3 +12,8 @@ next-env.d.ts
 .DS_Store
 .claude
 .cache
+
+# Tesseract dépose son modèle dans le répertoire courant quand langPath est ignoré :
+# le nôtre est versionné sous web/public/ocr, tout autre exemplaire est un résidu.
+/fra.traineddata
+web/fra.traineddata
