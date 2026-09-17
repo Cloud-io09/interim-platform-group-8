@@ -17,3 +17,4 @@ next-env.d.ts
 # le nôtre est versionné sous web/public/ocr, tout autre exemplaire est un résidu.
 /fra.traineddata
 web/fra.traineddata
+.vitest
