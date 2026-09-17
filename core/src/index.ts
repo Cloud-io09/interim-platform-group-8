@@ -8,6 +8,7 @@ export * from "./referentiel";
 export * from "./auth";
 export * from "./profil";
 export * from "./mission";
+export * from "./cv";
 export { connexion } from "./db";
 export * from "./redis";
 export * from "./ingestion/salaire";

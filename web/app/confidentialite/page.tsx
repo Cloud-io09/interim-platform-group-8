@@ -59,6 +59,15 @@ export default function Confidentialite() {
               <td>Documentée séparément. Elle n&apos;entre dans aucun calcul de correspondance.</td>
             </tr>
             <tr>
+              <th scope="row">Texte du CV</th>
+              <td>
+                Facultatif. Le fichier déposé n&apos;est jamais conservé : seul le texte
+                qui en est extrait l&apos;est, chiffré au repos, pour préremplir le profil
+                et suggérer des missions proches. Retirable à tout moment depuis votre
+                espace. Aucun service d&apos;analyse externe n&apos;est appelé.
+              </td>
+            </tr>
+            <tr>
               <th scope="row">Disponibilités</th>
               <td>Mesurer le recouvrement avec les dates de mission.</td>
             </tr>
@@ -67,7 +76,12 @@ export default function Confidentialite() {
 
         <h2>Ce que nous ne faisons pas</h2>
         <ul>
-          <li>Aucune analyse de CV, aucun profilage au-delà des critères annoncés.</li>
+          <li>
+            Le CV ne sert qu&apos;à proposer : il ne décide jamais de votre accès à une
+            mission. Cette décision repose uniquement sur vos certifications et leurs
+            dates, que vous saisissez vous-même.
+          </li>
+          <li>Aucun profilage au-delà des critères annoncés.</li>
           <li>Aucune notation des intérimaires.</li>
           <li>Aucune revente ni transmission à des tiers.</li>
           <li>Aucun traceur publicitaire. Le seul cookie déposé est celui de session.</li>
@@ -76,6 +90,7 @@ export default function Confidentialite() {
         <h2>Durées de conservation</h2>
         <ul>
           <li><strong>Compte et profil</strong> : 24 mois après la dernière connexion, puis suppression.</li>
+          <li><strong>Texte du CV</strong> : jusqu&apos;à son retrait par vous, ou la suppression du compte.</li>
           <li><strong>Session</strong> : 7 jours d&apos;inactivité, en base non relationnelle.</li>
           <li><strong>Tentatives de connexion</strong> : 15 minutes.</li>
           <li><strong>Traces de calcul de correspondance</strong> : 1 heure. Elles servent à expliquer un résultat, pas à archiver.</li>

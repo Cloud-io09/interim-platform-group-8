@@ -18,7 +18,7 @@ export default async function EspaceInterimaire() {
     const [c] = await sql<
       {
         certifications: number; perimees: number; expirent_bientot: number;
-        prochaine_echeance: string | null; periodes: number; missions_metier: number;
+        prochaine_echeance: string | null; periodes: number; cv: number; missions_metier: number;
       }[]
     >`
       select
@@ -32,6 +32,8 @@ export default async function EspaceInterimaire() {
            where interimaire_id = ${session.compteId} and date_echeance >= current_date) as prochaine_echeance,
         (select count(*)::int from disponibilite
            where interimaire_id = ${session.compteId} and date_fin >= current_date) as periodes,
+        (select count(*)::int from interimaire
+           where compte_id = ${session.compteId} and cv_texte_chiffre is not null) as cv,
         (select count(distinct m.id)::int from mission m
            join interimaire_metier im on im.metier_code = m.metier_code
            where im.interimaire_id = ${session.compteId}
@@ -99,6 +101,13 @@ export default async function EspaceInterimaire() {
                 texte: "Les périodes où vous pouvez travailler. Elles pèsent dans le classement.",
                 aFaire: c!.periodes === 0,
                 etat: c!.periodes === 0 ? "Aucune" : `${c!.periodes} période${c!.periodes > 1 ? "s" : ""}`,
+              },
+              {
+                href: "/espace/interimaire/cv",
+                titre: "Mon CV",
+                texte: "Déposez-le pour préremplir vos métiers et vos compétences, et repérer des missions proches.",
+                etat: c!.cv > 0 ? "Déposé" : "Aucun",
+                aFaire: false,
               },
               {
                 href: "/espace/interimaire/profil",

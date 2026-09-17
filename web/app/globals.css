@@ -14,6 +14,11 @@
   --texte-secondaire-sur-sombre: #a8a8a1;
   --bordure: #e3e3df;
   --bordure-forte: #1a1a1a;
+  /* Jaune de marque, réservé au logo — cf. public/logo/LISEZ-MOI.md : il identifie,
+     il ne signale rien, et n'apparaît qu'une fois par écran. */
+  --marque-jaune: #f5d90a;
+  /* Filet décoratif des encarts enrichis. Jamais porteur de texte : son contraste
+     sur fond clair ne passerait pas le critère 3.2 du RGAA. */
   --accent: #b8791f;
   --succes: #1f6b3a;
   --alerte: #a4331f;
@@ -88,7 +93,6 @@ a { color: inherit; }
 }
 
 .marque { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.15rem; }
-.marque-carre { width: 26px; height: 26px; background: var(--surface-sombre); border-radius: 6px; }
 .marque-etiquette {
   font-size: 0.7rem;
   font-weight: 600;
@@ -121,8 +125,11 @@ a { color: inherit; }
   border-color: var(--bordure);
 }
 
+/* Le sur-titre est du texte : il suit donc les règles du texte, pas celles d'un
+   ornement. Mesuré : l'ambre de l'accent plafonne à 3,38:1 sur fond clair, sous le
+   seuil de 4,5:1. On garde la graisse et l'interlettrage, on change la couleur. */
 .sur-titre {
-  color: var(--accent);
+  color: var(--texte-secondaire);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -148,7 +155,7 @@ a { color: inherit; }
   background: var(--surface-sombre);
   color: var(--texte-sur-sombre);
 }
-.section--sombre .sur-titre { color: var(--accent); }
+.section--sombre .sur-titre { color: var(--texte-secondaire-sur-sombre); }
 .section--sombre .secondaire { color: var(--texte-secondaire-sur-sombre); }
 
 .secondaire { color: var(--texte-secondaire); }
@@ -552,3 +559,8 @@ main code {
   background: #fdf8f7;
 }
 .bouton--danger { background: var(--alerte); border-color: var(--alerte); }
+
+/* Zone de protection de la marque : un quart de la hauteur du pavé, comme l'exige
+   la charte. Le `gap` la matérialise, rien ne vient s'y loger. */
+.marque { gap: 0.5rem; }
+.marque-pied { display: flex; align-items: center; gap: 0.5rem; }

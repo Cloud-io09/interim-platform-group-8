@@ -532,7 +532,36 @@ La carte de résultat de matching de la landing est reprise telle quelle au J8 �
 gauche, intitulé + entreprise + distance au centre, taux horaire à droite — **augmentée du
 détail par critère**, que la maquette n'affiche pas et que le sujet exige.
 
-### Le dépôt de CV est coupé du POC
+### Le dépôt de CV — décision révisée le 2026-09-17
+
+**La décision de couper a été renversée.** Le retour d'intervenant après soutenance
+blanche suggérait explicitement la lecture de CV, et l'équipe a tranché pour un
+dépôt de CV servant à la fois au préremplissage **et** à la suggestion de missions.
+
+Ce que ça implique, et qui doit être assumé devant le jury :
+
+- **Le préremplissage ne pose pas de problème.** Le CV propose des métiers, des
+  compétences et des types d'habilitation ; l'intérimaire valide ; seules des valeurs
+  typées entrent en base. Le moteur ne voit jamais le texte.
+- **Les certifications ne sont jamais appliquées automatiquement.** Un CV donne le
+  type du titre, presque jamais son numéro, son organisme ni sa date d'échéance — or
+  c'est cette date qui décide de l'éligibilité. Les détections ouvrent le formulaire,
+  l'intérimaire complète ce qui compte.
+- **La suggestion de missions depuis le texte sort du périmètre initial.** Le
+  CLAUDE.md classe le « matching sémantique sur CV » hors périmètre, et le cahier des
+  charges en fait l'élément différenciateur inversé. Les deux documents doivent être
+  amendés avant la soutenance, sinon la contradiction sera relevée.
+
+Garde-fou retenu dans le code : **chaque suggestion issue du CV porte le verdict du
+vrai moteur** — conforme, habilitation manquante, ou métier non déclaré. Sans ça, un
+intérimaire croirait pouvoir postuler à une mission dont il est écarté, c'est-à-dire
+exactement la confusion que le produit existe pour supprimer.
+
+Le fichier n'est jamais conservé : seul son texte l'est, chiffré, retirable, et
+effacé avec le compte. Aucun service d'OCR ou d'analyse externe n'est appelé — un PDF
+scanné sans couche texte est refusé avec une explication.
+
+### Ce qui avait motivé la coupe initiale
 
 L'écran d'inscription proposait « déposez votre CV, on remplit le profil ».
 

@@ -11,10 +11,12 @@
     "test": "next build && vitest run"
   },
   "dependencies": {
+    "@interimatch/core": "*",
+    "mammoth": "^1.12.3",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "@interimatch/core": "*"
+    "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@types/node": "^20",
