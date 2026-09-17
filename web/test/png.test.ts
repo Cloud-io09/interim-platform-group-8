@@ -85,7 +85,8 @@ describe("modèle de langue pour l'OCR", () => {
     // et un délai, et enverrait une requête à un tiers.
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
-    const chemin = join(process.cwd(), "public", "ocr", "fra.traineddata.gz");
+    // Chemin relatif au fichier de test : `process.cwd()` dépend d'où vitest est lancé.
+    const chemin = join(import.meta.dirname, "..", "public", "ocr", "fra.traineddata.gz");
     const contenu = readFileSync(chemin);
     expect(contenu.length).toBeGreaterThan(100_000);
     // Doit être un gzip valide : Tesseract le décompresse lui-même.
