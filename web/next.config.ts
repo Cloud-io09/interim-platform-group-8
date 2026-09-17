@@ -1,4 +1,16 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+
+/**
+ * Racine du monorepo.
+ *
+ * Sans cette indication, Next trace les fichiers relativement à `web/` et tout ce qui
+ * vit au-dessus — ici `node_modules/tesseract.js` et son cœur WASM, hoistés par npm
+ * workspaces — n'est pas embarqué dans la fonction déployée. Le worker attend alors
+ * un fichier absent, et la passerelle coupe : un 504 sans le moindre message.
+ */
+const racineMonorepo = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
  * En-têtes de sécurité.
@@ -60,11 +72,13 @@ const nextConfig: NextConfig = {
   images: { formats: ["image/avif", "image/webp"] },
 
   // Le pilote PostgreSQL ne doit pas être embarqué dans le bundle client.
-  serverExternalPackages: ["postgres", "tesseract.js", "unpdf"],
+  serverExternalPackages: ["postgres", "tesseract.js", "tesseract.js-core", "unpdf"],
 
   // Le modèle de langue vit dans public/, que Next ne trace pas dans le bundle des
   // fonctions : sans cette inclusion explicite, l'OCR échouerait en production sur
   // un fichier introuvable — alors qu'il fonctionne en local.
+  outputFileTracingRoot: racineMonorepo,
+
   outputFileTracingIncludes: {
     "/api/cv": [
       "./public/ocr/**",
