@@ -6,6 +6,14 @@ import type { NextConfig } from "next";
  * Vercel ne pose que HSTS ; tout le reste est à déclarer. Chaque ligne répond à une
  * attaque précise, pas à une case à cocher.
  */
+/**
+ * Vercel injecte sa barre de retour d'expérience sur les déploiements de
+ * prévisualisation. On l'autorise là, et nulle part ailleurs : en production, la
+ * politique reste stricte.
+ */
+const enPrevisualisation = process.env.VERCEL_ENV === "preview";
+const sourcesVercel = enPrevisualisation ? " https://vercel.live" : "";
+
 const enTetesSecurite = [
   // Empêche l'inclusion du site dans une iframe tierce — parade au clickjacking,
   // qui ferait cliquer un utilisateur connecté sur un bouton qu'il ne voit pas.
@@ -28,14 +36,15 @@ const enTetesSecurite = [
       "default-src 'self'",
       // Next injecte les données d'hydratation en ligne : 'unsafe-inline' est
       // nécessaire tant qu'on n'a pas de nonce par requête via middleware.
-      "script-src 'self' 'unsafe-inline'",
+      `script-src 'self' 'unsafe-inline'${sourcesVercel}`,
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data:",
+      `img-src 'self' data: blob:${sourcesVercel}`,
       "font-src 'self'",
-      "connect-src 'self'",
+      `connect-src 'self'${sourcesVercel}${enPrevisualisation ? " wss://ws-us3.pusher.com" : ""}`,
       "form-action 'self'",
       "base-uri 'self'",
       "frame-ancestors 'none'",
+      `frame-src 'self'${sourcesVercel}`,
       "object-src 'none'",
     ].join("; "),
   },
