@@ -49,6 +49,10 @@ export interface CompetenceReference {
   libelle: string;
 }
 
+export interface SuggestionCompetence extends CompetenceReference {
+  extrait: string;
+}
+
 /**
  * Longueur minimale d'un libellé de métier tenant en un seul mot.
  *
@@ -62,6 +66,34 @@ export interface SuggestionMetier {
   libelle: string;
   /** Fragment du libellé qui a déclenché la détection, pour que l'utilisateur juge. */
   declencheur: string;
+  /** Passage du CV où la détection a eu lieu, avec son contexte. */
+  extrait: string;
+}
+
+/** Contexte rendu autour d'une correspondance, en caractères de part et d'autre. */
+const MARGE_EXTRAIT = 45;
+
+/**
+ * Rend le passage du CV qui a déclenché une détection.
+ *
+ * Sans lui, l'utilisateur ne peut que croire l'outil sur parole. Avec, il vérifie
+ * d'un coup d'œil — et repère une erreur d'OCR aussi bien qu'un contresens.
+ */
+export function extraitAutour(texte: string, aiguille: string): string {
+  const normalise = normaliser(texte);
+  const position = normalise.indexOf(aiguille);
+  if (position < 0) return "";
+
+  // La normalisation change les longueurs : on repositionne en comptant les mots.
+  const motsAvant = normalise.slice(0, position).split(" ").length - 1;
+  const mots = texte.split(/\s+/);
+  const debut = Math.max(0, motsAvant - 6);
+  const fin = Math.min(mots.length, motsAvant + aiguille.split(" ").length + 6);
+  return (
+    (debut > 0 ? "…" : "") +
+    mots.slice(debut, fin).join(" ").trim() +
+    (fin < mots.length ? "…" : "")
+  );
 }
 
 /**
@@ -100,7 +132,12 @@ export function detecterMetiers(
       // courants du secteur, et ceux qu'un CV cite le plus souvent seuls.
       if (variante.split(" ").length < 2 && variante.length < LONGUEUR_MIN_MOT_METIER) continue;
       if (normalise.includes(` ${variante} `)) {
-        trouves.push({ code: metier.code, libelle: metier.libelle, declencheur: variante });
+        trouves.push({
+          code: metier.code,
+          libelle: metier.libelle,
+          declencheur: variante,
+          extrait: extraitAutour(texte, variante),
+        });
         break;
       }
     }
@@ -113,19 +150,20 @@ export function detecterCompetences(
   texte: string,
   referentiel: readonly CompetenceReference[],
   maximum = 10
-): CompetenceReference[] {
+): SuggestionCompetence[] {
   const normalise = ` ${normaliser(texte)} `;
   return referentiel
     .filter((c) => {
       const cible = normaliser(c.libelle);
       return cible.split(" ").length >= 2 && normalise.includes(` ${cible} `);
     })
-    .slice(0, maximum);
+    .slice(0, maximum)
+    .map((c) => ({ ...c, extrait: extraitAutour(texte, normaliser(c.libelle)) }));
 }
 
 export interface AnalyseCv {
   metiers: SuggestionMetier[];
-  competences: CompetenceReference[];
+  competences: SuggestionCompetence[];
   certifications: { typeCode: CodeTypeCertification; categorieCode: string | null; extrait: string }[];
   /** Vrai quand le texte est trop court pour qu'une extraction ait du sens. */
   tropCourt: boolean;

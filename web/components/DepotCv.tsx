@@ -5,8 +5,8 @@ import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
 import { envoyerJson } from "@/lib/client";
 
 interface Analyse {
-  metiers: { code: string; libelle: string; declencheur: string }[];
-  competences: { code: string; libelle: string }[];
+  metiers: { code: string; libelle: string; declencheur: string; extrait: string }[];
+  competences: { code: string; libelle: string; extrait: string }[];
   certifications: { typeCode: string; categorieCode: string | null; extrait: string }[];
   tropCourt: boolean;
 }
@@ -15,6 +15,7 @@ interface Cv {
   nomFichier: string | null;
   deposeLe?: string | null;
   longueur: number;
+  texte: string;
 }
 
 interface Suggestion {
@@ -180,23 +181,47 @@ export default function DepotCv() {
         </button>
       </form>
 
+      {cv?.texte && (
+        <details className="carte" style={{ marginBottom: "2rem" }}>
+          <summary>
+            Relire le texte lu dans votre document
+            <span className="petit secondaire"> — {cv.longueur.toLocaleString("fr-FR")} caractères</span>
+          </summary>
+          {/* Après une reconnaissance de caractères, l'utilisateur doit pouvoir
+              constater ce qui a été compris — et repérer une lecture fautive. */}
+          <p className="petit secondaire" style={{ marginTop: "0.75rem" }}>
+            Si ce texte est incompréhensible, votre document est probablement un scan de
+            mauvaise qualité. Un export PDF depuis un traitement de texte donnera un bien
+            meilleur résultat.
+          </p>
+          <pre className="texte-lu">{cv.texte}</pre>
+        </details>
+      )}
+
       {analyse && !analyse.tropCourt && (
         <>
           <h3>Ce que nous avons trouvé</h3>
+          <p className="secondaire">
+            Chaque élément est accompagné du passage qui l&apos;a déclenché. Décochez ce
+            qui ne correspond pas avant d&apos;ajouter à votre profil.
+          </p>
 
           {analyse.metiers.length > 0 && (
             <fieldset>
               <legend>Métiers</legend>
               <div className="cases">
                 {analyse.metiers.map((m) => (
-                  <label key={m.code} className="case">
-                    <input
-                      type="checkbox"
-                      checked={metiersCoches.includes(m.code)}
-                      onChange={() => basculer(metiersCoches, setMetiers, m.code)}
-                    />
-                    <span>{m.libelle}</span>
-                  </label>
+                  <div key={m.code} className="detection">
+                    <label className="case">
+                      <input
+                        type="checkbox"
+                        checked={metiersCoches.includes(m.code)}
+                        onChange={() => basculer(metiersCoches, setMetiers, m.code)}
+                      />
+                      <span>{m.libelle}</span>
+                    </label>
+                    {m.extrait && <p className="extrait-source">« {m.extrait} »</p>}
+                  </div>
                 ))}
               </div>
             </fieldset>
@@ -207,14 +232,17 @@ export default function DepotCv() {
               <legend>Compétences</legend>
               <div className="cases">
                 {analyse.competences.map((c) => (
-                  <label key={c.code} className="case">
-                    <input
-                      type="checkbox"
-                      checked={competencesCochees.includes(c.code)}
-                      onChange={() => basculer(competencesCochees, setCompetences, c.code)}
-                    />
-                    <span>{c.libelle}</span>
-                  </label>
+                  <div key={c.code} className="detection">
+                    <label className="case">
+                      <input
+                        type="checkbox"
+                        checked={competencesCochees.includes(c.code)}
+                        onChange={() => basculer(competencesCochees, setCompetences, c.code)}
+                      />
+                      <span>{c.libelle}</span>
+                    </label>
+                    {c.extrait && <p className="extrait-source">« {c.extrait} »</p>}
+                  </div>
                 ))}
               </div>
             </fieldset>

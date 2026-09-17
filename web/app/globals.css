@@ -596,3 +596,42 @@ main code {
    la charte. Le `gap` la matérialise, rien ne vient s'y loger. */
 .marque { gap: 0.5rem; }
 .marque-pied { display: flex; align-items: center; gap: 0.5rem; }
+
+/* --- Vérification de la lecture d'un CV ----------------------------------- */
+
+.detection { margin-bottom: 0.5rem; }
+
+/* Le passage d'origine : décalé sous la case, en retrait, pour qu'on le lise comme
+   une justification et non comme une seconde option. */
+.extrait-source {
+  margin: 0 0 0 2.1rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--bordure);
+  font-size: 0.8125rem;
+  color: var(--texte-secondaire);
+  font-style: italic;
+}
+
+details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: var(--cible-tactile);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.texte-lu {
+  max-height: 22rem;
+  overflow: auto;
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  padding: 0.9rem 1.1rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
