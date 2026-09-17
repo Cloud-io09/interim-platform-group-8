@@ -6,6 +6,15 @@ import { extraireTexte, FichierRefuse } from "@/lib/extraction-cv";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * La reconnaissance de caractères d'un CV scanné prend une à deux secondes, mais le
+ * chargement initial du moteur WASM s'y ajoute au premier appel d'une instance. La
+ * limite par défaut d'une fonction serverless ne suffit pas : sans cette déclaration,
+ * la requête est coupée sans message et l'utilisateur voit une lecture qui n'aboutit
+ * jamais.
+ */
+export const maxDuration = 60;
+
 /** Référentiels nécessaires à l'analyse, lus une fois par requête. */
 async function referentiels(sql: ReturnType<typeof connexion>) {
   const [metiers, competences] = await Promise.all([
@@ -33,7 +42,15 @@ export async function GET() {
 
     const { metiers, competences } = await referentiels(sql);
     return succes({
-      cv: { nomFichier: ligne!.cv_nom_fichier, deposeLe: ligne!.cv_depose_le, longueur: texte.length },
+      cv: {
+        nomFichier: ligne!.cv_nom_fichier,
+        deposeLe: ligne!.cv_depose_le,
+        longueur: texte.length,
+        // Le texte lu est rendu pour que l'utilisateur vérifie lui-même ce qui a été
+        // compris de son document — surtout après une reconnaissance de caractères,
+        // qui se trompe parfois sans le signaler.
+        texte,
+      },
       analyse: analyserCv(texte, metiers, competences),
     });
   } finally {
@@ -96,7 +113,10 @@ export async function POST(requete: Request) {
       ]);
     }
 
-    return succes({ cv: { nomFichier: fichier.name, longueur: texte.length }, analyse }, 201);
+    return succes(
+      { cv: { nomFichier: fichier.name, longueur: texte.length, texte }, analyse },
+      201
+    );
   } finally {
     await sql.end();
   }
