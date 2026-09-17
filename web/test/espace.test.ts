@@ -258,14 +258,21 @@ describe("consultation d'une mission par l'intérimaire", () => {
     expect(r.status).toBe(404);
   });
 
-  it("affiche l'urgence la plus bloquante sur l'accueil de l'espace", async () => {
+  it("met en avant le blocage le plus grave, et lui seul", async () => {
+    // Le tableau de bord n'expose qu'une chose à traiter : empiler les
+    // avertissements revient à n'en signaler aucun. L'ordre compte donc.
     const { cookie } = await inscrire("urgence", "interimaire");
+
     // Sans profil, c'est le profil qu'il faut signaler — pas les certifications.
     const sansProfil = await (await fetch(`${BASE}/espace/interimaire`, { headers: { cookie } })).text();
-    expect(sansProfil).toContain("Votre profil n&#x27;est pas renseigné");
+    expect(sansProfil).toContain("Renseignez votre profil");
+    expect(sansProfil).not.toContain("aucune certification");
 
+    // Profil renseigné : le blocage suivant est l'absence d'habilitation, parce
+    // qu'aucune mission qui en exige une ne peut être ouverte sans elle.
     await appel("/api/profil/interimaire", "POST", PROFIL, cookie);
     const avecProfil = await (await fetch(`${BASE}/espace/interimaire`, { headers: { cookie } })).text();
     expect(avecProfil).toContain("aucune certification");
+    expect(avecProfil).not.toContain("Renseignez votre profil");
   });
 });
