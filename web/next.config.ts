@@ -66,7 +66,15 @@ const nextConfig: NextConfig = {
   // fonctions : sans cette inclusion explicite, l'OCR échouerait en production sur
   // un fichier introuvable — alors qu'il fonctionne en local.
   outputFileTracingIncludes: {
-    "/api/cv": ["./public/ocr/**"],
+    "/api/cv": [
+      "./public/ocr/**",
+      // tesseract.js lance un `worker_threads` qui charge son cœur WASM depuis
+      // node_modules. Déclarer le paquet « externe » suffit à ne pas le bundler,
+      // mais pas à l'embarquer : sans ces deux lignes, le worker attend un fichier
+      // absent et la fonction expire — un 504 sans le moindre message.
+      "../node_modules/tesseract.js/**",
+      "../node_modules/tesseract.js-core/**",
+    ],
   },
 
   // Masque la version du framework : une information gratuite pour un attaquant.
