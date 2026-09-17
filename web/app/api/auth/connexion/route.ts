@@ -71,10 +71,26 @@ export async function POST(requete: Request) {
       ? await verifierMotDePasse(saisie.motDePasse, compte.mot_de_passe_hash, compte.mot_de_passe_sel)
       : await verifierMotDePasse(saisie.motDePasse, HASH_FACTICE, SEL_FACTICE);
 
-    // Message volontairement identique dans les deux cas : dire « cette adresse
-    // est inconnue » reviendrait à confirmer quelles adresses ont un compte.
+    // Message volontairement identique dans les deux cas : distinguer « compte
+    // inconnu » de « mot de passe faux » permettrait d'énumérer les comptes — on
+    // soumet une liste d'adresses et on apprend lesquelles sont inscrites. Le
+    // cahier des charges impose une protection contre les attaques basiques, et
+    // c'en est une.
+    //
+    // Le message reste utile sans être bavard : il dit quoi faire ensuite, dans les
+    // deux cas, plutôt que de laisser l'utilisateur deviner lequel s'applique.
     if (!compte || !valide) {
-      return erreur("Adresse e-mail ou mot de passe incorrect.", 401);
+      return erreur(
+        "Adresse e-mail ou mot de passe incorrect.",
+        401,
+        [
+          {
+            champ: "email",
+            message:
+              "Vérifiez votre saisie. Si vous n'avez pas encore de compte, créez-en un depuis le lien sous le formulaire.",
+          },
+        ]
+      );
     }
 
     await oublierTentatives([cleIp, cleEmail], cache);

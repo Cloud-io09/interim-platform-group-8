@@ -927,3 +927,68 @@ details > summary {
 /* Méta d'une carte : la pastille d'état doit rester sur la ligne plutôt que de la
    couper en deux au milieu d'un nombre. */
 .ligne-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
+
+/* --- Conformité ------------------------------------------------------------
+   Le différenciateur du produit. Trois contraintes : « expire pendant » n'est pas
+   une nuance de « valide », l'information ne repose jamais sur la couleur seule
+   (RGAA 3.1 — et les daltonismes sont fréquents dans les métiers manuels), et la
+   même formulation sert aux deux rôles. */
+
+.conformite {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+/* Le symbole diffère par la forme, pas seulement par la couleur : ✓ plein, ▲
+   triangulaire, ✕ croisé, — neutre. Lisible en niveaux de gris. */
+.conformite-symbole { font-size: 0.875em; }
+.conformite--ok { color: var(--succes); }
+.conformite--alerte { color: #8a5a00; border-width: 2px; }
+.conformite--bloque { color: var(--alerte); }
+
+.lignes-conformite { display: grid; gap: 0; }
+.ligne-conformite {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--bordure);
+}
+.lignes-conformite > .ligne-conformite:first-child { border-top: 0; padding-top: 0; }
+
+/* Carte de verdict : le filet de gauche double la couleur de fond, qui ne suffit
+   pas à signaler seule. */
+.carte--verdict-ok { border-left: 4px solid var(--succes); }
+.carte--verdict-bloque { border-left: 4px solid var(--alerte); }
+
+.separation-action { border-top: 1px solid var(--bordure); margin-top: 1.25rem; padding-top: 1.25rem; }
+.bloc-action { display: grid; gap: 0.75rem; }
+.boutons-action { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.boutons-action .bouton { flex: 1 1 auto; }
+
+/* Boutons posés sur la carte sombre : sans cette reprise, le bouton noir sur fond
+   noir disparaîtrait. Le jaune y atteint 12,6:1 avec du texte noir. */
+.carte--sombre .bouton {
+  background: var(--marque-jaune);
+  color: #1a1a1a;
+  border-color: var(--marque-jaune);
+}
+.carte--sombre .bouton:hover { background: #e3c909; border-color: #e3c909; }
+.carte--sombre .bouton--secondaire {
+  background: transparent;
+  color: var(--texte-sur-sombre);
+  border-color: #4a4a45;
+}
+.carte--sombre .bouton--secondaire:hover { background: transparent; border-color: var(--texte-sur-sombre); }
+.carte--sombre .separation-action { border-top-color: #333330; }
+.carte--sombre label { color: var(--texte-sur-sombre); }
+.carte--sombre .alerte-texte { color: #ff9c8a; }

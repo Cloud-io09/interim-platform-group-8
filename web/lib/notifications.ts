@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import { matcher } from "@interimatch/core";
+import { matcher, type Acteur, type EtatCandidature } from "@interimatch/core";
 import { chargerMission, chargerProfils } from "./depot";
 
 /**
@@ -101,57 +101,68 @@ export async function notifierMissionPubliee(sql: Sql, missionId: number): Promi
   );
 }
 
-/** Prévient un intérimaire qu'une entreprise l'a retenu sur une mission. */
-export async function notifierCandidatureProposee(
-  sql: Sql,
-  missionId: number,
-  interimaireId: number
-): Promise<number> {
-  const [mission] = await sql<{ titre: string; ville: string; raison_sociale: string }[]>`
-    select m.titre, m.ville, e.raison_sociale
-    from mission m join entreprise e on e.compte_id = m.entreprise_id
-    where m.id = ${missionId}`;
-  if (!mission) return 0;
-
-  return enregistrer(sql, [
-    {
-      compteId: interimaireId,
-      type: "candidature_proposee",
-      titre: `${mission.raison_sociale} vous propose une mission`,
-      corps: `${mission.titre} — ${mission.ville}. Répondez depuis la fiche.`,
-      lien: `/mes-missions/${missionId}`,
-      missionId,
-    },
-  ]);
-}
-
-/** Prévient l'entreprise que l'intérimaire a répondu à sa proposition. */
-export async function notifierReponseCandidature(
+/**
+ * Prévient **l'autre partie** d'un mouvement de candidature.
+ *
+ * Toujours l'autre : celui qui vient d'agir sait ce qu'il a fait. Une notification
+ * qui renvoie à son auteur son propre geste est du bruit, et elle noie celles qui
+ * appellent une réponse.
+ */
+export async function notifierCandidature(
   sql: Sql,
   missionId: number,
   interimaireId: number,
-  accepte: boolean
+  acteur: Acteur,
+  etat: EtatCandidature
 ): Promise<number> {
-  const [ligne] = await sql<{ entreprise_id: number; titre: string; prenom: string; nom: string }[]>`
-    select m.entreprise_id, m.titre, i.prenom, i.nom
-    from mission m, interimaire i
-    where m.id = ${missionId} and i.compte_id = ${interimaireId}`;
+  const [ligne] = await sql<
+    {
+      entreprise_id: number; titre: string; ville: string;
+      raison_sociale: string; prenom: string; nom: string;
+    }[]
+  >`
+    select m.entreprise_id, m.titre, m.ville, e.raison_sociale, i.prenom, i.nom
+    from mission m
+    join entreprise e on e.compte_id = m.entreprise_id
+    join interimaire i on i.compte_id = ${interimaireId}
+    where m.id = ${missionId}`;
   if (!ligne) return 0;
 
-  // La réponse remplace la précédente : un intérimaire qui change d'avis ne doit pas
-  // laisser deux notifications contradictoires côté entreprise.
+  const versEntreprise = acteur === "interimaire";
+  const destinataire = versEntreprise ? ligne.entreprise_id : interimaireId;
+  const qui = versEntreprise ? `${ligne.prenom} ${ligne.nom}` : ligne.raison_sociale;
+
+  const titre =
+    etat === "candidatee"
+      ? `${qui} a postulé à « ${ligne.titre} »`
+      : etat === "sollicitee"
+        ? `${qui} vous propose « ${ligne.titre} »`
+        : etat === "acceptee"
+          ? `Affectation confirmée : ${ligne.titre}`
+          : `${qui} s'est retiré de « ${ligne.titre} »`;
+
+  const corps =
+    etat === "acceptee"
+      ? `${ligne.ville}. ${versEntreprise ? `${qui} est affecté à ce chantier.` : "Vous êtes affecté à ce chantier."}`
+      : etat === "declinee"
+        ? null
+        : `${ligne.ville}. Une réponse est attendue de votre part.`;
+
+  // Un même couple mission/intérimaire peut enchaîner plusieurs mouvements : on
+  // remplace, sinon l'index d'unicité ferait taire tous les suivants.
   await sql`
     delete from notification
-    where compte_id = ${ligne.entreprise_id}
-      and type = 'candidature_repondue' and mission_id = ${missionId}`;
+    where compte_id = ${destinataire}
+      and type in ('candidature_proposee', 'candidature_repondue')
+      and mission_id = ${missionId}`;
 
   return enregistrer(sql, [
     {
-      compteId: ligne.entreprise_id,
-      type: "candidature_repondue",
-      titre: `${ligne.prenom} ${ligne.nom} a ${accepte ? "accepté" : "refusé"} votre proposition`,
-      corps: ligne.titre,
-      lien: `/missions/${missionId}`,
+      compteId: destinataire,
+      type: versEntreprise ? "candidature_repondue" : "candidature_proposee",
+      titre,
+      corps,
+      lien: versEntreprise ? `/missions/${missionId}` : `/mes-missions/${missionId}`,
       missionId,
     },
   ]);

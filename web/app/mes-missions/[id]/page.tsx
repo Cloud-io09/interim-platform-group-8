@@ -1,14 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connexion } from "@interimatch/core/db";
-import { distanceKm, joursDeChevauchement, nombreDeJours, matcher, typeCertification } from "@interimatch/core";
+import {
+  distanceKm,
+  estConforme,
+  joursDeChevauchement,
+  libelleEtat,
+  nombreDeJours,
+  type EtatCandidature,
+} from "@interimatch/core";
+import ActionCandidature from "@/components/ActionCandidature";
+import { ListeConformite, PastilleConformite } from "@/components/Conformite";
 import { exigerSession } from "@/lib/garde";
 import { chargerMission, chargerProfils } from "@/lib/depot";
+import { chargerMissionPourConformite, conformiteDetaillee } from "@/lib/candidatures";
 
 export const metadata: Metadata = { title: "Détail de la mission", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
+const enKm = (km: number) => `${km.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`;
+const enEuros = (v: number) => `${v.toFixed(2).replace(".", ",")} €`;
 
 export default async function DetailMissionInterimaire({ params }: { params: Promise<{ id: string }> }) {
   const session = await exigerSession("interimaire");
@@ -19,38 +31,27 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
   const sql = connexion();
   try {
     const mission = await chargerMission(sql, missionId);
-    // Seules les missions publiées sont consultables : un brouillon appartient à
-    // l'entreprise qui le rédige.
-    if (!mission || mission.statut !== "publiee") notFound();
+    if (!mission) notFound();
+
+    // Une mission pourvue reste consultable par l'intérimaire affecté : c'est son
+    // chantier. Elle disparaît pour les autres.
+    const [affectation] = await sql<{ interimaire_affecte_id: number | null }[]>`
+      select interimaire_affecte_id from mission where id = ${missionId}`;
+    const jeSuisAffecte = affectation?.interimaire_affecte_id === session.compteId;
+    if (mission.statut !== "publiee" && !jeSuisAffecte) notFound();
+
+    const pourConformite = (await chargerMissionPourConformite(sql, missionId))!;
+    const conformite = await conformiteDetaillee(sql, pourConformite, session.compteId);
+    const conforme = estConforme(conformite);
+    const bloquantes = conformite.filter((c) => c.bloquant);
+
+    const [candidature] = await sql<{ statut: EtatCandidature; motif: string | null }[]>`
+      select statut, motif from candidature
+      where mission_id = ${missionId} and interimaire_id = ${session.compteId}`;
+    const etat: EtatCandidature = candidature?.statut ?? "proposee";
 
     const profils = await chargerProfils(sql, mission.metierCode);
     const moi = profils.find((p) => p.interimaireId === session.compteId);
-    const resultat = matcher(mission, profils);
-    const retenu = resultat.retenus.find((r) => r.interimaireId === session.compteId);
-    const ecarte = resultat.ecartes.find((e) => e.interimaireId === session.compteId);
-
-    // État détenu pour chaque habilitation exigée : c'est ce qui permet à
-    // l'intérimaire de savoir quoi renouveler, et pas seulement qu'il est écarté.
-    const etatExigences = mission.certificationsRequises.map((exigence) => {
-      const detenues = (moi?.certifications ?? []).filter(
-        (c) =>
-          c.typeCode === exigence.typeCode &&
-          (exigence.categorieCode === null || c.categorieCode === exigence.categorieCode)
-      );
-      const meilleure = detenues.sort((a, b) => b.dateEcheance.localeCompare(a.dateEcheance))[0];
-      return {
-        libelle:
-          (typeCertification(exigence.typeCode)?.libelle ?? exigence.typeCode) +
-          (exigence.categorieCode ? ` — catégorie ${exigence.categorieCode}` : ""),
-        etat: !meilleure
-          ? ("absente" as const)
-          : meilleure.dateEcheance >= mission.dateFin
-            ? ("valide" as const)
-            : ("trop_tot" as const),
-        dateEcheance: meilleure?.dateEcheance ?? null,
-      };
-    });
-
     const distance = moi ? Math.round(distanceKm(moi, mission) * 10) / 10 : null;
     const joursMission = nombreDeJours(mission);
     const couverts = moi ? joursDeChevauchement(mission, moi.disponibilites) : 0;
@@ -58,35 +59,81 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
     return (
       <section className="section">
         <div className="colonne colonne--formulaire">
-          <p className="petit secondaire"><a href="/mes-missions">← Les missions</a></p>
+          <p className="petit secondaire">
+            <a href="/mes-missions">← Mes missions</a>
+          </p>
+
           <h1>{mission.titre}</h1>
+          <p className="secondaire ligne-meta">
+            <span>
+              {mission.raisonSociale} · {mission.ville}
+              {distance !== null && ` · ${enKm(distance)} de chez vous`}
+            </span>
+            <span className="pastille pastille--info">{libelleEtat(etat)}</span>
+          </p>
           <p className="secondaire">
-            {mission.raisonSociale} · {mission.ville} · du {enDateFr(mission.dateDebut)} au{" "}
-            {enDateFr(mission.dateFin)} · {joursMission} jours
+            Du {enDateFr(mission.dateDebut)} au {enDateFr(mission.dateFin)} · {joursMission} jours
             {mission.tauxHoraireMin !== null && (
-              <> · {mission.tauxHoraireMin.toFixed(2)} €/h
-                {mission.tauxHoraireMax !== null && mission.tauxHoraireMax !== mission.tauxHoraireMin && (
-                  <> à {mission.tauxHoraireMax.toFixed(2)} €/h</>
-                )}
+              <>
+                {" · "}
+                {enEuros(mission.tauxHoraireMin)}
+                {mission.tauxHoraireMax !== null && mission.tauxHoraireMax !== mission.tauxHoraireMin
+                  ? ` à ${enEuros(mission.tauxHoraireMax)}`
+                  : ""}
+                {" /h"}
               </>
             )}
           </p>
 
-          <div className={`bandeau ${retenu ? "bandeau--ok" : ecarte ? "bandeau--alerte" : "bandeau--neutre"}`}>
-            <p style={{ margin: 0, fontWeight: 600 }}>
-              {retenu
-                ? `Vous êtes conforme pour cette mission — compatibilité ${Math.round(retenu.total * 100)} %`
-                : ecarte
-                  ? "Il vous manque une habilitation pour cette mission"
-                  : "Ce métier n'est pas déclaré sur votre profil"}
+          {/* Le verdict d'abord, et la raison avec lui : un intérimaire qui découvre
+              qu'il est écarté doit apprendre dans la même phrase ce qui le débloque. */}
+          <div className={`carte ${conforme ? "carte--verdict-ok" : "carte--verdict-bloque"}`}>
+            <div className="tete-carte">
+              <h2 className="titre-carte">
+                {conforme
+                  ? "Vous pouvez travailler sur ce chantier"
+                  : bloquantes.length === 1
+                    ? "Une habilitation vous en écarte"
+                    : `${bloquantes.length} habilitations vous en écartent`}
+              </h2>
+              <PastilleConformite etat={conforme ? "valide" : bloquantes[0]!.etat} />
+            </div>
+            <p className="petit secondaire" style={{ margin: 0 }}>
+              {conforme
+                ? "Toutes les habilitations exigées couvrent la durée de la mission."
+                : "La validité est comparée à la date de fin du chantier, pas à celle du jour : un titre valable aujourd'hui peut ne pas suffire."}
             </p>
-            {!retenu && !ecarte && (
-              <p className="petit" style={{ margin: "0.4rem 0 0" }}>
-                Ajoutez-le depuis <a href="/espace/interimaire/profil">votre profil</a> pour
-                savoir si vous y êtes conforme.
+
+            {!conforme && (
+              <p className="petit" style={{ margin: "0.75rem 0 0" }}>
+                <a href="/espace/interimaire/certifications">Mettre à jour mes habilitations</a>
               </p>
             )}
+
+            <div className="separation-action">
+              <ActionCandidature
+                missionId={missionId}
+                acteur="interimaire"
+                etat={etat}
+                retour={`/mes-missions/${missionId}`}
+                conclusion={
+                  etat === "acceptee"
+                    ? "Vous êtes affecté à ce chantier. L'entreprise a été prévenue."
+                    : etat === "declinee"
+                      ? `Vous avez décliné cette mission.${candidature?.motif ? ` Motif : ${candidature.motif}` : ""}`
+                      : etat === "expiree"
+                        ? "Cette mission a été pourvue par quelqu'un d'autre."
+                        : "Votre candidature est en cours d'examen par l'entreprise."
+                }
+              />
+            </div>
           </div>
+
+          <h2>Habilitations exigées</h2>
+          <ListeConformite
+            exigences={conformite}
+            vide="Cette mission n'exige aucune habilitation particulière."
+          />
 
           {mission.description && (
             <>
@@ -95,64 +142,30 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
             </>
           )}
 
-          <h2>Habilitations exigées</h2>
-          {etatExigences.length === 0 ? (
-            <p className="secondaire">Cette mission n&apos;exige aucune habilitation particulière.</p>
-          ) : (
-            <ul className="liste-nue">
-              {etatExigences.map((e) => (
-                <li key={e.libelle} className="carte" style={{ marginBottom: "0.6rem" }}>
-                  <div className="ligne-certification">
-                    <div>
-                      <h3 style={{ fontSize: "1rem", margin: 0 }}>{e.libelle}</h3>
-                      {e.etat === "trop_tot" && e.dateEcheance && (
-                        <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
-                          Le vôtre expire le {enDateFr(e.dateEcheance)}, avant la fin du chantier
-                          le {enDateFr(mission.dateFin)}.
-                        </p>
-                      )}
-                      {e.etat === "valide" && e.dateEcheance && (
-                        <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
-                          Le vôtre est valable jusqu&apos;au {enDateFr(e.dateEcheance)}.
-                        </p>
-                      )}
-                    </div>
-                    <span
-                      className={`etiquette ${
-                        e.etat === "valide" ? "etiquette--ok" : e.etat === "trop_tot" ? "etiquette--attention" : "etiquette--alerte"
-                      }`}
-                    >
-                      {e.etat === "valide" ? "Vous l'avez" : e.etat === "trop_tot" ? "Expire trop tôt" : "Manquante"}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
           {moi && (
             <>
               <h2>Ce que ça donne pour vous</h2>
-              <ul className="liste-nue grille grille--3">
-                <li className="carte">
-                  <p className="statistique" style={{ fontSize: "1.75rem" }}>{distance} km</p>
-                  <p className="petit secondaire" style={{ margin: 0 }}>
-                    du chantier, pour une zone déclarée de {moi.rayonMobiliteKm} km
-                  </p>
+              <ul className="liste-nue lignes">
+                <li className="ligne">
+                  <span>
+                    <strong className="petit">Distance</strong>
+                    <span className="petit secondaire">
+                      {" "}
+                      pour une zone déclarée de {moi.rayonMobiliteKm} km
+                    </span>
+                  </span>
+                  <span className={distance !== null && distance <= moi.rayonMobiliteKm ? "pastille pastille--ok" : "pastille pastille--attention"}>
+                    {distance !== null ? enKm(distance) : "—"}
+                  </span>
                 </li>
-                <li className="carte">
-                  <p className="statistique" style={{ fontSize: "1.75rem" }}>{couverts}/{joursMission}</p>
-                  <p className="petit secondaire" style={{ margin: 0 }}>
-                    jours couverts par vos disponibilités
-                  </p>
-                </li>
-                <li className="carte">
-                  <p className="statistique" style={{ fontSize: "1.75rem" }}>
-                    {retenu ? `${Math.round(retenu.competences * 100)} %` : "—"}
-                  </p>
-                  <p className="petit secondaire" style={{ margin: 0 }}>
-                    des compétences attendues
-                  </p>
+                <li className="ligne">
+                  <span>
+                    <strong className="petit">Jours couverts</strong>
+                    <span className="petit secondaire"> par vos disponibilités déclarées</span>
+                  </span>
+                  <span className={couverts >= joursMission ? "pastille pastille--ok" : "pastille pastille--attention"}>
+                    {couverts}/{joursMission}
+                  </span>
                 </li>
               </ul>
               {couverts < joursMission && (

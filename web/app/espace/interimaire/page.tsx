@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connexion } from "@interimatch/core/db";
 import EnteteEspace from "@/components/EnteteEspace";
 import Notifications from "@/components/Notifications";
-import ReponseProposition from "@/components/ReponseProposition";
+import ActionCandidature from "@/components/ActionCandidature";
 import { exigerSession } from "@/lib/garde";
 import { tableauBordInterimaire, type EcheanceCertification, type MissionSuggeree } from "@/lib/tableau-bord";
 
@@ -146,8 +146,8 @@ export default async function EspaceInterimaire() {
                   <div className="carte carte--sombre">
                     <p className="sur-titre sur-titre--marque">
                       {b.propositions.length > 1
-                        ? `${b.propositions.length} propositions en attente`
-                        : "Une proposition en attente"}
+                        ? `${b.propositions.length} sollicitations en attente de votre réponse`
+                        : "Une entreprise vous sollicite"}
                     </p>
                     <h2>{b.propositions[0]!.titre}</h2>
                     <p className="sur-sombre-secondaire">
@@ -155,7 +155,14 @@ export default async function EspaceInterimaire() {
                       {enDateFr(b.propositions[0]!.dateDebut)} au {enDateFr(b.propositions[0]!.dateFin)}, début{" "}
                       {delai(b.propositions[0]!.joursAvantDebut)}.
                     </p>
-                    <ReponseProposition missionId={b.propositions[0]!.id} />
+                    <div className="separation-action">
+                      <ActionCandidature
+                        missionId={b.propositions[0]!.id}
+                        acteur="interimaire"
+                        etat={b.propositions[0]!.statut}
+                        retour="/espace/interimaire"
+                      />
+                    </div>
                   </div>
                 ) : b.certificationsPerimees > 0 ? (
                   <div className="carte carte--sombre">

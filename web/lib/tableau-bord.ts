@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import { matcher, typeCertification } from "@interimatch/core";
+import { attendUneReponseDe, matcher, typeCertification, type EtatCandidature } from "@interimatch/core";
 import { chargerMissions, chargerProfilsParMetiers } from "./depot";
 import { lireProfilEntreprise, lireProfilInterimaire, type ProfilEntrepriseLu, type ProfilInterimaireLu } from "./profils";
 import { compterNonLues, lister, rattraperEcheances, type Notification } from "./notifications";
@@ -44,7 +44,7 @@ export interface MissionProposee {
   ville: string;
   dateDebut: string;
   dateFin: string;
-  statut: "proposee" | "acceptee" | "refusee";
+  statut: EtatCandidature;
   joursAvantDebut: number;
 }
 
@@ -80,8 +80,10 @@ export interface TableauBordInterimaire {
   initiales: string;
   notifications: Notification[];
   nonLues: number;
-  /** Propositions d'entreprise en attente de réponse : la seule chose qui presse. */
+  /** Sollicitations d'entreprise en attente de ma réponse : la seule chose qui presse. */
   propositions: MissionProposee[];
+  /** Ce que j'ai envoyé et qui attend une réponse de l'entreprise. */
+  candidaturesEnvoyees: MissionProposee[];
   /** Mission acceptée dont la date de début est la plus proche. */
   prochaine: MissionProposee | null;
   suggestions: MissionSuggeree[];
@@ -106,7 +108,7 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
     sql<
       {
         id: number; titre: string; ville: string; date_debut: string; date_fin: string;
-        statut: MissionProposee["statut"]; raison_sociale: string;
+        statut: EtatCandidature; raison_sociale: string;
       }[]
     >`
       select m.id, m.titre, m.ville, m.date_debut::text, m.date_fin::text,
@@ -144,7 +146,7 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
   const { suggestions, bloquees } = await suggestionsPourInterimaire(
     sql,
     compteId,
-    new Set(enCandidature.map((c) => c.id))
+    new Set(enCandidature.filter((c) => c.statut !== "declinee").map((c) => c.id))
   );
 
   return {
@@ -152,7 +154,8 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
     initiales: profil ? initiales(profil.prenom, profil.nom) : "?",
     notifications,
     nonLues,
-    propositions: enCandidature.filter((c) => c.statut === "proposee"),
+    propositions: enCandidature.filter((c) => attendUneReponseDe(c.statut, "interimaire")),
+    candidaturesEnvoyees: enCandidature.filter((c) => c.statut === "candidatee"),
     prochaine: enCandidature.find((c) => c.statut === "acceptee") ?? null,
     suggestions,
     bloquees,

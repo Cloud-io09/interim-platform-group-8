@@ -236,9 +236,12 @@ describe("consultation d'une mission par l'intérimaire", () => {
     expect(r.status).toBe(200);
     const html = await r.text();
     expect(html).toContain("Mission consultable");
-    // Sans certification, l'écran doit le dire explicitement plutôt que d'afficher
-    // un simple refus.
-    expect(html).toContain("Manquante");
+    // Sans habilitation, la fiche doit nommer celle qui bloque plutôt que de rendre
+    // un verdict global, et proposer quand même une action — une fiche sans action
+    // est un cul-de-sac.
+    expect(html).toContain("Non déclarée");
+    expect(html).toContain("CACES R482");
+    expect(html).toContain("Postuler");
   });
 
   it("ne rend pas consultable une mission en brouillon", async () => {

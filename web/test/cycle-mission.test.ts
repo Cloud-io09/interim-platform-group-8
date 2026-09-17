@@ -64,57 +64,125 @@ afterAll(async () => {
   await Promise.all(emails.map((e) => cache.del(cle.tentativesEmail(e))));
 });
 
-describe("candidatures", () => {
-  it("permet de retenir un profil conforme, puis de le relire", async () => {
-    const ent = await entrepriseAvecMission("cand-ent");
-    const int = await inscrire("cand-conforme", "interimaire");
+describe("candidatures — le rapprochement est bilatéral", () => {
+  /** Intérimaire conforme à la mission d'essai, avec son identifiant de compte. */
+  async function interimaireConforme(marque: string, avecCaces = true) {
+    const int = await inscrire(marque, "interimaire");
     await appel("/api/profil/interimaire", "POST", PROFIL, int.cookie);
-    await appel("/api/certifications", "POST", {
-      typeCode: "CACES_R482", categorieCode: "B1", organismeEmetteur: "AFPA",
-      numero: `C-${Date.now()}`, dateObtention: "2024-01-15", dateEcheance: "2034-01-15",
+    if (avecCaces) {
+      await appel("/api/certifications", "POST", {
+        typeCode: "CACES_R482", categorieCode: "B1", organismeEmetteur: "AFPA",
+        numero: `C-${Date.now()}-${marque}`, dateObtention: "2024-01-15", dateEcheance: "2034-01-15",
+      }, int.cookie);
+    }
+    const id = (await appel("/api/moi", "GET", undefined, int.cookie)).corps.compte.id;
+    return { ...int, id };
+  }
+
+  it("laisse l'intérimaire postuler, et l'entreprise conclure", async () => {
+    const ent = await entrepriseAvecMission("bi-ent");
+    const int = await interimaireConforme("bi-int");
+
+    const postule = await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, vers: "candidatee",
     }, int.cookie);
-
-    const moi = await appel("/api/moi", "GET", undefined, int.cookie);
-    const id = moi.corps.compte.id;
-
-    const retenu = await appel(`/api/missions/${ent.missionId}/candidatures`, "POST", {
-      interimaireId: id, statut: "acceptee",
-    }, ent.cookie);
-    expect(retenu.statut).toBe(200);
+    expect(postule.statut).toBe(200);
+    expect(postule.corps.etat).toBe("candidatee");
 
     const lues = await appel(`/api/missions/${ent.missionId}/candidatures`, "GET", undefined, ent.cookie);
-    expect(lues.corps.candidatures).toHaveLength(1);
-    expect(lues.corps.candidatures[0]).toMatchObject({ interimaireId: id, statut: "acceptee" });
-  });
+    expect(lues.corps.candidatures[0]).toMatchObject({ interimaireId: int.id, statut: "candidatee" });
 
-  it("refuse de retenir un profil non conforme", async () => {
-    const ent = await entrepriseAvecMission("cand-refus");
-    const int = await inscrire("cand-sans", "interimaire");
-    await appel("/api/profil/interimaire", "POST", PROFIL, int.cookie);
-    const id = (await appel("/api/moi", "GET", undefined, int.cookie)).corps.compte.id;
-
-    // La conformité est revérifiée au moment de retenir, pas seulement à l'affichage :
-    // une certification a pu expirer entre les deux.
-    const r = await appel(`/api/missions/${ent.missionId}/candidatures`, "POST", {
-      interimaireId: id, statut: "acceptee",
+    const retenu = await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: int.id, vers: "acceptee",
     }, ent.cookie);
+    expect(retenu.statut).toBe(200);
+    expect(retenu.corps.missionPourvue).toBe(true);
+  });
+
+  it("laisse l'entreprise solliciter, et l'intérimaire conclure", async () => {
+    const ent = await entrepriseAvecMission("bi-sol");
+    const int = await interimaireConforme("bi-sol-int");
+
+    expect((await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: int.id, vers: "sollicitee",
+    }, ent.cookie)).corps.etat).toBe("sollicitee");
+
+    expect((await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, vers: "acceptee",
+    }, int.cookie)).corps.etat).toBe("acceptee");
+  });
+
+  it("interdit à une partie de conclure seule", async () => {
+    // C'est ce qui distingue une mise en relation d'une affectation unilatérale :
+    // postuler n'affecte pas, solliciter non plus.
+    const ent = await entrepriseAvecMission("bi-seul");
+    const int = await interimaireConforme("bi-seul-int");
+
+    expect((await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, vers: "acceptee",
+    }, int.cookie)).statut).toBe(409);
+
+    expect((await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: int.id, vers: "acceptee",
+    }, ent.cookie)).statut).toBe(409);
+  });
+
+  it("refuse une affectation non conforme, et dit laquelle des habilitations bloque", async () => {
+    // La conformité est rejouée au moment d'accepter, pas seulement au matching :
+    // un titre peut avoir expiré entre le rapprochement et la décision.
+    const ent = await entrepriseAvecMission("bi-nc");
+    const int = await interimaireConforme("bi-nc-int", false);
+
+    await appel("/api/candidatures", "POST", { missionId: ent.missionId, vers: "candidatee" }, int.cookie);
+    const r = await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: int.id, vers: "acceptee",
+    }, ent.cookie);
+
     expect(r.statut).toBe(409);
-    expect(r.corps.problemes[0].message).toMatch(/habilitation/);
+    expect(r.corps.message).toMatch(/CACES|non déclarée/i);
+    // Le détail est rendu habilitation par habilitation, pas en verdict global.
+    expect(r.corps.conformite[0]).toMatchObject({ typeCode: "CACES_R482", etat: "absente", bloquant: true });
   });
 
-  it("autorise en revanche à écarter explicitement un profil non conforme", async () => {
-    const ent = await entrepriseAvecMission("cand-ecart");
-    const int = await inscrire("cand-ecarte", "interimaire");
-    await appel("/api/profil/interimaire", "POST", PROFIL, int.cookie);
-    const id = (await appel("/api/moi", "GET", undefined, int.cookie)).corps.compte.id;
-    expect((await appel(`/api/missions/${ent.missionId}/candidatures`, "POST", { interimaireId: id, statut: "refusee" }, ent.cookie)).statut).toBe(200);
+  it("autorise en revanche à écarter un profil non conforme", async () => {
+    const ent = await entrepriseAvecMission("bi-ecart");
+    const int = await interimaireConforme("bi-ecart-int", false);
+    const r = await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: int.id, vers: "declinee", motif: "Profil retenu ailleurs",
+    }, ent.cookie);
+    expect(r.statut).toBe(200);
   });
 
-  it("refuse un statut inventé et une mission d'une autre entreprise", async () => {
-    const a = await entrepriseAvecMission("cand-a");
-    const b = await inscrire("cand-b", "entreprise");
-    expect((await appel(`/api/missions/${a.missionId}/candidatures`, "POST", { interimaireId: 1, statut: "embauche" }, a.cookie)).statut).toBe(422);
-    expect((await appel(`/api/missions/${a.missionId}/candidatures`, "GET", undefined, b.cookie)).statut).toBe(403);
+  it("rend les autres candidatures caduques quand la mission est pourvue", async () => {
+    const ent = await entrepriseAvecMission("bi-caduc");
+    const retenu = await interimaireConforme("bi-caduc-a");
+    const autre = await interimaireConforme("bi-caduc-b");
+
+    await appel("/api/candidatures", "POST", { missionId: ent.missionId, vers: "candidatee" }, autre.cookie);
+    await appel("/api/candidatures", "POST", { missionId: ent.missionId, vers: "candidatee" }, retenu.cookie);
+    await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: retenu.id, vers: "acceptee",
+    }, ent.cookie);
+
+    const lues = await appel(`/api/missions/${ent.missionId}/candidatures`, "GET", undefined, ent.cookie);
+    const etats = Object.fromEntries(
+      lues.corps.candidatures.map((c: { interimaireId: number; statut: string }) => [c.interimaireId, c.statut])
+    );
+    expect(etats[retenu.id]).toBe("acceptee");
+    // Laisser l'autre « en attente » d'une réponse qui ne viendra jamais serait pire
+    // que de le lui dire.
+    expect(etats[autre.id]).toBe("expiree");
+  });
+
+  it("refuse une action inventée, et une mission qui n'est pas la sienne", async () => {
+    const a = await entrepriseAvecMission("bi-a");
+    const b = await inscrire("bi-b", "entreprise");
+    expect((await appel("/api/candidatures", "POST", {
+      missionId: a.missionId, interimaireId: 1, vers: "embauche",
+    }, a.cookie)).statut).toBe(422);
+    expect((await appel("/api/candidatures", "POST", {
+      missionId: a.missionId, interimaireId: 1, vers: "sollicitee",
+    }, b.cookie)).statut).toBe(403);
   });
 });
 

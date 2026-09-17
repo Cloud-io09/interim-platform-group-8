@@ -49,7 +49,8 @@ export default function Entete() {
         ]
       : compte?.role === "interimaire"
         ? [
-            { href: "/mes-missions", libelle: "Les missions" },
+            { href: "/opportunites", libelle: "Opportunités" },
+            { href: "/mes-candidatures", libelle: "Mes candidatures" },
             { href: "/espace/interimaire", libelle: "Mon espace" },
           ]
         : [];
