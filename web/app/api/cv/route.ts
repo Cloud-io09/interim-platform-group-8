@@ -3,6 +3,7 @@ import { analyserCv, chiffrer, dechiffrerOptionnel } from "@interimatch/core";
 import { erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
 import { extraireTexte, FichierRefuse } from "@/lib/extraction-cv";
+import { OcrTropLong } from "@/lib/ocr";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,14 @@ export async function POST(requete: Request) {
   } catch (e) {
     if (e instanceof FichierRefuse) {
       return erreur(e.message, 422, [{ champ: "cv", message: e.message }]);
+    }
+    if (e instanceof OcrTropLong) {
+      // 503 et non 500 : réessayer a du sens, l'instance suivante sera chaude.
+      return erreur(
+        "La lecture de ce document a pris trop de temps. Réessayez, ou déposez un PDF contenant du texte plutôt qu'un scan.",
+        503,
+        [{ champ: "cv", message: "Lecture interrompue." }]
+      );
     }
     // Un PDF corrompu ou protégé fait échouer la bibliothèque : on l'explique
     // plutôt que de renvoyer une erreur serveur opaque.
