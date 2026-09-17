@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "L'intérim du BTP, sur certifications vérifiées",
+  title: "L'intérim du BTP, sur habilitations vérifiées",
   alternates: { canonical: "/" },
 };
 
 /**
- * Chiffres du relevé France Travail du 14 septembre 2026, méthode `scan-domaines`
- * (agrégation par grand domaine ROME). La date est affichée : le nombre d'offres
- * actives change tous les jours, un chiffre sans date n'est pas vérifiable.
+ * Relevé France Travail du 14 septembre 2026, méthode `scan-domaines` (agrégation par
+ * grand domaine ROME). La date accompagne toujours les chiffres : le nombre d'offres
+ * actives change chaque jour, et un chiffre sans date n'est pas vérifiable.
  */
 const RELEVE = {
   date: "14 septembre 2026",
@@ -20,40 +20,46 @@ const RELEVE = {
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");
 
-const FONCTIONNALITES = [
+/** Arguments écrits du point de vue de celui qui lit, dans ses termes à lui. */
+const POUR_ENTREPRISES = [
   {
-    titre: "Matching en deux temps",
+    titre: "Conformité d'abord, classement ensuite",
     texte:
-      "Un filtre éliminatoire écarte d'abord les profils non conformes, puis seuls les " +
-      "profils restants sont classés. Aucun score ne rattrape une certification manquante.",
+      "Un profil auquel il manque une habilitation exigée ne vous est pas proposé. " +
+      "Les autres sont classés par compétences communes, distance et disponibilité.",
   },
   {
-    titre: "Certifications à date d'échéance",
+    titre: "Validité vérifiée à la date de fin",
     texte:
-      "La validité est comparée à la date de fin de mission, pas à celle du jour. Une " +
-      "habilitation qui expire pendant le chantier écarte le profil.",
+      "Un CACES valide aujourd'hui mais périmé le 15 ne couvre pas un chantier qui " +
+      "finit le 21. C'est cette date-là que nous comparons, pas celle du jour.",
   },
   {
-    titre: "Missions à proximité",
+    titre: "Fiche de poste préremplie",
     texte:
-      "Rayon de mobilité réglable par l'intérimaire, 50 km par défaut, aligné sur le " +
-      "périmètre du CDI intérimaire.",
+      "Choisissez le métier : les habilitations habituellement exigées et la " +
+      "rémunération observée dans votre département viennent des offres publiques.",
+  },
+];
+
+const POUR_INTERIMAIRES = [
+  {
+    titre: "Vos titres, avec leurs dates",
+    texte:
+      "Vous déclarez vos CACES, AIPR et habilitations avec leur échéance. Rien " +
+      "d'autre ne détermine votre accès à un chantier — ni CV, ni notation.",
   },
   {
-    titre: "Alerte avant expiration",
+    titre: "Prévenu avant l'échéance",
     texte:
-      "L'intérimaire est prévenu en amont, avec le nombre de missions ouvertes qu'un " +
-      "renouvellement lui débloquerait.",
+      "Une alerte avant qu'un titre expire, accompagnée du nombre de missions " +
+      "ouvertes qu'un renouvellement vous rouvrirait.",
   },
   {
-    titre: "Notification de mission",
-    texte: "Dès qu'une mission publiée correspond au profil, sans avoir à consulter la plateforme.",
-  },
-  {
-    titre: "Fiche de poste enrichie",
+    titre: "Les missions viennent à vous",
     texte:
-      "Intitulés normalisés, certifications typiques du métier et fourchette de " +
-      "rémunération locale, issus des données publiques France Travail.",
+      "Dès qu'une mission publiée correspond à vos métiers et à vos titres valides, " +
+      "vous êtes prévenu. Vous fixez vous-même votre zone de déplacement.",
   },
 ];
 
@@ -62,18 +68,18 @@ export default function Accueil() {
     <>
       <section className="section">
         <div className="colonne">
-          <h1>Sur ce chantier, qui a le droit de monter dans l&apos;engin&nbsp;?</h1>
-          <p style={{ maxWidth: "54ch", fontSize: "1.125rem" }} className="secondaire">
-            Intérimatch écarte d&apos;emblée les profils dont le CACES, l&apos;AIPR ou
-            l&apos;habilitation expire avant la fin de votre chantier. Vous ne recevez que
-            des candidats affectables, classés par proximité et disponibilité.
+          <h1>L&apos;intérim du BTP, sur habilitations vérifiées.</h1>
+          <p style={{ maxWidth: "56ch", fontSize: "1.125rem" }} className="secondaire">
+            Les entreprises publient un besoin avec les habilitations exigées. Les
+            intérimaires déclarent les leurs, avec leurs dates. Nous ne rapprochons que
+            ce qui est conforme à la date du chantier.
           </p>
           <p style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "2rem" }}>
-            <a className="bouton" href="/inscription/interimaire">
-              Trouver une mission
+            <a className="bouton" href="/inscription/entreprise">
+              Je recrute pour un chantier
             </a>
-            <a className="bouton bouton--secondaire" href="/inscription/entreprise">
-              Je recrute pour mon chantier
+            <a className="bouton bouton--secondaire" href="/inscription/interimaire">
+              Je cherche des missions
             </a>
           </p>
         </div>
@@ -81,23 +87,20 @@ export default function Accueil() {
 
       <section className="section section--sombre">
         <div className="colonne">
-          <p className="sur-titre">Le problème</p>
-          <h2 style={{ maxWidth: "24ch" }}>
-            Le BTP recourt le plus à l&apos;intérim, et sa mise en relation reste la plus
-            artisanale.
+          <p className="sur-titre">Pourquoi le BTP</p>
+          <h2 style={{ maxWidth: "26ch" }}>
+            Plus d&apos;une offre du BTP sur deux est une mission d&apos;intérim.
           </h2>
           <div className="grille grille--3" style={{ marginTop: "2.5rem" }}>
             <div>
               <p className="statistique">{nombre(RELEVE.offresBtp)}</p>
-              <p className="petit secondaire">
-                offres BTP recensées via l&apos;API France Travail
-              </p>
+              <p className="petit secondaire">offres BTP recensées via l&apos;API France Travail</p>
             </div>
             <div>
               <p className="statistique">{RELEVE.partMissions} %</p>
               <p className="petit secondaire">
-                de ces offres sont des missions d&apos;intérim — le ratio le plus élevé des
-                quatre secteurs mesurés
+                sont des missions d&apos;intérim — le ratio le plus élevé des quatre
+                secteurs mesurés
               </p>
             </div>
             <div>
@@ -108,29 +111,48 @@ export default function Accueil() {
               </p>
             </div>
           </div>
-          {/* La source et la date accompagnent les chiffres : sans elles, ils ne sont
-              pas vérifiables — et c'est le reproche qu'on adresse aux concurrents. */}
           <p className="petit secondaire" style={{ marginTop: "1.5rem" }}>
-            Relevé du {RELEVE.date}, API Offres d&apos;emploi France Travail, agrégation par
-            grand domaine ROME. Le nombre d&apos;offres actives évolue chaque jour.
+            Relevé du {RELEVE.date}, API Offres d&apos;emploi France Travail, agrégation
+            par grand domaine ROME. Le nombre d&apos;offres actives évolue chaque jour.
           </p>
         </div>
       </section>
 
+      {/* Deux blocs distincts plutôt qu'une liste mixte : un intérimaire n'a pas à
+          trier ce qui le concerne dans une page écrite pour les entreprises. */}
       <section className="section">
         <div className="colonne">
-          <p className="sur-titre">Ce que fait la plateforme</p>
-          <h2>Six fonctions, une seule promesse.</h2>
+          <p className="sur-titre">Vous recrutez</p>
+          <h2>Vous ne recevez que des profils affectables.</h2>
           <div className="grille grille--3" style={{ marginTop: "2rem" }}>
-            {FONCTIONNALITES.map((f) => (
+            {POUR_ENTREPRISES.map((f) => (
               <article className="carte" key={f.titre}>
                 <h3>{f.titre}</h3>
-                <p className="petit secondaire" style={{ margin: 0 }}>
-                  {f.texte}
-                </p>
+                <p className="petit secondaire" style={{ margin: 0 }}>{f.texte}</p>
               </article>
             ))}
           </div>
+          <p style={{ marginTop: "2rem" }}>
+            <a className="bouton" href="/inscription/entreprise">Publier une fiche de poste</a>
+          </p>
+        </div>
+      </section>
+
+      <section className="section" style={{ borderTop: "1px solid var(--bordure)" }}>
+        <div className="colonne">
+          <p className="sur-titre">Vous cherchez des missions</p>
+          <h2>Ce sont vos habilitations qui ouvrent les chantiers.</h2>
+          <div className="grille grille--3" style={{ marginTop: "2rem" }}>
+            {POUR_INTERIMAIRES.map((f) => (
+              <article className="carte" key={f.titre}>
+                <h3>{f.titre}</h3>
+                <p className="petit secondaire" style={{ margin: 0 }}>{f.texte}</p>
+              </article>
+            ))}
+          </div>
+          <p style={{ marginTop: "2rem" }}>
+            <a className="bouton" href="/inscription/interimaire">Créer mon profil</a>
+          </p>
         </div>
       </section>
     </>
