@@ -52,7 +52,15 @@ h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 600; }
 h3 { font-size: 1.125rem; font-weight: 600; }
 p { margin: 0 0 1rem; }
 
-a { color: inherit; }
+/* Les liens héritent de la couleur du texte : le soulignement est donc le seul
+   moyen de les distinguer, et il est obligatoire partout où un lien est noyé dans
+   une phrase (RGAA 3.1). Ailleurs — marque, navigation, cartes entièrement
+   cliquables — le contexte suffit et le soulignement devient du bruit. */
+a { color: inherit; text-decoration: none; }
+
+/* Soulignement au survol ET à la prise de focus : un utilisateur au clavier doit
+   voir la même affordance qu'à la souris. */
+a:hover, a:focus-visible { text-decoration: underline; }
 
 /* RGAA 10.7 : la prise de focus doit rester visible partout. */
 :focus-visible {
@@ -221,7 +229,31 @@ a { color: inherit; }
 
 /* Les liens dans un bloc de texte doivent être identifiables autrement que par
    la couleur seule — RGAA 3.1. */
-main p a, .pied a { text-decoration: underline; }
+/* Liens au fil du texte : soulignés en permanence. */
+main p a,
+main li a:not(.action):not(.chiffre-lien),
+.pied a {
+  text-decoration: underline;
+}
+
+/* Éléments dont le lien est porté par un bloc entier ou par la marque : le
+   soulignement y ressemblerait à un oubli plutôt qu'à une affordance. */
+.marque,
+.marque:hover,
+.action,
+.action:hover,
+.chiffre-lien,
+.chiffre-lien:hover,
+.bouton,
+.bouton:hover,
+h1 a, h2 a, h3 a, h4 a {
+  text-decoration: none;
+}
+
+h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover,
+h1 a:focus-visible, h2 a:focus-visible, h3 a:focus-visible, h4 a:focus-visible {
+  text-decoration: underline;
+}
 
 /* --- Formulaires guidés --------------------------------------------------- */
 
