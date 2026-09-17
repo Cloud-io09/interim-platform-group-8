@@ -1,6 +1,7 @@
 import { connexion } from "@interimatch/core/db";
 import { cle, redis, sansEchec } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
+import { notifierMissionPubliee } from "@/lib/notifications";
 import { sessionOuErreur } from "@/lib/garde";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +63,9 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
       where id = ${missionId}`;
 
     await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation changement de statut");
+    if (vise === "publiee") {
+      await sansEchec(() => notifierMissionPubliee(sql, missionId), "notification de publication");
+    }
     return succes({ id: missionId, statut: vise });
   } finally {
     await sql.end();

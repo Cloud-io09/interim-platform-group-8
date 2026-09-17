@@ -1,6 +1,7 @@
 import { connexion } from "@interimatch/core/db";
 import { cle, matcher, redis, sansEchec } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
+import { notifierCandidatureProposee } from "@/lib/notifications";
 import { sessionOuErreur } from "@/lib/garde";
 import { chargerMission, chargerProfils } from "@/lib/depot";
 
@@ -108,6 +109,12 @@ export async function POST(requete: Request, contexte: { params: Promise<{ id: s
     // Retenir quelqu'un ne ferme pas la mission : une entreprise peut chercher
     // plusieurs profils pour un même chantier.
     await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation candidature");
+    if (statut === "proposee") {
+      await sansEchec(
+        () => notifierCandidatureProposee(sql, missionId, interimaireId),
+        "notification de proposition"
+      );
+    }
     return succes({ interimaireId, statut });
   } finally {
     await sql.end();
