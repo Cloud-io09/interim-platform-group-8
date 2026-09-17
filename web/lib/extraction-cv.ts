@@ -1,12 +1,21 @@
+import { lireParOcr } from "./ocr";
+
 /**
  * Extraction du texte d'un CV déposé.
  *
  * Le fichier n'est jamais écrit sur disque ni conservé : il est lu en mémoire, son
  * texte est extrait, et l'objet est abandonné. Seul le texte est stocké, chiffré.
  *
- * Aucun service d'OCR externe n'est appelé. Un CV scanné sans couche texte ne rendra
- * donc rien — on le dit à l'utilisateur plutôt que d'envoyer son document à un tiers.
+ * Deux chemins pour un PDF : la couche texte quand elle existe, la reconnaissance de
+ * caractères sinon. Beaucoup de CV du BTP sont des scans — un fichier réel testé ici
+ * ne contenait aucune police et une seule image pleine page.
+ *
+ * L'OCR s'exécute sur notre serveur, avec un modèle servi depuis nos fichiers :
+ * le document du candidat n'est transmis à aucun tiers.
  */
+
+/** En deçà, la couche texte est absente ou inutilisable : on tente l'OCR. */
+export const SEUIL_BASCULE_OCR = 120;
 
 /** Vercel plafonne le corps d'une requête serverless : on refuse avant d'y arriver. */
 export const TAILLE_MAX_OCTETS = 4 * 1024 * 1024;
@@ -54,9 +63,17 @@ export async function extraireTexte(fichier: File): Promise<string> {
 
   if (fichier.type === "application/pdf") {
     const { extractText, getDocumentProxy } = await import("unpdf");
+    // pdf.js **détache** le tampon qu'on lui passe : sans copie préalable, la
+    // seconde lecture — celle de l'OCR — échouerait sur un tampon vidé.
+    const pourOcr = octets.slice();
     const document = await getDocumentProxy(octets);
     const { text } = await extractText(document, { mergePages: true });
-    return Array.isArray(text) ? text.join("\n") : text;
+    const coucheTexte = Array.isArray(text) ? text.join("\n") : text;
+    if (coucheTexte.trim().length >= SEUIL_BASCULE_OCR) return coucheTexte;
+
+    // Pas de couche texte exploitable : le PDF est un scan. On lit l'image.
+    const reconnu = await lireParOcr(pourOcr);
+    return reconnu.trim().length > coucheTexte.trim().length ? reconnu : coucheTexte;
   }
 
   const mammoth = (await import("mammoth")).default;

@@ -51,7 +51,7 @@ const nextConfig: NextConfig = {
   images: { formats: ["image/avif", "image/webp"] },
 
   // Le pilote PostgreSQL ne doit pas être embarqué dans le bundle client.
-  serverExternalPackages: ["postgres"],
+  serverExternalPackages: ["postgres", "tesseract.js", "unpdf"],
 
   // Masque la version du framework : une information gratuite pour un attaquant.
   poweredByHeader: false,
