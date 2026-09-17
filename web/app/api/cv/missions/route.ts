@@ -2,7 +2,7 @@ import { connexion } from "@interimatch/core/db";
 import { dechiffrerOptionnel, matcher, rapprocherMissions } from "@interimatch/core";
 import { erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
-import { chargerMission, chargerProfils } from "@/lib/depot";
+import { chargerMissions, chargerProfilsParMetiers } from "@/lib/depot";
 
 export const dynamic = "force-dynamic";
 
@@ -51,11 +51,14 @@ export async function GET() {
     ).slice(0, MAXIMUM);
 
     const enrichies = [];
+    const chargees = await chargerMissions(sql, suggestions.map((x) => x.missionId));
+    const missions = new Map(chargees.map((m) => [m.missionId, m]));
+    const profilsParMetier = await chargerProfilsParMetiers(sql, chargees.map((m) => m.metierCode));
     for (const s of suggestions) {
-      const mission = await chargerMission(sql, s.missionId);
+      const mission = missions.get(s.missionId);
       if (!mission) continue;
 
-      const profils = await chargerProfils(sql, mission.metierCode);
+      const profils = profilsParMetier.get(mission.metierCode) ?? [];
       const resultat = matcher(mission, profils);
       const retenu = resultat.retenus.some((r) => r.interimaireId === moi);
       const ecarte = resultat.ecartes.find((e) => e.interimaireId === moi);

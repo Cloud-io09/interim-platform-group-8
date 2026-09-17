@@ -1,6 +1,6 @@
 import { connexion } from "@interimatch/core/db";
 import { matcher } from "@interimatch/core";
-import { chargerMission, chargerProfils } from "@/lib/depot";
+import { chargerMissions, chargerProfilsParMetiers } from "@/lib/depot";
 import { n8nAutorise, refusN8n } from "@/lib/n8n";
 
 export const dynamic = "force-dynamic";
@@ -37,11 +37,12 @@ export async function GET(requete: Request) {
       limit 50`;
 
     const notifications = [];
-    for (const { id } of recentes) {
-      const mission = await chargerMission(sql, id);
-      if (!mission) continue;
-
-      const profils = await chargerProfils(sql, mission.metierCode);
+    // Trois requêtes pour l'ensemble des missions, au lieu de trois par mission.
+    const missions = await chargerMissions(sql, recentes.map((m) => m.id));
+    // Tous les profils concernés en une fois : l'union des métiers des missions.
+    const profilsParMetier = await chargerProfilsParMetiers(sql, missions.map((m) => m.metierCode));
+    for (const mission of missions) {
+      const profils = profilsParMetier.get(mission.metierCode) ?? [];
       const resultat = matcher(mission, profils);
       const identites = new Map(profils.map((p) => [p.interimaireId, p]));
 
