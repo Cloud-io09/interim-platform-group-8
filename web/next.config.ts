@@ -53,6 +53,13 @@ const nextConfig: NextConfig = {
   // Le pilote PostgreSQL ne doit pas être embarqué dans le bundle client.
   serverExternalPackages: ["postgres", "tesseract.js", "unpdf"],
 
+  // Le modèle de langue vit dans public/, que Next ne trace pas dans le bundle des
+  // fonctions : sans cette inclusion explicite, l'OCR échouerait en production sur
+  // un fichier introuvable — alors qu'il fonctionne en local.
+  outputFileTracingIncludes: {
+    "/api/cv": ["./public/ocr/**"],
+  },
+
   // Masque la version du framework : une information gratuite pour un attaquant.
   poweredByHeader: false,
 
