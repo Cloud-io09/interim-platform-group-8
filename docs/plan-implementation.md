@@ -559,9 +559,20 @@ vrai moteur** — conforme, habilitation manquante, ou métier non déclaré. Sa
 intérimaire croirait pouvoir postuler à une mission dont il est écarté, c'est-à-dire
 exactement la confusion que le produit existe pour supprimer.
 
-Le fichier n'est jamais conservé : seul son texte l'est, chiffré, retirable, et
-effacé avec le compte. Aucun service d'OCR ou d'analyse externe n'est appelé — un PDF
-scanné sans couche texte est refusé avec une explication.
+**Le fichier ne quitte pas l'appareil de l'utilisateur.** La lecture se fait dans le
+navigateur : couche texte du PDF quand elle existe, reconnaissance de caractères
+(Tesseract en WebAssembly) quand le document est un scan ou une photo. Le serveur ne
+reçoit que le texte, qu'il chiffre ; il est retirable et effacé avec le compte. Aucun
+service externe n'est appelé, et les fichiers du moteur sont servis depuis le projet.
+
+Ce choix n'était pas le premier. La reconnaissance tournait d'abord côté serveur ; en
+production elle a produit trois passerelles expirées de suite, une fonction sans état
+n'ayant ni le temps ni la mémoire de charger douze mégaoctets de moteur à chaque
+requête. Le navigateur, lui, n'a pas de limite de temps — et le document reste chez son
+propriétaire, ce qui vaut mieux que le compromis d'origine.
+
+Mesuré sur poste, avec Chrome piloté par le protocole DevTools : PDF à couche texte lu
+en 0,5 s, PDF scanné en 2,1 s (1 999 caractères), photo PNG en 1,5 s.
 
 ### Ce qui avait motivé la coupe initiale
 
