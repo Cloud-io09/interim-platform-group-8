@@ -66,7 +66,7 @@ export default function Disponibilites() {
 
   return (
     <section aria-labelledby="titre-disponibilites">
-      <h2 id="titre-disponibilites">Mes disponibilités</h2>
+      <h2 id="titre-disponibilites">Vos périodes déclarées</h2>
       <p className="secondaire">
         Déclarez les périodes où vous pouvez travailler. Elles ne vous excluent jamais
         d&apos;une mission : elles pèsent dans le classement, pour que les entreprises

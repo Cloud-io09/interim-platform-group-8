@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Entete from "@/components/Entete";
+import Logo from "@/components/Logo";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://interimatch.vercel.app"),
@@ -18,6 +19,13 @@ export const metadata: Metadata = {
     siteName: "Intérimatch",
   },
   robots: { index: true, follow: true },
+  icons: {
+    icon: [
+      { url: "/logo/interimatch-favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo/interimatch-favicon-64.png", sizes: "64x64", type: "image/png" },
+    ],
+    apple: { url: "/logo/interimatch-favicon-180.png", sizes: "180x180" },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="pied">
           <div className="colonne grille grille--3">
             <div>
-              <h2>Intérimatch</h2>
+              <h2 className="marque-pied">
+                <Logo taille={24} inverse />
+                Intérimatch
+              </h2>
               <p>
                 La plateforme d&apos;intérim dédiée au BTP. Projet Epitech, preuve de
                 concept réalisée en 11 jours.

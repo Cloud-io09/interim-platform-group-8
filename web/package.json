@@ -11,10 +11,13 @@
     "test": "next build && vitest run"
   },
   "dependencies": {
+    "@interimatch/core": "*",
+    "mammoth": "^1.12.3",
     "next": "16.3.5",
+    "pdfjs-dist": "^6.3.289",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "@interimatch/core": "*"
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",

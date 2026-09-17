@@ -14,6 +14,11 @@
   --texte-secondaire-sur-sombre: #a8a8a1;
   --bordure: #e3e3df;
   --bordure-forte: #1a1a1a;
+  /* Jaune de marque, réservé au logo — cf. public/logo/LISEZ-MOI.md : il identifie,
+     il ne signale rien, et n'apparaît qu'une fois par écran. */
+  --marque-jaune: #f5d90a;
+  /* Filet décoratif des encarts enrichis. Jamais porteur de texte : son contraste
+     sur fond clair ne passerait pas le critère 3.2 du RGAA. */
   --accent: #b8791f;
   --succes: #1f6b3a;
   --alerte: #a4331f;
@@ -47,7 +52,15 @@ h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 600; }
 h3 { font-size: 1.125rem; font-weight: 600; }
 p { margin: 0 0 1rem; }
 
-a { color: inherit; }
+/* Les liens héritent de la couleur du texte : le soulignement est donc le seul
+   moyen de les distinguer, et il est obligatoire partout où un lien est noyé dans
+   une phrase (RGAA 3.1). Ailleurs — marque, navigation, cartes entièrement
+   cliquables — le contexte suffit et le soulignement devient du bruit. */
+a { color: inherit; text-decoration: none; }
+
+/* Soulignement au survol ET à la prise de focus : un utilisateur au clavier doit
+   voir la même affordance qu'à la souris. */
+a:hover, a:focus-visible { text-decoration: underline; }
 
 /* RGAA 10.7 : la prise de focus doit rester visible partout. */
 :focus-visible {
@@ -88,7 +101,6 @@ a { color: inherit; }
 }
 
 .marque { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.15rem; }
-.marque-carre { width: 26px; height: 26px; background: var(--surface-sombre); border-radius: 6px; }
 .marque-etiquette {
   font-size: 0.7rem;
   font-weight: 600;
@@ -121,8 +133,11 @@ a { color: inherit; }
   border-color: var(--bordure);
 }
 
+/* Le sur-titre est du texte : il suit donc les règles du texte, pas celles d'un
+   ornement. Mesuré : l'ambre de l'accent plafonne à 3,38:1 sur fond clair, sous le
+   seuil de 4,5:1. On garde la graisse et l'interlettrage, on change la couleur. */
 .sur-titre {
-  color: var(--accent);
+  color: var(--texte-secondaire);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -148,7 +163,7 @@ a { color: inherit; }
   background: var(--surface-sombre);
   color: var(--texte-sur-sombre);
 }
-.section--sombre .sur-titre { color: var(--accent); }
+.section--sombre .sur-titre { color: var(--texte-secondaire-sur-sombre); }
 .section--sombre .secondaire { color: var(--texte-secondaire-sur-sombre); }
 
 .secondaire { color: var(--texte-secondaire); }
@@ -214,7 +229,31 @@ a { color: inherit; }
 
 /* Les liens dans un bloc de texte doivent être identifiables autrement que par
    la couleur seule — RGAA 3.1. */
-main p a, .pied a { text-decoration: underline; }
+/* Liens au fil du texte : soulignés en permanence. */
+main p a,
+main li a:not(.action):not(.chiffre-lien),
+.pied a {
+  text-decoration: underline;
+}
+
+/* Éléments dont le lien est porté par un bloc entier ou par la marque : le
+   soulignement y ressemblerait à un oubli plutôt qu'à une affordance. */
+.marque,
+.marque:hover,
+.action,
+.action:hover,
+.chiffre-lien,
+.chiffre-lien:hover,
+.bouton,
+.bouton:hover,
+h1 a, h2 a, h3 a, h4 a {
+  text-decoration: none;
+}
+
+h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover,
+h1 a:focus-visible, h2 a:focus-visible, h3 a:focus-visible, h4 a:focus-visible {
+  text-decoration: underline;
+}
 
 /* --- Formulaires guidés --------------------------------------------------- */
 
@@ -552,3 +591,59 @@ main code {
   background: #fdf8f7;
 }
 .bouton--danger { background: var(--alerte); border-color: var(--alerte); }
+
+/* Zone de protection de la marque : un quart de la hauteur du pavé, comme l'exige
+   la charte. Le `gap` la matérialise, rien ne vient s'y loger. */
+.marque { gap: 0.5rem; }
+.marque-pied { display: flex; align-items: center; gap: 0.5rem; }
+
+/* --- Vérification de la lecture d'un CV ----------------------------------- */
+
+.detection { margin-bottom: 0.5rem; }
+
+/* Le passage d'origine : décalé sous la case, en retrait, pour qu'on le lise comme
+   une justification et non comme une seconde option. */
+.extrait-source {
+  margin: 0 0 0 2.1rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--bordure);
+  font-size: 0.8125rem;
+  color: var(--texte-secondaire);
+  font-style: italic;
+}
+
+details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: var(--cible-tactile);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.texte-lu {
+  max-height: 22rem;
+  overflow: auto;
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  padding: 0.9rem 1.1rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Progression d'une lecture longue : l'utilisateur doit voir qu'il se passe quelque
+   chose, sinon il croit l'outil bloqué et recharge la page. */
+.progression {
+  border: 1px solid var(--bordure);
+  border-left: 3px solid var(--texte-secondaire);
+  border-radius: var(--rayon-petit);
+  background: var(--fond);
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+.progression .jauge { margin-top: 0.5rem; }

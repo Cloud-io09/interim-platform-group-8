@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Logo from "./Logo";
 
 interface Compte {
   role: "entreprise" | "interimaire";
@@ -57,7 +58,7 @@ export default function Entete() {
     <header className="entete">
       <div className="colonne">
         <a href="/" className="marque" aria-label="Intérimatch, accueil">
-          <span className="marque-carre" aria-hidden="true" />
+          <Logo taille={28} />
           Intérimatch
           <span className="marque-etiquette">BTP</span>
         </a>

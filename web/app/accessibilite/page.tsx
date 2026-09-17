@@ -24,7 +24,25 @@ export default function Accessibilite() {
           porte sur une version de démonstration.
         </p>
 
-        <h3>Ce qui est mis en œuvre</h3>
+        <h3>Ce qui est vérifié automatiquement</h3>
+        <p>
+          Les critères vérifiables sur le code rendu le sont par des tests exécutés à
+          chaque modification, sur les dix-sept pages du produit. Un manquement casse la
+          construction : il ne peut pas partir en production.
+        </p>
+        <ul>
+          <li>Langue du document déclarée, un seul <code>h1</code> par page, aucun niveau de titre sauté.</li>
+          <li>Repères <code>header</code>, <code>main</code>, <code>footer</code> et navigation nommée présents partout.</li>
+          <li>Lien d&apos;évitement présent, et sa cible existante.</li>
+          <li>Aucun <code>tabindex</code> positif, aucun lien ou bouton retiré de la tabulation.</li>
+          <li>Aucune action confiée à un élément non interactif.</li>
+          <li>Chaque champ associé à une étiquette — par <code>for</code>, par ARIA, ou par enveloppement.</li>
+          <li>Chaque <code>fieldset</code> nommé par une <code>legend</code>.</li>
+          <li>Aucune image sans alternative, logo masqué aux technologies d&apos;assistance.</li>
+          <li>Aucun état de certification signalé par la seule couleur.</li>
+        </ul>
+
+        <h3>Ce qui est mis en œuvre, sans être automatiquement vérifiable</h3>
         <ul>
           <li>Lien d&apos;évitement vers le contenu principal, visible à la prise de focus.</li>
           <li>Un seul <code>h1</code> par page, hiérarchie de titres continue.</li>
@@ -33,14 +51,21 @@ export default function Accessibilite() {
           <li>Cibles tactiles d&apos;au moins 44 pixels, y compris les liens de navigation.</li>
           <li>Aucune information portée par la couleur seule : les états de certification sont toujours écrits en toutes lettres.</li>
           <li>Champs de saisie à 16 pixels minimum, pour éviter le zoom automatique sur iOS.</li>
+          <li>Contrastes mesurés : 16,2:1 pour le texte principal, 6,3:1 pour le texte secondaire, 5,9:1 pour les états d&apos;alerte — tous au-dessus du seuil de 4,5:1.</li>
           <li>Prise de focus visible en permanence, et respect du réglage système de réduction des animations.</li>
         </ul>
 
         <h3>Limites connues</h3>
+        <p>
+          Un test automatique vérifie la structure, pas l&apos;expérience. Ces points
+          restent à éprouver à la main :
+        </p>
         <ul>
-          <li>Aucun audit RGAA complet n&apos;a été conduit par un tiers.</li>
-          <li>Les jauges de score sont décoratives ; la valeur chiffrée les accompagne systématiquement, mais leur rendu n&apos;a pas été testé sur lecteur d&apos;écran.</li>
+          <li>La cohérence perçue de l&apos;ordre de tabulation n&apos;a pas été parcourue écran par écran.</li>
+          <li>La restitution réelle par un lecteur d&apos;écran n&apos;a pas été testée.</li>
+          <li>Les jauges de score sont décoratives et toujours accompagnées de leur valeur chiffrée, mais leur annonce n&apos;a pas été vérifiée.</li>
           <li>Le parcours n&apos;a pas été éprouvé avec un utilisateur en situation de handicap.</li>
+          <li>Aucun audit RGAA complet n&apos;a été conduit par un tiers.</li>
         </ul>
 
         <h2>Écoconception</h2>

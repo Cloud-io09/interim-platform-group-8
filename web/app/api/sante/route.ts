@@ -47,6 +47,9 @@ export async function GET() {
     return String(pong);
   });
 
+  // Rien à sonder pour la lecture des CV : elle s'exécute dans le navigateur, à
+  // partir de fichiers statiques. Une sonde côté serveur ne dirait rien de ce que
+  // l'utilisateur obtient réellement — et le navigateur, lui, signale son échec.
   const ok = postgres.ok && cache.ok;
   return Response.json(
     { ok, verifieLe: new Date().toISOString(), services: { postgres, cache } },

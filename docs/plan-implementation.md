@@ -532,7 +532,49 @@ La carte de résultat de matching de la landing est reprise telle quelle au J8 �
 gauche, intitulé + entreprise + distance au centre, taux horaire à droite — **augmentée du
 détail par critère**, que la maquette n'affiche pas et que le sujet exige.
 
-### Le dépôt de CV est coupé du POC
+### Le dépôt de CV — décision révisée le 2026-09-17
+
+**La décision de couper a été renversée.** Le retour d'intervenant après soutenance
+blanche suggérait explicitement la lecture de CV, et l'équipe a tranché pour un
+dépôt de CV servant à la fois au préremplissage **et** à la suggestion de missions.
+
+Ce que ça implique, et qui doit être assumé devant le jury :
+
+- **Le préremplissage ne pose pas de problème.** Le CV propose des métiers, des
+  compétences et des types d'habilitation ; l'intérimaire valide ; seules des valeurs
+  typées entrent en base. Le moteur ne voit jamais le texte.
+- **Les certifications ne sont jamais appliquées automatiquement.** Un CV donne le
+  type du titre, presque jamais son numéro, son organisme ni sa date d'échéance — or
+  c'est cette date qui décide de l'éligibilité. Les détections ouvrent le formulaire,
+  l'intérimaire complète ce qui compte.
+- **La suggestion de missions depuis le texte** a été réglée le 2026-09-17, en
+  relisant le cahier des charges de plus près. Il écrit : « … tout en évitant de se
+  baser **seulement** sur des mots-clés extraits d'un CV. » Le mot « seulement »
+  rend le produit conforme à sa propre description : le CV aide à découvrir et à
+  saisir, il ne décide jamais. C'est le CLAUDE.md qui était plus strict que le
+  document de rendu ; il a été aligné, pas l'inverse.
+
+Garde-fou retenu dans le code : **chaque suggestion issue du CV porte le verdict du
+vrai moteur** — conforme, habilitation manquante, ou métier non déclaré. Sans ça, un
+intérimaire croirait pouvoir postuler à une mission dont il est écarté, c'est-à-dire
+exactement la confusion que le produit existe pour supprimer.
+
+**Le fichier ne quitte pas l'appareil de l'utilisateur.** La lecture se fait dans le
+navigateur : couche texte du PDF quand elle existe, reconnaissance de caractères
+(Tesseract en WebAssembly) quand le document est un scan ou une photo. Le serveur ne
+reçoit que le texte, qu'il chiffre ; il est retirable et effacé avec le compte. Aucun
+service externe n'est appelé, et les fichiers du moteur sont servis depuis le projet.
+
+Ce choix n'était pas le premier. La reconnaissance tournait d'abord côté serveur ; en
+production elle a produit trois passerelles expirées de suite, une fonction sans état
+n'ayant ni le temps ni la mémoire de charger douze mégaoctets de moteur à chaque
+requête. Le navigateur, lui, n'a pas de limite de temps — et le document reste chez son
+propriétaire, ce qui vaut mieux que le compromis d'origine.
+
+Mesuré sur poste, avec Chrome piloté par le protocole DevTools : PDF à couche texte lu
+en 0,5 s, PDF scanné en 2,1 s (1 999 caractères), photo PNG en 1,5 s.
+
+### Ce qui avait motivé la coupe initiale
 
 L'écran d'inscription proposait « déposez votre CV, on remplit le profil ».
 
@@ -577,6 +619,36 @@ La maquette écrit deux fois « haché avec **bcrypt** ». Le plan retient `scry
 « est-ce une librairie d'authentification ? ». bcrypt conviendrait aussi — c'est une
 primitive de hachage, pas une solution d'authentification. Une fois tranché, **aligner le
 texte de l'interface sur le code** : une mention fausse dans l'UI est un point perdu gratuitement.
+
+---
+
+## 7 bis. Ce que la base non relationnelle fait, et ce qu'elle ne fera pas
+
+Le sujet cite « cache, logs de matching, recherche full-text » comme exemples
+d'usage complémentaire. Redis en couvre **cinq** : sessions, limitation de
+tentatives, cache de matching, traces de calcul, cache de géocodage — dont deux
+figurent littéralement dans la parenthèse du sujet.
+
+**La recherche full-text sur les CV est écartée, et c'est un choix**, pas un oubli.
+Elle reviendrait à chercher des candidats par mots-clés extraits de leur CV,
+c'est-à-dire exactement le contre-modèle que l'étude de marché oppose aux
+concurrents : « les plateformes existantes traitent les certifications comme du
+texte, nous les traitons comme des données avec une date de péremption ». L'ajouter
+donnerait au jury une contradiction écrite dans notre propre document, pour un gain
+nul — l'exigence étant déjà satisfaite deux fois.
+
+## 7 ter. À reprendre dans le cahier des charges
+
+Le document de rendu ne décrit plus exactement le produit. Trois points :
+
+1. **Le dépôt de CV n'y figure pas.** Il est à ajouter au périmètre, avec la
+   distinction qui le rend conforme : le CV propose, il ne décide pas. Le tableau de
+   chiffrage doit recevoir la ligne correspondante.
+2. **Le référentiel compte neuf types de certification**, pas cinq. Les quatre CACES
+   de levage ont été ajoutés après mesure : un grutier relève du R487 ou du R490,
+   presque jamais du R482. Sans eux, le produit ignorait ce métier.
+3. **Le rayon de mobilité par défaut est de 50 km**, aligné sur le périmètre du CDI
+   intérimaire que cite l'étude de marché.
 
 ---
 
