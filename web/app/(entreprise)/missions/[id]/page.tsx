@@ -36,6 +36,9 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
             <a href="/missions">← Mes fiches de poste</a>
           </p>
           <h1 className="titre-page">{mission.titre}</h1>
+          <p className="petit secondaire">
+            <a href={`/missions/${missionId}/contrat`}>Document de mission et mentions obligatoires</a>
+          </p>
           <p className="secondaire">
             {mission.ville} · du {enDateFr(mission.dateDebut)} au {enDateFr(mission.dateFin)}
             {mission.tauxHoraireMin !== null && (

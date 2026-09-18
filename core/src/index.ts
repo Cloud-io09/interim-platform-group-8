@@ -2,6 +2,7 @@ export * from "./types";
 export * from "./geo";
 export * from "./dates";
 export * from "./candidature";
+export * from "./droit-travail";
 export * from "./conformite";
 export * from "./matching";
 export * from "./chiffrement";

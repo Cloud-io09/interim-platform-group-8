@@ -52,6 +52,8 @@ interface Saisie {
   dateFin?: string;
   tauxHoraireMin?: number | null;
   tauxHoraireMax?: number | null;
+  /** Mention obligatoire du contrat de mission : texte libre, un chantier n'a pas de grille. */
+  horaires?: string;
   certificationsRequises?: ExigenceSaisie[];
   competencesRequises?: string[];
   publier?: boolean;
@@ -102,12 +104,13 @@ export async function POST(requete: Request) {
       const [creee] = await tx<{ id: number }[]>`
         insert into mission (
           entreprise_id, titre, metier_code, description, adresse, code_postal, ville,
-          lat, lon, date_debut, date_fin, taux_horaire_min, taux_horaire_max, statut, publiee_le
+          lat, lon, date_debut, date_fin, horaires, taux_horaire_min, taux_horaire_max, statut, publiee_le
         ) values (
           ${garde.session.compteId}, ${saisie.titre!.trim()}, ${saisie.metierCode!},
           ${saisie.description?.trim() || null}, ${saisie.adresse?.trim() || null},
           ${codePostal}, ${ville}, ${position.lat}, ${position.lon},
           ${saisie.dateDebut!}, ${saisie.dateFin!},
+          ${saisie.horaires?.trim().slice(0, 300) || null},
           ${saisie.tauxHoraireMin ?? null}, ${saisie.tauxHoraireMax ?? null},
           ${saisie.publier ? "publiee" : "brouillon"},
           ${saisie.publier ? new Date() : null}
