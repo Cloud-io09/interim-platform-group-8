@@ -98,7 +98,11 @@ Monorepo npm workspaces.
 
 ### Choix techniques
 
-**Authentification écrite à la main**, comme le sujet l'impose : `scrypt` de `node:crypto` avec sel par compte, jetons de session opaques de 32 octets, comparaison en temps constant. Aucune librairie d'authentification, aucune solution managée — Supabase ne sert que de base de données.
+**Authentification écrite à la main**, comme le sujet l'impose : « *L'authentification classique (email/mot de passe, hash, sessions/tokens) doit être comprise et implémentée par vous-même.* » `scrypt` de `node:crypto` avec sel par compte, jetons de session opaques de 32 octets, comparaison en temps constant. Aucune librairie d'authentification, aucune solution managée — Supabase ne sert que de base de données.
+
+**Récupération d'accès, deux chemins.** Un lien de réinitialisation envoyé à l'adresse du compte, valable une heure et à usage unique ; et, pour qui a aussi perdu l'accès à sa boîte, des codes de récupération remis à l'inscription. Le jeton est indexé par son empreinte SHA-256 : un dump de Redis ne donne aucun lien exploitable. Toute reprise en main ferme toutes les sessions.
+
+Sans clé d'envoi configurée, les courriels partent au journal du serveur : le parcours reste complet et testable, et une configuration oubliée se voit au lieu d'échouer en silence. Voir `BREVO_API_KEY` dans `.env.example`.
 
 **Deux bases, deux usages.** PostgreSQL pour les données structurées. Redis pour cinq usages complémentaires : sessions, limitation des tentatives de connexion, cache des résultats de matching, traces d'exclusion, cache de géocodage. Une colonne JSONB ne satisferait pas l'exigence : il faut un second stockage réel.
 

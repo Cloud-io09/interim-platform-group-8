@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { connexion } from "@interimatch/core/db";
 import { cle, redis } from "@interimatch/core";
-import { BASE } from "./serveur";
+import { BASE, journalServeur } from "./serveur";
 
 /**
  * Parcours de récupération d'accès.
@@ -206,5 +206,93 @@ describe("régénération des codes", () => {
     const { cookie } = await inscrire("sans-mdp");
     expect((await appel("/api/compte/codes", "POST", { motDePasse: "faux" }, cookie)).statut).toBe(403);
     expect((await appel("/api/compte/codes", "POST", {}, cookie)).statut).toBe(422);
+  });
+});
+
+describe("réinitialisation par lien envoyé à l'adresse du compte", () => {
+  /**
+   * Récupère le lien depuis le journal du serveur.
+   *
+   * Aucun prestataire n'est configuré en test : le courriel part au journal, que le
+   * harnais capture. Aucune route de production n'expose jamais le jeton — ce serait
+   * un défaut de sécurité le jour où la configuration viendrait à manquer.
+   */
+  function jetonEnvoyeA(email: string): string | null {
+    const journal = journalServeur();
+    const bloc = journal.lastIndexOf(`→ ${email}`);
+    if (bloc < 0) return null;
+    const lien = journal.slice(bloc).match(/reinitialisation\?jeton=([A-Za-z0-9_-]+)/);
+    return lien ? decodeURIComponent(lien[1]!) : null;
+  }
+
+  async function attendreJeton(email: string): Promise<string | null> {
+    // L'écriture du journal est asynchrone : on laisse au flux le temps d'arriver.
+    for (let i = 0; i < 20; i++) {
+      const jeton = jetonEnvoyeA(email);
+      if (jeton) return jeton;
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    return null;
+  }
+
+  it("envoie un lien, qui change le mot de passe et ferme les sessions", async () => {
+    const { email, cookie } = await inscrire("lien");
+    expect((await appel("/api/auth/reinitialisation", "POST", { email })).statut).toBe(200);
+
+    const jeton = await attendreJeton(email);
+    expect(jeton, "aucun lien n'a été envoyé").toBeTruthy();
+
+    const r = await appel("/api/auth/reinitialisation/confirmation", "POST", {
+      jeton, nouveau: "mot-de-passe-par-lien-2026",
+    });
+    expect(r.statut).toBe(200);
+
+    expect((await appel("/api/auth/connexion", "POST", {
+      email, motDePasse: "mot-de-passe-par-lien-2026",
+    })).statut).toBe(200);
+    // Quiconque était connecté ne doit plus l'être.
+    expect((await appel("/api/moi", "GET", undefined, cookie)).statut).toBe(401);
+  });
+
+  it("refuse un lien déjà utilisé", async () => {
+    const { email } = await inscrire("lien-rejeu");
+    await appel("/api/auth/reinitialisation", "POST", { email });
+    const jeton = await attendreJeton(email);
+
+    await appel("/api/auth/reinitialisation/confirmation", "POST", { jeton, nouveau: "premier-usage-2026" });
+    const second = await appel("/api/auth/reinitialisation/confirmation", "POST", {
+      jeton, nouveau: "second-usage-2026",
+    });
+    expect(second.statut).toBe(403);
+  });
+
+  it("refuse un jeton inventé", async () => {
+    const r = await appel("/api/auth/reinitialisation/confirmation", "POST", {
+      jeton: "un-jeton-totalement-invente-mais-assez-long-pour-passer-la-longueur",
+      nouveau: "peu-importe-2026",
+    });
+    expect(r.statut).toBe(403);
+  });
+
+  it("répond la même chose pour une adresse inconnue", async () => {
+    // Sans cela, l'écran deviendrait un moyen de savoir qui est inscrit.
+    const { email } = await inscrire("lien-enum");
+    const connu = await appel("/api/auth/reinitialisation", "POST", { email });
+    const inconnu = await appel("/api/auth/reinitialisation", "POST", {
+      email: `${MARQUE}-jamais-vu@exemple.test`,
+    });
+    expect(connu.statut).toBe(inconnu.statut);
+    expect(connu.corps.message).toBe(inconnu.corps.message);
+  });
+
+  it("n'envoie rien au-delà du seuil, sans le dire", async () => {
+    // Annoncer « trop de demandes » confirmerait au passage que le compte existe.
+    const { email } = await inscrire("lien-inondation");
+    for (let i = 0; i < 6; i++) {
+      const r = await appel("/api/auth/reinitialisation", "POST", { email });
+      expect(r.statut).toBe(200);
+    }
+    const occurrences = journalServeur().split(`→ ${email}`).length - 1;
+    expect(occurrences).toBeLessThanOrEqual(5);
   });
 });
