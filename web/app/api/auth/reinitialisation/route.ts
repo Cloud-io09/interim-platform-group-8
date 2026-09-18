@@ -12,9 +12,17 @@ import { corpsJson, erreur, succes } from "@/lib/reponses";
 
 export const dynamic = "force-dynamic";
 
-/** Base publique du site, pour composer un lien cliquable. */
+/**
+ * Base publique du site, pour composer un lien cliquable.
+ *
+ * `||` et non `??` : une variable **présente mais vide** — le cas par défaut du
+ * `.env.example` — doit retomber sur l'origine de la requête. Avec `??` elle était
+ * retenue telle quelle, et le courriel partait avec un chemin relatif, donc un lien
+ * mort. La barre oblique finale est retirée pour ne pas composer un double slash.
+ */
 function origine(requete: Request): string {
-  return process.env.URL_PUBLIQUE ?? new URL(requete.url).origin;
+  const publique = process.env.URL_PUBLIQUE?.trim();
+  return (publique || new URL(requete.url).origin).replace(/\/+$/, "");
 }
 
 /**

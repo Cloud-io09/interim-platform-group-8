@@ -254,6 +254,24 @@ describe("réinitialisation par lien envoyé à l'adresse du compte", () => {
     expect((await appel("/api/moi", "GET", undefined, cookie)).statut).toBe(401);
   });
 
+  it("compose un lien absolu, pas un chemin relatif", async () => {
+    // Défaut trouvé à la main le 2026-09-18 : `URL_PUBLIQUE` présente mais vide était
+    // retenue telle quelle par `??`, et le courriel partait avec « /reinitialisation…
+    // » — un lien mort dans une boîte de réception. Le cas est verrouillé ici.
+    const { email } = await inscrire("lien-absolu");
+    await appel("/api/auth/reinitialisation", "POST", { email });
+    await attendreJeton(email);
+
+    const journal = journalServeur();
+    const ligne = journal
+      .slice(journal.lastIndexOf(`→ ${email}`))
+      .split("\n")
+      .find((l) => l.includes("reinitialisation?jeton="));
+
+    expect(ligne, "aucun lien dans le courriel").toBeTruthy();
+    expect(ligne, "le lien doit être absolu").toMatch(/https?:\/\/[^/]+\/reinitialisation\?jeton=/);
+  });
+
   it("refuse un lien déjà utilisé", async () => {
     const { email } = await inscrire("lien-rejeu");
     await appel("/api/auth/reinitialisation", "POST", { email });

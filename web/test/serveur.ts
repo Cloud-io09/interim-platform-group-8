@@ -56,7 +56,16 @@ export async function setup(): Promise<void> {
   serveur = spawn("npx", ["next", "start", "-p", String(PORT)], {
     cwd: new URL("..", import.meta.url).pathname,
     stdio: ["ignore", "ignore", "pipe"],
-    env: { ...process.env, NODE_ENV: "production" },
+    env: {
+      ...process.env,
+      NODE_ENV: "production",
+      // Le prestataire d'envoi est neutralisé pour la durée de la suite, même si une
+      // clé est présente dans .env. Les parcours créent des comptes en @exemple.test :
+      // les laisser partir pour de vrai produirait des rebonds en série, qui abîment
+      // la réputation d'expéditeur et consomment le quota. Les messages vont donc au
+      // journal, que la suite sait lire — le chemin réel se vérifie à la main.
+      BREVO_API_KEY: "",
+    },
   });
   rmSync(CHEMIN_JOURNAL, { force: true });
   serveur.stderr?.on("data", (morceau) => {
