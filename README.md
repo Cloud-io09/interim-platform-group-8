@@ -141,7 +141,9 @@ Elles alimentent une fonctionnalité visible : **la fiche de poste enrichie**. �
 
 **RGESN** — voir [docs/ecoconception.md](docs/ecoconception.md).
 
-**RGPD.** Base légale et durées de conservation énoncées sur `/confidentialite`, mentions légales sur `/mentions-legales`, suppression de compte effaçant profil, habilitations, disponibilités, candidatures et texte de CV.
+**RGPD et chiffrement au repos.** Six colonnes chiffrées en AES-256-GCM — téléphones, adresse du domicile, numéro de carte BTP, numéro d'habilitation, texte du CV. Ce qui reste en clair l'est par choix documenté : chiffrer une date d'échéance rendrait le filtre éliminatoire inapplicable. La cartographie complète est dans [docs/donnees-personnelles.md](docs/donnees-personnelles.md), et la propriété est **vérifiée par la suite de tests** plutôt qu'affirmée : la base est relue hors de l'application, et toute colonne ajoutée sans être classée fait échouer la suite.
+
+Base légale et durées de conservation énoncées sur `/confidentialite`, mentions légales sur `/mentions-legales`, suppression de compte effaçant profil, habilitations, disponibilités, candidatures et texte de CV.
 
 **SEO.** Métadonnées sur les pages publiques, `sitemap.xml` et `robots.txt` générés, URLs lisibles.
 
@@ -152,6 +154,7 @@ Elles alimentent une fonctionnalité visible : **la fiche de poste enrichie**. �
 | Document | Contenu |
 |---|---|
 | [docs/plan-implementation.md](docs/plan-implementation.md) | décisions techniques, mesures issues de l'exploration API, arbitrages |
+| [docs/donnees-personnelles.md](docs/donnees-personnelles.md) | cartographie du traitement, chiffrement au repos, durées de conservation |
 | [docs/ecoconception.md](docs/ecoconception.md) | pratiques RGESN appliquées et mesurées |
 | [docs/automatisations-n8n.md](docs/automatisations-n8n.md) | les deux scénarios, leurs endpoints et leur configuration |
 | [docs/tests-et-couverture.md](docs/tests-et-couverture.md) | ce que la suite couvre, et ce qu'elle ne couvre pas |
