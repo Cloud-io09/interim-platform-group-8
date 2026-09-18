@@ -29,6 +29,15 @@ export const cle = {
   session: (jeton: string) => `sess:${jeton}`,
   tentativesIp: (ip: string) => `rl:ip:${ip}`,
   tentativesEmail: (email: string) => `rl:email:${email.toLowerCase()}`,
+  /** Index des jetons de session d'un compte, pour pouvoir tous les révoquer. */
+  sessionsDuCompte: (compteId: number) => `sess:compte:${compteId}`,
+  /**
+   * Jeton à usage unique, indexé par son **empreinte** et non par sa valeur : un
+   * dump de Redis ne permet donc pas de réinitialiser un mot de passe.
+   */
+  jetonUsageUnique: (empreinte: string) => `jeton:${empreinte}`,
+  /** Fenêtre de comptage des demandes de réinitialisation, par compte visé. */
+  demandesReinitialisation: (email: string) => `rl:reinit:${email.toLowerCase()}`,
   cacheMatching: (missionId: number) => `match:cache:${missionId}`,
   traceMatching: (missionId: number) => `match:trace:${missionId}`,
 } as const;
@@ -43,6 +52,15 @@ export const TTL = {
   cacheMatching: 15 * 60,
   /** Trace de calcul : le but est d'expliquer un résultat, pas d'archiver. */
   traceMatching: 3600,
+  /**
+   * Réinitialisation de mot de passe : une heure. Assez pour relever ses courriels,
+   * assez court pour qu'un lien oublié dans une boîte partagée cesse vite de nuire.
+   */
+  jetonReinitialisation: 3600,
+  /** Changement d'adresse : 24 h, l'utilisateur doit pouvoir relever l'autre boîte. */
+  jetonChangementEmail: 24 * 3600,
+  /** Fenêtre de comptage des demandes de réinitialisation. */
+  demandesReinitialisation: 3600,
 } as const;
 
 /**
@@ -135,3 +153,13 @@ export async function sansEchec<T>(
     return null;
   }
 }
+
+/**
+ * Demandes de réinitialisation tolérées par heure, pour un même compte.
+ *
+ * Seuil bas volontairement : sans lui, on dispose d'un canal pour inonder la boîte
+ * de n'importe qui, et l'endpoint ne peut pas exiger d'authentification — c'est tout
+ * son objet. Dépassé, on répond comme d'habitude sans rien envoyer : dire « trop de
+ * demandes » confirmerait au passage que le compte existe.
+ */
+export const MAX_DEMANDES_REINITIALISATION = 5;

@@ -1,3 +1,4 @@
+import SecuriteCompte from "@/components/SecuriteCompte";
 import type { Metadata } from "next";
 import FormulaireProfilEntreprise from "@/components/FormulaireProfilEntreprise";
 import SupprimerCompte from "@/components/SupprimerCompte";
@@ -28,6 +29,9 @@ export default async function ProfilEntreprise({
           apresEnregistrement={suite === "premiere-mission" ? "/missions/nouvelle" : undefined}
         />
         <hr className="separateur" />
+        <hr className="separateur" />
+        <SecuriteCompte />
+
         <SupprimerCompte />
       </div>
     </section>

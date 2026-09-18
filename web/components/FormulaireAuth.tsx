@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import CodesRecuperation from "./CodesRecuperation";
 import { envoyerJson, rechargerVers } from "@/lib/client";
 
 interface Props {
@@ -11,16 +12,20 @@ interface Props {
   titre: string;
   intro: string;
   libelleBouton: string;
+  /** « Étape 1 sur 2 » et consorts. Porté par le formulaire, donc il disparaît avec lui. */
+  surTitre?: string;
 }
 
 const LONGUEUR_MIN_MOT_DE_PASSE = 12;
 
-export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton }: Props) {
+export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton, surTitre }: Props) {
   const idEmail = useId();
   const idMotDePasse = useId();
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [etapeSuivante, setEtapeSuivante] = useState("/espace");
 
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ);
 
@@ -34,7 +39,7 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
     setErreur(null);
 
     try {
-      const { ok, corps } = await envoyerJson<{ etapeSuivante?: string }>(
+      const { ok, corps } = await envoyerJson<{ etapeSuivante?: string; codesRecuperation?: string[] }>(
         `/api/auth/${mode}`,
         "POST",
         {
@@ -51,17 +56,41 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
         return;
       }
 
+      const suite = corps.etapeSuivante ?? "/espace";
+
+      // À l'inscription, on s'arrête pour remettre les codes de récupération. Les
+      // afficher après la redirection les noierait dans un formulaire de profil,
+      // alors qu'ils ne seront plus jamais montrés.
+      if (corps.codesRecuperation?.length) {
+        setCodes(corps.codesRecuperation);
+        setEtapeSuivante(suite);
+        setEnCours(false);
+        return;
+      }
+
       // Rechargement complet : après un changement de compte, le cache du routeur
       // servirait des pages rendues pour l'utilisateur précédent.
-      rechargerVers(corps.etapeSuivante ?? "/espace");
+      rechargerVers(suite);
     } catch {
       setErreur("Impossible de joindre le serveur. Vérifiez votre connexion.");
       setEnCours(false);
     }
   }
 
+  if (codes) {
+    return (
+      <CodesRecuperation
+        codes={codes}
+        libelleSuite="J'ai noté mes codes, continuer"
+        surConfirmation={() => rechargerVers(etapeSuivante)}
+      />
+    );
+  }
+
   return (
-    <form onSubmit={envoyer} noValidate>
+    <div className="carte">
+      {surTitre && <p className="sur-titre">{surTitre}</p>}
+      <form onSubmit={envoyer} noValidate>
       <h1>{titre}</h1>
       <p className="secondaire">{intro}</p>
 
@@ -107,9 +136,10 @@ export default function FormulaireAuth({ mode, role, titre, intro, libelleBouton
 
       <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
 
-      <button className="bouton" type="submit" disabled={enCours} style={{ width: "100%" }}>
-        {enCours ? "Envoi en cours…" : libelleBouton}
-      </button>
-    </form>
+        <button className="bouton pleine-largeur" type="submit" disabled={enCours}>
+          {enCours ? "Envoi en cours…" : libelleBouton}
+        </button>
+      </form>
+    </div>
   );
 }

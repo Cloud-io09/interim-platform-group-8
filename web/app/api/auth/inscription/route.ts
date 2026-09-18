@@ -6,6 +6,7 @@ import {
   type RoleCompte,
 } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
+import { remettreCodes } from "@/lib/recuperation";
 import { poserCookieSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -57,10 +58,16 @@ export async function POST(requete: Request) {
       ]);
     }
 
+    // Codes de récupération remis à l'inscription, et rendus une seule fois : sans
+    // eux, oublier son mot de passe reviendrait à perdre ses habilitations, ses
+    // disponibilités et ses candidatures. La base n'en garde que les empreintes.
+    const codes = await remettreCodes(sql, compte.id);
+
     await poserCookieSession({ id: compte.id, role, email });
     return succes(
       {
         compte: { id: compte.id, email, role },
+        codesRecuperation: codes,
         etapeSuivante:
           role === "entreprise"
             ? "/espace/entreprise/profil?suite=premiere-mission"

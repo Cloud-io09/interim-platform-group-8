@@ -1070,3 +1070,27 @@ details > summary {
   .page-opportunites { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 2rem; align-items: start; }
   .page-opportunites .barre-filtres { position: sticky; top: 1.5rem; margin-bottom: 0; }
 }
+
+/* Codes de récupération : chasse fixe et groupes séparés, parce qu'ils seront
+   recopiés à la main depuis un écran vers un bout de papier. */
+.codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.codes code {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 0.75rem;
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  text-align: center;
+}
+@media print {
+  /* Une impression ne doit sortir que les codes, pas la navigation du site. */
+  .entete, .pied, .bandeau-espace, .bouton, .case { display: none !important; }
+}

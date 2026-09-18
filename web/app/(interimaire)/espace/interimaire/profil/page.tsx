@@ -1,3 +1,4 @@
+import SecuriteCompte from "@/components/SecuriteCompte";
 import type { Metadata } from "next";
 import FormulaireProfilInterimaire from "@/components/FormulaireProfilInterimaire";
 import SupprimerCompte from "@/components/SupprimerCompte";
@@ -28,6 +29,9 @@ export default async function ProfilInterimaire({
           apresEnregistrement={suite === "certifications" ? "/espace/interimaire/certifications" : undefined}
         />
         <hr className="separateur" />
+        <hr className="separateur" />
+        <SecuriteCompte />
+
         <SupprimerCompte />
       </div>
     </section>

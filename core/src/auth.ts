@@ -24,6 +24,10 @@ export interface MagasinSession {
   get(cle: string): Promise<unknown>;
   expire(cle: string, secondes: number): Promise<unknown>;
   del(...cles: string[]): Promise<unknown>;
+  /** Index des sessions par compte : sans lui, on ne peut pas toutes les révoquer. */
+  sadd(cle: string, ...membres: string[]): Promise<unknown>;
+  srem(cle: string, ...membres: string[]): Promise<unknown>;
+  smembers(cle: string): Promise<unknown>;
 }
 
 export interface SessionOuverte {
@@ -45,6 +49,10 @@ export async function ouvrirSession(
     creeeLe: new Date().toISOString(),
   };
   await magasin.set(cle.session(jeton), JSON.stringify(session), { ex: TTL.session });
+  // Index par compte : c'est ce qui rend possible « déconnecter partout », exigé dès
+  // qu'un mot de passe change — sans quoi un attaquant déjà connecté le resterait.
+  await magasin.sadd(cle.sessionsDuCompte(compte.id), jeton);
+  await magasin.expire(cle.sessionsDuCompte(compte.id), TTL.session);
   return { jeton, session, dureeSecondes: TTL.session };
 }
 
@@ -76,7 +84,44 @@ export async function fermerSession(
   magasin: MagasinSession,
   jeton: string | undefined
 ): Promise<void> {
-  if (jeton) await magasin.del(cle.session(jeton));
+  if (!jeton) return;
+  // On relit la session avant de la supprimer, pour retirer le jeton de l'index du
+  // compte. Un index qui accumule des jetons morts finirait par révoquer dans le vide.
+  const brut = await magasin.get(cle.session(jeton));
+  await magasin.del(cle.session(jeton));
+  if (brut === null || brut === undefined) return;
+  const session = typeof brut === "string" ? (JSON.parse(brut) as Session) : (brut as Session);
+  if (typeof session?.compteId === "number") {
+    await magasin.srem(cle.sessionsDuCompte(session.compteId), jeton);
+  }
+}
+
+/**
+ * Ferme toutes les sessions d'un compte, sauf une éventuellement.
+ *
+ * Appelée à chaque changement de mot de passe : c'est le geste qui distingue un
+ * changement de mot de passe d'un simple remplacement de chaîne. Si quelqu'un d'autre
+ * était connecté — vol de cookie, poste partagé, session oubliée sur une tablette de
+ * chantier — il doit être éjecté au moment même où le propriétaire reprend la main.
+ *
+ * Le jeton courant est épargné quand on le lui passe : déconnecter l'utilisateur de
+ * l'écran où il vient de changer son mot de passe serait une punition, pas une mesure
+ * de sécurité.
+ */
+export async function fermerToutesLesSessions(
+  magasin: MagasinSession,
+  compteId: number,
+  jetonAEpargner?: string
+): Promise<number> {
+  const brut = await magasin.smembers(cle.sessionsDuCompte(compteId));
+  const jetons = (Array.isArray(brut) ? brut : []) as string[];
+  const aFermer = jetons.filter((j) => j !== jetonAEpargner);
+
+  if (aFermer.length > 0) {
+    await magasin.del(...aFermer.map((j) => cle.session(j)));
+    await magasin.srem(cle.sessionsDuCompte(compteId), ...aFermer);
+  }
+  return aFermer.length;
 }
 
 // ---------------------------------------------------------------------------

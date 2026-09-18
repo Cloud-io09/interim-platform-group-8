@@ -3,6 +3,8 @@ export * from "./geo";
 export * from "./dates";
 export * from "./candidature";
 export * from "./droit-travail";
+export * from "./jetons";
+export * from "./recuperation";
 export * from "./conformite";
 export * from "./matching";
 export * from "./chiffrement";
