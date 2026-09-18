@@ -2,6 +2,7 @@ import { connexion } from "@interimatch/core/db";
 import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { cle, redis, sansEchec } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
+import { notifierMissionPubliee } from "@/lib/notifications";
 import { sessionOuErreur } from "@/lib/garde";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 
@@ -137,6 +138,12 @@ export async function POST(requete: Request) {
     // Invalidation du cache : agrément, pas condition. La mission est déjà créée —
     // échouer ici renverrait une erreur pour une opération qui a réussi.
     await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation matching");
+
+    // Même principe que l'invalidation : la fiche existe, prévenir les intérimaires
+    // concernés est un agrément. Un échec ici ne doit pas défaire une publication.
+    if (saisie.publier) {
+      await sansEchec(() => notifierMissionPubliee(sql, missionId), "notification de publication");
+    }
 
     return succes({ id: missionId, statut: saisie.publier ? "publiee" : "brouillon" }, 201);
   } catch (e) {

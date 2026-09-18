@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  actionsPossibles,
+  libelleAction,
+  libelleEtat,
+  type EtatCandidature,
+} from "@interimatch/core/candidature";
 import { envoyerJson } from "@/lib/client";
 
 interface Score {
@@ -62,15 +68,9 @@ function Critere({ libelle, valeur, poids, detail }: { libelle: string; valeur: 
   );
 }
 
-const LIBELLE_CANDIDATURE: Record<string, string> = {
-  proposee: "Proposée",
-  acceptee: "Retenue",
-  refusee: "Écartée",
-};
-
 export default function ResultatsMatching({ missionId }: { missionId: number }) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
-  const [candidatures, setCandidatures] = useState<Record<number, string>>({});
+  const [candidatures, setCandidatures] = useState<Record<number, EtatCandidature>>({});
   const [enTraitement, setEnTraitement] = useState<number | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(true);
@@ -80,23 +80,31 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
     if (!r.ok) return;
     const d = await r.json();
     setCandidatures(
-      Object.fromEntries(d.candidatures.map((c: { interimaireId: number; statut: string }) => [c.interimaireId, c.statut]))
+      Object.fromEntries(
+        d.candidatures.map((c: { interimaireId: number; statut: EtatCandidature }) => [c.interimaireId, c.statut])
+      )
     );
   }
 
-  async function decider(interimaireId: number, statut: "acceptee" | "refusee") {
+  /**
+   * Le rapprochement est bilatéral : une entreprise sollicite un profil, elle ne
+   * l'affecte pas. L'affectation ne devient possible qu'après que l'intérimaire a
+   * postulé — c'est la table de transitions du cœur qui en décide, pas cet écran.
+   */
+  async function decider(interimaireId: number, vers: EtatCandidature) {
     setEnTraitement(interimaireId);
     setErreur(null);
-    const { ok, corps } = await envoyerJson(`/api/missions/${missionId}/candidatures`, "POST", {
+    const { ok, corps } = await envoyerJson("/api/candidatures", "POST", {
+      missionId,
       interimaireId,
-      statut,
+      vers,
     });
     setEnTraitement(null);
     if (!ok) {
       setErreur(corps.message ?? "Action impossible.");
       return;
     }
-    setCandidatures((a) => ({ ...a, [interimaireId]: statut }));
+    setCandidatures((a) => ({ ...a, [interimaireId]: vers }));
   }
 
   async function charger(recalculer = false) {
@@ -150,34 +158,35 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
             <li key={s.interimaireId} className="carte" style={{ marginBottom: "1rem" }}>
               <div className="ligne-certification" style={{ marginBottom: "1rem" }}>
                 <div>
-                  <h3 style={{ marginBottom: "0.15rem" }}>{s.prenom} {s.nom}</h3>
+                  {/* Le lien porte le nom de la personne : une fiche s'ouvre, pas
+                      une URL. Elle rend la validité des titres au regard de cette
+                      mission-ci, la seule qui ait un sens ici. */}
+                  <h3 style={{ marginBottom: "0.15rem" }}>
+                    <a className="lien-bloc" href={`/missions/${missionId}/profils/${s.interimaireId}`}>
+                      {s.prenom} {s.nom}
+                    </a>
+                  </h3>
                   <p className="petit secondaire" style={{ margin: 0 }}>{s.ville}</p>
                 </div>
                 <span className="score-total">{pourcent(s.total)}</span>
               </div>
 
               <div className="actions-candidature">
-                {candidatures[s.interimaireId] ? (
-                  <span
-                    className={`etiquette ${candidatures[s.interimaireId] === "acceptee" ? "etiquette--ok" : "etiquette--alerte"}`}
+                <span className="pastille pastille--info">
+                  {libelleEtat(candidatures[s.interimaireId] ?? "proposee")}
+                </span>
+                {/* Les boutons viennent de la table de transitions : une action
+                    affichée ici mais refusée par le serveur serait une impasse. */}
+                {actionsPossibles(candidatures[s.interimaireId] ?? "proposee", "entreprise").map((vers) => (
+                  <button
+                    key={vers}
+                    className={vers === "declinee" ? "bouton bouton--secondaire" : "bouton"}
+                    onClick={() => decider(s.interimaireId, vers)}
+                    disabled={enTraitement === s.interimaireId}
                   >
-                    {LIBELLE_CANDIDATURE[candidatures[s.interimaireId]!]}
-                  </span>
-                ) : null}
-                <button
-                  className="bouton"
-                  onClick={() => decider(s.interimaireId, "acceptee")}
-                  disabled={enTraitement === s.interimaireId || candidatures[s.interimaireId] === "acceptee"}
-                >
-                  {enTraitement === s.interimaireId ? "…" : "Retenir ce profil"}
-                </button>
-                <button
-                  className="bouton bouton--secondaire"
-                  onClick={() => decider(s.interimaireId, "refusee")}
-                  disabled={enTraitement === s.interimaireId || candidatures[s.interimaireId] === "refusee"}
-                >
-                  Écarter
-                </button>
+                    {enTraitement === s.interimaireId ? "…" : libelleAction(vers, "entreprise")}
+                  </button>
+                ))}
               </div>
               {/* Le score est exposé par critère, pas seulement en total : on doit
                   pouvoir expliquer pourquoi ce profil est devant un autre. */}

@@ -1,9 +1,8 @@
+import { repondALExigence } from "./conformite";
 import { enMsUTC, joursDeChevauchement, nombreDeJours } from "./dates";
 import { distanceKm } from "./geo";
 import type {
-  CertificationDetenue,
   Exclusion,
-  ExigenceCertification,
   MissionAMatcher,
   ProfilInterimaire,
   ResultatMatching,
@@ -19,17 +18,6 @@ export const PONDERATIONS = {
   distance: 0.35,
   disponibilite: 0.25,
 } as const;
-
-/** Une certification détenue répond-elle à l'exigence, catégorie comprise ? */
-function repondALExigence(
-  detenue: CertificationDetenue,
-  exigence: ExigenceCertification
-): boolean {
-  if (detenue.typeCode !== exigence.typeCode) return false;
-  // Exigence sans catégorie : n'importe quelle catégorie du bon type convient.
-  if (exigence.categorieCode === null) return true;
-  return detenue.categorieCode === exigence.categorieCode;
-}
 
 /**
  * Étape 1 — filtre éliminatoire.

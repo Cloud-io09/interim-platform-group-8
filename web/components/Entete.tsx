@@ -40,19 +40,12 @@ export default function Entete() {
     router.refresh();
   }
 
-  const liens =
-    compte?.role === "entreprise"
-      ? [
-          { href: "/missions", libelle: "Mes fiches de poste" },
-          { href: "/missions/nouvelle", libelle: "Publier" },
-          { href: "/espace/entreprise", libelle: "Mon espace" },
-        ]
-      : compte?.role === "interimaire"
-        ? [
-            { href: "/mes-missions", libelle: "Les missions" },
-            { href: "/espace/interimaire", libelle: "Mon espace" },
-          ]
-        : [];
+  // Un seul lien : depuis le 007, chaque rôle a sa barre d'onglets sous l'en-tête.
+  // Reprendre les mêmes entrées ici donnerait deux navigations concurrentes pour les
+  // mêmes destinations — l'utilisateur ne saurait plus laquelle fait autorité.
+  const liens = compte
+    ? [{ href: compte.role === "entreprise" ? "/espace/entreprise" : "/espace/interimaire", libelle: "Mon espace" }]
+    : [];
 
   return (
     <header className="entete">

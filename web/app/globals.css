@@ -231,7 +231,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
    la couleur seule — RGAA 3.1. */
 /* Liens au fil du texte : soulignés en permanence. */
 main p a,
-main li a:not(.action):not(.chiffre-lien),
+main li a:not(.action):not(.chiffre-lien):not(.bouton):not(.onglet):not(.lien-bloc),
 .pied a {
   text-decoration: underline;
 }
@@ -647,3 +647,360 @@ details > summary {
   margin-bottom: 1.25rem;
 }
 .progression .jauge { margin-top: 0.5rem; }
+
+/* ===========================================================================
+   Tableaux de bord
+   ---------------------------------------------------------------------------
+   Langage repris des maquettes : en-tête d'identité compact avec onglets, grille
+   à deux colonnes, cartes blanches avec une carte sombre pour la seule chose qui
+   appelle une décision, lignes « objet + état », jauges toujours doublées du
+   chiffre écrit.
+
+   RGAA : le jaune de marque ne porte jamais seul une information. Il colore des
+   jauges dont la valeur est écrite à côté, et des boutons dont le texte est en
+   noir sur fond jaune (contraste 12,6:1).
+   =========================================================================== */
+
+.entete-espace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--bordure);
+}
+.identite { display: flex; align-items: center; gap: 1rem; }
+.identite h1 { font-size: 1.5rem; margin: 0; }
+.identite p { margin: 0.15rem 0 0; }
+
+.pastille-initiales {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--rayon-petit);
+  background: var(--surface-sombre);
+  color: var(--texte-sur-sombre);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.onglets ul { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.onglet {
+  display: inline-block;
+  padding: 0.5rem 0;
+  min-height: var(--cible-tactile);
+  color: var(--texte-secondaire);
+  border-bottom: 2px solid transparent;
+}
+.onglet--actif { color: var(--texte); font-weight: 600; border-bottom-color: var(--bordure-forte); }
+/* Le soulignement du survol ferait doublon avec le filet de l'onglet actif. */
+.onglet:hover, .onglet:focus-visible { text-decoration: none; color: var(--texte); border-bottom-color: var(--bordure-forte); }
+
+.grille-bord {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.colonne-principale, .colonne-laterale { display: grid; gap: 1.5rem; align-content: start; }
+@media (max-width: 900px) {
+  .grille-bord { grid-template-columns: 1fr; }
+}
+
+/* Sur-titre court, précédé d'un filet : il situe la carte sans consommer un titre. */
+.sur-titre {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texte-secondaire);
+}
+.sur-titre::before {
+  content: "";
+  width: 24px;
+  height: 2px;
+  background: var(--texte-secondaire);
+  flex: none;
+}
+
+.carte--sombre {
+  background: var(--surface-sombre);
+  color: var(--texte-sur-sombre);
+  border-color: var(--surface-sombre);
+}
+.carte--sombre h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.carte--sombre a:not(.bouton) { color: var(--texte-sur-sombre); text-decoration: underline; }
+.sur-sombre-secondaire { color: var(--texte-secondaire-sur-sombre); }
+.carte--sombre .sur-titre { color: var(--texte-secondaire-sur-sombre); }
+.carte--sombre .sur-titre::before { background: var(--marque-jaune); }
+.sur-titre--marque::before { background: var(--marque-jaune); }
+.filet-sombre { border: 0; border-top: 1px solid #333330; margin: 1.25rem 0; }
+
+.chiffre-geant {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  font-size: clamp(2.25rem, 6vw, 3.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.chiffre-suffixe {
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--texte-secondaire-sur-sombre);
+}
+
+/* Bouton jaune : réservé à la carte sombre, où le texte noir sur jaune atteint
+   12,6:1. Sur fond clair il resterait lisible mais perdrait sa fonction de repère. */
+.bouton--marque {
+  background: var(--marque-jaune);
+  color: #1a1a1a;
+  border-color: var(--marque-jaune);
+  width: 100%;
+}
+.bouton--marque:hover { background: #e3c909; border-color: #e3c909; }
+.bouton--sur-sombre {
+  background: transparent;
+  color: var(--texte-sur-sombre);
+  border-color: #4a4a45;
+  width: 100%;
+}
+.bouton--sur-sombre:hover { border-color: var(--texte-sur-sombre); }
+.bouton--discret {
+  background: transparent;
+  color: var(--texte-secondaire);
+  border-color: transparent;
+  padding-inline: 0;
+  min-height: var(--cible-tactile);
+  text-decoration: underline;
+}
+.bouton--discret:hover { color: var(--texte); }
+.pleine-largeur { width: 100%; }
+.reponse-proposition { display: grid; gap: 0.6rem; margin-top: 1.5rem; }
+
+.tete-section {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.tete-section h2 { font-size: 1.25rem; margin: 0; }
+.tete-carte {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+.titre-carte { font-size: 1rem; font-weight: 600; margin: 0; letter-spacing: 0; }
+
+/* Carte de mission : le descriptif à gauche, le verdict du moteur dans un encart
+   à droite. Le verdict est visuellement séparé parce qu'il ne décrit pas la
+   mission, il décrit la relation entre la mission et celui qui la lit. */
+.carte-mission {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+.carte-mission h3 { margin: 0 0 0.2rem; }
+.carte-mission-corps > p { margin: 0 0 0.6rem; }
+@media (max-width: 720px) {
+  .carte-mission { grid-template-columns: 1fr; }
+}
+
+.ligne-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin: 0.75rem 0 0 !important;
+}
+.ligne-conditions strong { font-size: 1.0625rem; }
+
+.encart-score {
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  padding: 0.9rem 1rem;
+  align-self: start;
+}
+.encart-score-tete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.45rem;
+}
+.encart-score-tete strong { font-size: 1.375rem; letter-spacing: -0.02em; }
+.encart-score p:last-of-type { margin: 0.45rem 0 0.9rem; }
+.encart-score .bouton { width: 100%; }
+.jauge-remplie--marque { background: var(--marque-jaune); }
+
+/* Puces de compétence : acquise en foncé, exigée non acquise en contour. La
+   distinction ne tient pas qu'à la couleur — le fond plein la double. */
+.puces { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.6rem 0 0; }
+.puce {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--bordure);
+  color: var(--texte-secondaire);
+  background: var(--surface);
+}
+.puce--acquise { background: var(--fond); border-color: var(--texte-secondaire); color: var(--texte); }
+
+.pastille {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.pastille--ok { color: var(--succes); }
+.pastille--attention { color: #8a5a00; }
+.pastille--alerte { color: var(--alerte); }
+.pastille--info { color: var(--texte); }
+
+.lignes { display: grid; gap: 0.5rem; }
+.ligne {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--bordure);
+}
+.lignes > .ligne:first-child { border-top: 0; padding-top: 0; }
+
+/* Fil d'activité : les non lues portent un filet à gauche, pas seulement une
+   nuance de fond — un contraste de fond seul ne se voit pas à la lumière du jour
+   sur un téléphone de chantier. */
+.fil { display: grid; gap: 0.25rem; }
+.fil-ligne { border-top: 1px solid var(--bordure); }
+.fil:first-child > .fil-ligne:first-child { border-top: 0; }
+.fil-ligne > a {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.7rem 0.6rem 0.7rem 0.75rem;
+  border-left: 3px solid transparent;
+  min-height: var(--cible-tactile);
+}
+.fil-ligne > a:hover, .fil-ligne > a:focus-visible { background: var(--fond); text-decoration: none; }
+.fil-ligne > a strong { font-size: 0.9375rem; line-height: 1.35; }
+.fil-ligne--neuve > a { border-left-color: var(--surface-sombre); }
+.fil-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.etiquette-type {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texte-secondaire);
+}
+.alerte-texte { color: var(--alerte); margin: 0 0 0.6rem; }
+
+/* Un lien qui occupe un titre entier ou une ligne entière tient son affordance de
+   sa position, pas d'un soulignement — qui y ressemblerait à un oubli. Ces liens
+   portent `.lien-bloc`, parce qu'une exception par balise perdrait en spécificité
+   contre la règle des liens au fil du texte. */
+.lien-bloc { text-decoration: none; }
+.lien-bloc:hover, .lien-bloc:focus-visible { text-decoration: underline; }
+.fil-ligne > .lien-bloc:hover, .fil-ligne > .lien-bloc:focus-visible { text-decoration: none; }
+
+/* Méta d'une carte : la pastille d'état doit rester sur la ligne plutôt que de la
+   couper en deux au milieu d'un nombre. */
+.ligne-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
+
+/* --- Conformité ------------------------------------------------------------
+   Le différenciateur du produit. Trois contraintes : « expire pendant » n'est pas
+   une nuance de « valide », l'information ne repose jamais sur la couleur seule
+   (RGAA 3.1 — et les daltonismes sont fréquents dans les métiers manuels), et la
+   même formulation sert aux deux rôles. */
+
+.conformite {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+/* Le symbole diffère par la forme, pas seulement par la couleur : ✓ plein, ▲
+   triangulaire, ✕ croisé, — neutre. Lisible en niveaux de gris. */
+.conformite-symbole { font-size: 0.875em; }
+.conformite--ok { color: var(--succes); }
+.conformite--alerte { color: #8a5a00; border-width: 2px; }
+.conformite--bloque { color: var(--alerte); }
+
+.lignes-conformite { display: grid; gap: 0; }
+.ligne-conformite {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--bordure);
+}
+.lignes-conformite > .ligne-conformite:first-child { border-top: 0; padding-top: 0; }
+
+/* Carte de verdict : le filet de gauche double la couleur de fond, qui ne suffit
+   pas à signaler seule. */
+.carte--verdict-ok { border-left: 4px solid var(--succes); }
+.carte--verdict-bloque { border-left: 4px solid var(--alerte); }
+
+.separation-action { border-top: 1px solid var(--bordure); margin-top: 1.25rem; padding-top: 1.25rem; }
+.bloc-action { display: grid; gap: 0.75rem; }
+.boutons-action { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.boutons-action .bouton { flex: 1 1 auto; }
+
+/* Boutons posés sur la carte sombre : sans cette reprise, le bouton noir sur fond
+   noir disparaîtrait. Le jaune y atteint 12,6:1 avec du texte noir. */
+.carte--sombre .bouton {
+  background: var(--marque-jaune);
+  color: #1a1a1a;
+  border-color: var(--marque-jaune);
+}
+.carte--sombre .bouton:hover { background: #e3c909; border-color: #e3c909; }
+.carte--sombre .bouton--secondaire {
+  background: transparent;
+  color: var(--texte-sur-sombre);
+  border-color: #4a4a45;
+}
+.carte--sombre .bouton--secondaire:hover { background: transparent; border-color: var(--texte-sur-sombre); }
+.carte--sombre .separation-action { border-top-color: #333330; }
+.carte--sombre label { color: var(--texte-sur-sombre); }
+.carte--sombre .alerte-texte { color: #ff9c8a; }
+
+/* Bandeau d'identité d'un espace : posé par le layout du rôle, il survit aux
+   navigations entre onglets. Son espacement est réduit par rapport à une section
+   ordinaire — c'est un chrome, pas un contenu. */
+.bandeau-espace { padding-top: 2rem; }
+.bandeau-espace .entete-espace { margin-bottom: 0; }
+.bandeau-espace + .section { padding-top: clamp(1.75rem, 3vw, 2.5rem); }
+.identite-nom { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; line-height: 1.2; }
+
+/* Titre d'écran sous le bandeau d'espace : plus discret qu'un h1 de page publique,
+   qui viserait 3 rem — ici le bandeau tient déjà le haut de la page. */
+.titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: 0.35rem; }
