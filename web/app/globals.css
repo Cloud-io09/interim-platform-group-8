@@ -992,3 +992,15 @@ details > summary {
 .carte--sombre .separation-action { border-top-color: #333330; }
 .carte--sombre label { color: var(--texte-sur-sombre); }
 .carte--sombre .alerte-texte { color: #ff9c8a; }
+
+/* Bandeau d'identité d'un espace : posé par le layout du rôle, il survit aux
+   navigations entre onglets. Son espacement est réduit par rapport à une section
+   ordinaire — c'est un chrome, pas un contenu. */
+.bandeau-espace { padding-top: 2rem; }
+.bandeau-espace .entete-espace { margin-bottom: 0; }
+.bandeau-espace + .section { padding-top: clamp(1.75rem, 3vw, 2.5rem); }
+.identite-nom { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; line-height: 1.2; }
+
+/* Titre d'écran sous le bandeau d'espace : plus discret qu'un h1 de page publique,
+   qui viserait 3 rem — ici le bandeau tient déjà le haut de la page. */
+.titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: 0.35rem; }
