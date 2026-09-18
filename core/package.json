@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./matching": "./src/matching.ts",
     "./candidature": "./src/candidature.ts",
+    "./cv": "./src/cv.ts",
     "./conformite": "./src/conformite.ts",
     "./db": "./src/db.ts"
   },

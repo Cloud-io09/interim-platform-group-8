@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import SelecteurReferentiel, { type Element } from "./SelecteurReferentiel";
 import { envoyerJson } from "@/lib/client";
 
 interface Domaine {
@@ -21,6 +22,7 @@ interface Profil {
   carteBtpNumero: string | null;
   carteBtpEcheance: string | null;
   metiers: string[];
+  competences: string[];
 }
 
 const RAYON_DEFAUT_KM = 50;
@@ -31,6 +33,8 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
   const [charge, setCharge] = useState(false);
   const [rayon, setRayon] = useState(RAYON_DEFAUT_KM);
   const [metiers, setMetiers] = useState<string[]>([]);
+  const [competences, setCompetences] = useState<string[]>([]);
+  const [refCompetences, setRefCompetences] = useState<Element[]>([]);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
@@ -41,6 +45,14 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
   };
 
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ)?.message;
+
+  useEffect(() => {
+    const parametre = metiers.length ? `?metiers=${metiers.join(",")}` : "";
+    fetch(`/api/referentiel/competences${parametre}`)
+      .then((r) => (r.ok ? r.json() : { competences: [] }))
+      .then((d) => setRefCompetences(d.competences ?? []))
+      .catch(() => {});
+  }, [metiers]);
 
   useEffect(() => {
     Promise.all([
@@ -55,6 +67,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           setProfil(mien.profil);
           setRayon(mien.profil.rayonMobiliteKm);
           setMetiers(mien.profil.metiers);
+          setCompetences(mien.profil.competences ?? []);
         }
       })
       .catch(() => setErreur("Impossible de charger votre profil."))
@@ -83,6 +96,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         carteBtpNumero: d.get("carteBtpNumero"),
         carteBtpEcheance: d.get("carteBtpEcheance"),
         metiers,
+        competences,
       }
     );
     setEnCours(false);
@@ -94,10 +108,6 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
     }
     setSucces(`Profil enregistré. Adresse retenue : ${corps.position.libelle}.`);
     if (apresEnregistrement) setTimeout(() => window.location.assign(apresEnregistrement), 900);
-  }
-
-  function basculerMetier(code: string) {
-    setMetiers((a) => (a.includes(code) ? a.filter((x) => x !== code) : [...a, code]));
   }
 
   if (!charge) return <p className="secondaire">Chargement de votre profil…</p>;
@@ -154,23 +164,33 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Vos métiers</legend>
+      <div>
         {problemeDe("metiers") && <p className="petit message-erreur">{problemeDe("metiers")}</p>}
-        {domaines.map((d) => (
-          <div key={d.domaine} className="groupe-cases">
-            <h3 className="petit sur-titre">{d.libelle}</h3>
-            <div className="cases">
-              {d.metiers.map((m) => (
-                <label key={m.code} className="case">
-                  <input type="checkbox" checked={metiers.includes(m.code)} onChange={() => basculerMetier(m.code)} />
-                  <span>{m.libelle}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-      </fieldset>
+        <SelecteurReferentiel
+          legende="Vos métiers"
+          aide="Ils décident des missions qui vous sont proposées. Cherchez par mot — « maçon », « engins », « couverture »."
+          placeholder="Maçon, grutier, coffreur…"
+          elements={domaines.flatMap((d) => d.metiers.map((m) => ({ ...m, groupe: d.libelle })))}
+          selection={metiers}
+          surChangement={setMetiers}
+        />
+      </div>
+
+      {/* Les compétences pèsent 40 % du classement. Avant, elles ne pouvaient venir
+          que d'un CV déposé : un intérimaire sans CV partait avec ce critère à zéro
+          sans jamais l'apprendre. */}
+      <SelecteurReferentiel
+        legende="Vos compétences de chantier"
+        aide={
+          metiers.length > 0
+            ? "Classées par fréquence dans les offres réelles de vos métiers. Facultatif, mais elles comptent pour beaucoup dans votre classement."
+            : "Choisissez d'abord vos métiers : la liste sera classée par pertinence pour eux."
+        }
+        placeholder="Coffrage, ferraillage, lecture de plans…"
+        elements={refCompetences}
+        selection={competences}
+        surChangement={setCompetences}
+      />
 
       <fieldset>
         {/* Bloc séparé des certifications : la carte BTP atteste d'une situation

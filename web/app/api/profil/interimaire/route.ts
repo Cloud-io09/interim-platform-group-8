@@ -32,6 +32,7 @@ interface Saisie {
   carteBtpNumero?: string;
   carteBtpEcheance?: string;
   metiers?: string[];
+  competences?: string[];
 }
 
 /**
@@ -102,6 +103,17 @@ export async function POST(requete: Request) {
       const metiers = (saisie.metiers ?? []).map((code) => ({ interimaire_id: compteId, metier_code: code }));
       if (metiers.length > 0) {
         await tx`insert into interimaire_metier ${tx(metiers, "interimaire_id", "metier_code")}`;
+      }
+
+      // Même principe pour les compétences. Un code hors référentiel est ignoré
+      // plutôt que de faire échouer tout l'enregistrement : le référentiel se remplit
+      // au fil des ingestions, et perdre un profil entier pour un libellé disparu
+      // serait une punition disproportionnée.
+      await tx`delete from interimaire_competence where interimaire_id = ${compteId}`;
+      for (const code of saisie.competences ?? []) {
+        await tx`
+          insert into interimaire_competence (interimaire_id, competence_code)
+          select ${compteId}, ${code} where exists (select 1 from competence where code = ${code})`;
       }
     });
 

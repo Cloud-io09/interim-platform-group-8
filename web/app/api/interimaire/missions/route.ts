@@ -103,6 +103,14 @@ export async function GET(requete: Request) {
       }
     }
 
+    // L'écran annonce un classement par compatibilité : le rendre dans l'ordre des
+    // identifiants démentirait sa propre promesse. Les missions bloquées sont
+    // classées par échéance, la plus proche d'abord — c'est celle qu'un
+    // renouvellement rouvrirait le plus vite.
+    accessibles.sort((a, b) => b.score - a.score || a.distanceKm - b.distanceKm);
+    bloquees.sort((a, b) => (a.dateEcheance ?? "9999").localeCompare(b.dateEcheance ?? "9999"));
+    horsMetier.sort((a, b) => a.dateDebut.localeCompare(b.dateDebut));
+
     return succes({ portee: toutes ? "toutes" : "mes-metiers", accessibles, bloquees, horsMetier });
   } finally {
     await sql.end();
