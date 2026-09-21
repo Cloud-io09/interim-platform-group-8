@@ -46,6 +46,11 @@ const CLASSIFICATION: Record<string, Record<string, { etat: "chiffre" | "clair";
     mot_de_passe_sel: { etat: "clair", raison: "Un sel n'est pas un secret ; il doit être lisible pour vérifier." },
     role: { etat: "clair", raison: "Détermine les permissions à chaque requête." },
     cree_le: { etat: "clair", raison: "Horodatage technique." },
+    email_verifie_le: {
+      etat: "clair",
+      raison:
+        "Date seule, sans contenu personnel, lue à chaque demande de réinitialisation pour décider si un lien peut partir.",
+    },
   },
   interimaire: {
     compte_id: { etat: "clair", raison: "Clé technique." },

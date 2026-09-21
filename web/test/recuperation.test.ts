@@ -15,6 +15,7 @@ import { BASE, journalServeur } from "./serveur";
 const MARQUE = `recup-${Date.now()}`;
 const MOT_DE_PASSE = "chantier-de-reims-2026";
 const emails: string[] = [];
+const comptes: number[] = [];
 
 async function appel(chemin: string, methode: string, corps?: unknown, cookie?: string) {
   const r = await fetch(`${BASE}${chemin}`, {
@@ -26,7 +27,40 @@ async function appel(chemin: string, methode: string, corps?: unknown, cookie?: 
   return { statut: r.status, corps: t ? JSON.parse(t) : null, entetes: r.headers };
 }
 
-async function inscrire(suffixe: string) {
+/**
+ * Relève un lien dans le journal du serveur, pour un chemin donné.
+ *
+ * Aucun prestataire n'est configuré en test : le courriel part au journal, que le
+ * harnais capture. Aucune route de production n'expose jamais le jeton — ce serait
+ * un défaut de sécurité le jour où la configuration viendrait à manquer.
+ */
+function lienEnvoyeA(email: string, chemin: string): string | null {
+  const journal = journalServeur();
+  const bloc = journal.lastIndexOf(`→ ${email}`);
+  if (bloc < 0) return null;
+  const trouve = journal.slice(bloc).match(new RegExp(`${chemin}\\?jeton=([A-Za-z0-9_-]+)`));
+  return trouve ? decodeURIComponent(trouve[1]!) : null;
+}
+
+async function attendreLien(email: string, chemin: string): Promise<string | null> {
+  // L'écriture du journal est asynchrone : on laisse au flux le temps d'arriver.
+  for (let i = 0; i < 20; i++) {
+    const jeton = lienEnvoyeA(email, chemin);
+    if (jeton) return jeton;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  return null;
+}
+
+/**
+ * Inscrit un compte **et confirme son adresse**.
+ *
+ * La confirmation n'est pas un détail de mise en scène : depuis qu'elle existe,
+ * aucun lien de réinitialisation ne part vers une adresse non confirmée. Sans cette
+ * étape, les cas ci-dessous n'éprouveraient plus le parcours par lien mais le refus
+ * qui le précède — lequel a ses propres cas, dans `verification-email.test.ts`.
+ */
+async function inscrire(suffixe: string, confirmer = true) {
   const email = `${MARQUE}-${suffixe}@exemple.test`;
   emails.push(email);
   const r = await fetch(`${BASE}/api/auth/inscription`, {
@@ -35,6 +69,13 @@ async function inscrire(suffixe: string) {
     body: JSON.stringify({ email, motDePasse: MOT_DE_PASSE, role: "interimaire" }),
   });
   const corps = await r.json();
+  comptes.push(corps.compte.id as number);
+
+  if (confirmer) {
+    const jeton = await attendreLien(email, "verification");
+    await appel("/api/auth/verification", "POST", { jeton });
+  }
+
   return {
     email,
     cookie: r.headers.get("set-cookie")?.split(";")[0] ?? "",
@@ -50,12 +91,13 @@ afterAll(async () => {
     await sql.end();
   }
   const cache = redis();
-  await Promise.all(
-    emails.flatMap((e) => [
+  await Promise.all([
+    ...emails.flatMap((e) => [
       cache.del(cle.tentativesEmail(e)),
       cache.del(cle.demandesReinitialisation(e)),
-    ])
-  );
+    ]),
+    ...comptes.map((id) => cache.del(cle.demandesReinitialisation(`verif:${id}`))),
+  ]);
 });
 
 describe("codes de récupération remis à l'inscription", () => {
@@ -210,30 +252,7 @@ describe("régénération des codes", () => {
 });
 
 describe("réinitialisation par lien envoyé à l'adresse du compte", () => {
-  /**
-   * Récupère le lien depuis le journal du serveur.
-   *
-   * Aucun prestataire n'est configuré en test : le courriel part au journal, que le
-   * harnais capture. Aucune route de production n'expose jamais le jeton — ce serait
-   * un défaut de sécurité le jour où la configuration viendrait à manquer.
-   */
-  function jetonEnvoyeA(email: string): string | null {
-    const journal = journalServeur();
-    const bloc = journal.lastIndexOf(`→ ${email}`);
-    if (bloc < 0) return null;
-    const lien = journal.slice(bloc).match(/reinitialisation\?jeton=([A-Za-z0-9_-]+)/);
-    return lien ? decodeURIComponent(lien[1]!) : null;
-  }
-
-  async function attendreJeton(email: string): Promise<string | null> {
-    // L'écriture du journal est asynchrone : on laisse au flux le temps d'arriver.
-    for (let i = 0; i < 20; i++) {
-      const jeton = jetonEnvoyeA(email);
-      if (jeton) return jeton;
-      await new Promise((r) => setTimeout(r, 150));
-    }
-    return null;
-  }
+  const attendreJeton = (email: string) => attendreLien(email, "reinitialisation");
 
   it("envoie un lien, qui change le mot de passe et ferme les sessions", async () => {
     const { email, cookie } = await inscrire("lien");
@@ -310,7 +329,13 @@ describe("réinitialisation par lien envoyé à l'adresse du compte", () => {
       const r = await appel("/api/auth/reinitialisation", "POST", { email });
       expect(r.statut).toBe(200);
     }
-    const occurrences = journalServeur().split(`→ ${email}`).length - 1;
-    expect(occurrences).toBeLessThanOrEqual(5);
+    // On compte les blocs adressés à ce compte qui portent un lien de
+    // réinitialisation, et non tous ses courriels : celui de vérification, envoyé à
+    // l'inscription, en fait aussi partie sans relever du seuil éprouvé ici.
+    const envois = journalServeur()
+      .split(`→ ${email}`)
+      .slice(1)
+      .filter((bloc) => bloc.split("→ ")[0]!.includes("reinitialisation?jeton="));
+    expect(envois.length).toBeLessThanOrEqual(5);
   });
 });

@@ -9,10 +9,12 @@
  * seulement en local. La suite de tests couvre le code ; ceci couvre **la
  * configuration** : variables d'environnement, base atteignable, cache joignable.
  *
- * **N'envoie aucun courriel.** Les comptes créés utilisent des adresses factices :
- * les laisser partir pour de vrai produirait des rebonds, qui abîment la réputation
- * d'expéditeur. Le chemin par lien est donc éprouvé par la suite fonctionnelle, et le
- * chemin par code de récupération l'est ici — les deux aboutissent au même endroit.
+ * **N'envoie aucun courriel.** Les comptes créés utilisent des adresses en
+ * `@exemple.test`, un domaine que la RFC 2606 réserve : la couche d'envoi les
+ * reconnaît et journalise au lieu de transmettre. Sans cela, chaque exécution
+ * produirait autant de rebonds durs, qui abîment la réputation d'expéditeur. Le
+ * chemin par lien est donc éprouvé par la suite fonctionnelle, et le chemin par code
+ * de récupération l'est ici — les deux aboutissent au même endroit.
  *
  * Le compte d'essai est supprimé en fin de parcours, y compris en cas d'échec.
  */
@@ -161,7 +163,44 @@ verifier(
   demande.corps?.message
 );
 
-// --- 7. Ménage --------------------------------------------------------------
+// --- 7. Adresse e-mail : vérification et changement -------------------------
+//
+// La propriété qui compte : une adresse non confirmée ne reçoit pas de lien de
+// réinitialisation. Sans elle, s'inscrire avec « karim@gmial.com » suffirait au
+// propriétaire réel de cette boîte pour prendre le compte.
+const adresse = await appel("/api/compte/email");
+verifier("l'état de l'adresse est lisible", adresse.statut === 200, `statut ${adresse.statut}`);
+verifier(
+  "une adresse fraîchement inscrite n'est pas confirmée",
+  adresse.corps?.verifie === false,
+  `verifie = ${adresse.corps?.verifie}`
+);
+
+const renvoi = await appel("/api/compte/verification", "POST", {});
+verifier("un lien de confirmation peut être redemandé", renvoi.statut === 200, `statut ${renvoi.statut}`);
+verifier("et il part effectivement", renvoi.corps?.envoye === true, renvoi.corps?.message);
+
+// Le mot de passe est exigé : l'adresse est un facteur de reprise en main, un cookie
+// volé ne doit pas suffire à la détourner.
+const detournement = await appel("/api/compte/email", "POST", {
+  email: `detourne-${Date.now()}@exemple.test`,
+  motDePasse: "ce n'est pas le bon",
+});
+verifier(
+  "changer d'adresse exige le mot de passe",
+  detournement.statut === 403,
+  `statut ${detournement.statut}`
+);
+
+const jetonInvente = await appel(
+  "/api/auth/verification",
+  "POST",
+  { jeton: "un-jeton-totalement-invente-mais-assez-long-pour-passer-la-longueur" },
+  false
+);
+verifier("un lien de confirmation inventé est refusé", jetonInvente.statut === 400, `statut ${jetonInvente.statut}`);
+
+// --- 8. Ménage --------------------------------------------------------------
 const suppression = await appel("/api/compte", "DELETE", { motDePasse: MOT_DE_PASSE_3 });
 verifier("suppression du compte d'essai", suppression.statut === 200, `statut ${suppression.statut}`);
 
