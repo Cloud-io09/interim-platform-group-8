@@ -1,0 +1,126 @@
+{
+  "name": "Intérimatch — alerte avant expiration d'une habilitation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "alertes-declencheur",
+      "name": "Chaque jour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://VOTRE-DOMAINE/api/n8n/certifications-expirantes?jours=90",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "alertes-api",
+      "name": "Habilitations qui expirent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REMPLACER",
+          "name": "Secret Intérimatch"
+        }
+      },
+      "notes": "Rend une alerte par intérimaire concerné, avec le nombre de missions qu'un renouvellement rouvrirait."
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "alertes",
+        "options": {}
+      },
+      "id": "alertes-eclatement",
+      "name": "Un message par personne",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "L'API renvoie un objet contenant un tableau ; Discord attend un message par destinataire. Sans alerte, ce nœud ne produit rien et la suite ne s'exécute pas : le flux ne poste jamais dans le vide."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/REMPLACER",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "alertes-discord",
+      "name": "Poster sur Discord",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "Le champ « message » est rédigé côté serveur : n8n ne connaît aucune règle métier, il transporte."
+    }
+  ],
+  "connections": {
+    "Chaque jour": {
+      "main": [
+        [
+          {
+            "node": "Habilitations qui expirent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Habilitations qui expirent": {
+      "main": [
+        [
+          {
+            "node": "Un message par personne",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Un message par personne": {
+      "main": [
+        [
+          {
+            "node": "Poster sur Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

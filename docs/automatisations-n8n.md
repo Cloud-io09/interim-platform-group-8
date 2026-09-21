@@ -125,6 +125,16 @@ travail. C'est proportionné à ce qu'ils exposent — des rappels d'échéance 
 rapprochements déjà calculés — et à la durée de vie d'un POC. Ce ne serait pas
 suffisant pour un service en production détenant des données de paie.
 
+## Le plus rapide : importer les flux déjà faits
+
+Les deux scénarios sont dans [`n8n/`](n8n/), **importés et exécutés** sur n8n 2.8.4 le
+2026-09-21 contre l'application réelle. Trois valeurs à remplacer, et c'est monté :
+l'adresse de l'application, la credential, l'URL du webhook Discord. Marche à suivre
+dans [`n8n/LISEZ-MOI.md`](n8n/LISEZ-MOI.md).
+
+La section qui suit reste utile pour comprendre ce que fait chaque nœud, ou pour
+remonter un flux de zéro.
+
 ## Montage du flux n8n, pas à pas
 
 *Récrit le 2026-09-21 : la version précédente supposait qu'on savait déjà se servir
