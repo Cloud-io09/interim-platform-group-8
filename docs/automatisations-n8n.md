@@ -125,16 +125,148 @@ travail. C'est proportionné à ce qu'ils exposent — des rappels d'échéance 
 rapprochements déjà calculés — et à la durée de vie d'un POC. Ce ne serait pas
 suffisant pour un service en production détenant des données de paie.
 
-## Montage du flux n8n
+## Montage du flux n8n, pas à pas
 
-```
-Schedule Trigger ──▶ HTTP Request ──▶ Split Out (alertes / notifications) ──▶ Discord
-   (cron)              GET + en-tête        un élément par message
+*Récrit le 2026-09-21 : la version précédente supposait qu'on savait déjà se servir
+de n8n.*
+
+### Avant de toucher à n8n : vérifier que la donnée arrive
+
+Ne montez pas le flux en aveugle. Si l'endpoint ne répond pas, vous chercherez
+l'erreur dans n8n alors qu'elle est ailleurs.
+
+```bash
+curl -s -H "x-secret-n8n: <le-secret>" \
+  "https://<domaine>/api/n8n/certifications-expirantes?jours=90"
 ```
 
-Le champ `message` est prêt à poster : n8n n'a pas à connaître nos règles métier.
-Le webhook Discord se crée dans : salon dédié → Paramètres du serveur → Intégrations
-→ Webhooks → Nouveau webhook.
+Trois réponses possibles, et une seule est un problème de n8n :
+
+| Réponse | Ce que ça veut dire |
+|---|---|
+| `{"ok":true,"alertes":[...]}` | tout va bien, montez le flux |
+| `{"ok":true,"alertes":[]}` | ça marche, mais aucune habilitation n'expire dans la fenêtre — élargissez avec `?jours=3650` pour voir des données |
+| `401` | le secret ne correspond pas, ou `SECRET_N8N` est absente de cet environnement |
+
+### 1. Lancer n8n
+
+Sur le poste qui l'hébergera, avec Node installé :
+
+```bash
+npx n8n
+```
+
+n8n s'ouvre sur `http://localhost:5678`. **Il ne tourne que tant que ce terminal est
+ouvert** : un flux programmé ne se déclenchera pas portable fermé. Pour la soutenance,
+on déclenche à la main — voir plus bas.
+
+### 2. Créer le flux et son déclencheur
+
+*Workflows → Add workflow*. Sur la toile vide, cliquer le **+**, chercher
+**Schedule Trigger**, l'ajouter.
+
+Réglage : *Trigger Interval* → `Days`, *Days Between Triggers* → `1`. Une alerte
+d'échéance n'a aucune raison de partir plus souvent qu'une fois par jour.
+
+### 3. Ajouter l'appel à l'API
+
+Cliquer le **+** à droite du déclencheur, chercher **HTTP Request**.
+
+| Champ | Valeur |
+|---|---|
+| Method | `GET` |
+| URL | `https://<domaine>/api/n8n/certifications-expirantes?jours=90` |
+| Authentication | `Generic Credential Type` |
+| Generic Auth Type | `Header Auth` |
+
+Puis *Credential for Header Auth* → **Create new credential** :
+
+| Champ | Valeur |
+|---|---|
+| Name | `x-secret-n8n` |
+| Value | le secret partagé |
+
+Nommer la credential, par exemple « Secret Intérimatch », et enregistrer.
+
+**C'est ici que le secret doit vivre, et nulle part ailleurs.** Saisi dans le nœud, il
+partirait dans le JSON exporté — donc dans le dépôt. Rangé en credential, il n'apparaît
+pas dans l'export.
+
+Cliquer **Test step** : la sortie doit montrer l'objet avec son tableau `alertes`.
+
+### 4. Séparer les alertes en messages
+
+L'API renvoie **un objet contenant un tableau**. Discord attend **un message par
+destinataire**. Il faut donc éclater le tableau.
+
+**+** → **Split Out**. *Fields To Split Out* → `alertes`.
+
+Après ce nœud, chaque élément est une alerte, et `{{ $json.message }}` désigne son
+message. S'il n'y a aucune alerte, le nœud ne produit rien et la suite ne s'exécute
+pas : le flux ne poste donc jamais dans le vide.
+
+### 5. Poster sur Discord
+
+Le plus simple et le plus stable d'une version de n8n à l'autre : un second **HTTP
+Request**.
+
+| Champ | Valeur |
+|---|---|
+| Method | `POST` |
+| URL | l'URL du webhook Discord |
+| Send Body | activé |
+| Body Content Type | `JSON` |
+| Specify Body | `Using Fields Below` |
+| Name | `content` |
+| Value | `{{ $json.message }}` |
+
+Le webhook Discord se crée dans : salon dédié → *Paramètres du salon* → *Intégrations*
+→ *Webhooks* → *Nouveau webhook* → *Copier l'URL*.
+
+n8n a aussi un nœud **Discord** natif, qui fait la même chose avec un champ de moins.
+Son interface change selon les versions ; l'appel HTTP ci-dessus, lui, ne bouge pas.
+
+### 6. Éprouver le flux
+
+Bouton **Test workflow**, en bas de la toile. Chaque nœud s'allume vert l'un après
+l'autre, et le message doit apparaître dans Discord.
+
+Si un nœud passe au rouge, son panneau de sortie affiche la réponse HTTP reçue : un
+`401` vient du secret, un `400` d'un paramètre d'URL, un `404` d'une faute dans le
+chemin.
+
+### 7. Le second scénario
+
+Dupliquer le flux (*⋯ → Duplicate*) et changer deux choses :
+
+| | Scénario 1 | Scénario 2 |
+|---|---|---|
+| URL | `…/certifications-expirantes?jours=90` | `…/missions-a-notifier?heures=24` |
+| Split Out | `alertes` | `notifications` |
+
+Le reste est identique : le champ `message` est prêt dans les deux cas.
+
+### 8. Livrer l'export
+
+Le sujet demande l'export des scénarios. *⋯ → Download* produit un `.json` à ranger
+dans `docs/n8n/`. **Vérifier avant de le committer** que le secret n'y figure pas :
+
+```bash
+grep -i "x-secret-n8n\|secret" docs/n8n/*.json
+```
+
+Seul le **nom** de la credential doit apparaître, jamais sa valeur. Si vous y trouvez
+le secret, c'est qu'il a été saisi dans le nœud plutôt qu'en credential : refaites
+l'étape 3, puis changez le secret des deux côtés.
+
+### Pour la soutenance
+
+Un n8n local ne tourne que pendant qu'il est ouvert. Le jour J, ne comptez pas sur la
+programmation : ouvrez le flux et cliquez **Test workflow** devant le jury. C'est aussi
+plus démonstratif — on voit la donnée traverser chaque nœud.
+
+Pour qu'il y ait quelque chose à montrer, `?jours=3650` garantit des alertes quelle que
+soit la base.
 
 ## Vérifier sans n8n
 
