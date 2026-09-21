@@ -72,14 +72,40 @@ export async function GET() {
           `Vérifier que la variable est cochée pour cet environnement, puis redéployer.`,
   };
 
+  // Relais Discord : même raisonnement que pour le courriel.
+  //
+  // Quatre variables, et chacune manque pour une raison différente : sans les deux
+  // premières le bouton de rattachement n'a nulle part où envoyer, sans les deux
+  // autres le salon ne peut pas être créé. Les nommer séparément évite de chercher
+  // laquelle des quatre a été oubliée.
+  const attenduesDiscord = [
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET",
+    "DISCORD_BOT_TOKEN",
+    "DISCORD_SERVEUR_ID",
+  ] as const;
+  const manquantesDiscord = attenduesDiscord.filter((v) => !process.env[v]?.trim());
+
+  const discord = {
+    ok: manquantesDiscord.length === 0,
+    latenceMs: 0,
+    detail:
+      manquantesDiscord.length === 0
+        ? `relais configuré (${environnement}), serveur ${process.env.DISCORD_SERVEUR_ID}`
+        : `environnement « ${environnement} » : ${manquantesDiscord.join(", ")} ${
+            manquantesDiscord.length > 1 ? "manquent" : "manque"
+          }. Le rattachement est masqué dans l'interface ; les notifications restent ` +
+          `visibles dans l'application.`,
+  };
+
   // Rien à sonder pour la lecture des CV : elle s'exécute dans le navigateur, à
   // partir de fichiers statiques. Une sonde côté serveur ne dirait rien de ce que
   // l'utilisateur obtient réellement — et le navigateur, lui, signale son échec.
-  // Le courriel n'empêche pas le produit de fonctionner : son absence se lit dans le
-  // détail, elle ne fait pas échouer la sonde.
+  // Ni le courriel ni Discord n'empêchent le produit de fonctionner : leur absence se
+  // lit dans le détail, elle ne fait pas échouer la sonde.
   const ok = postgres.ok && cache.ok;
   return Response.json(
-    { ok, verifieLe: new Date().toISOString(), services: { postgres, cache, courriel } },
+    { ok, verifieLe: new Date().toISOString(), services: { postgres, cache, courriel, discord } },
     { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } }
   );
 }

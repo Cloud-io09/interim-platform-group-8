@@ -46,8 +46,8 @@ export async function GET(requete: Request) {
       const resultat = matcher(mission, profils);
       const identites = new Map(profils.map((p) => [p.interimaireId, p]));
 
-      const contacts = await sql<{ compte_id: number; email: string; webhook_discord: string | null }[]>`
-        select i.compte_id, c.email, i.webhook_discord
+      const contacts = await sql<{ compte_id: number; email: string; discord_salon_id: string | null }[]>`
+        select i.compte_id, c.email, c.discord_salon_id
         from interimaire i join compte c on c.id = i.compte_id
         where i.compte_id = any(${resultat.retenus.map((r) => r.interimaireId)})`;
 
@@ -69,7 +69,7 @@ export async function GET(requete: Request) {
           interimaireId: score.interimaireId,
           nomComplet: `${profil.prenom} ${profil.nom}`,
           email: contact.email,
-          webhookDiscord: contact.webhook_discord,
+          discordSalonId: contact.discord_salon_id,
           score: Math.round(score.total * 100),
           distanceKm: score.detail.distanceKm,
           message:
