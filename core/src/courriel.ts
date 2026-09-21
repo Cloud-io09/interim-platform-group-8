@@ -24,7 +24,7 @@ export interface Courriel {
   texte: string;
 }
 
-export type CanalCourriel = "brevo" | "journal";
+export type CanalCourriel = "brevo" | "journal" | "factice";
 
 export interface ResultatEnvoi {
   transmis: boolean;
@@ -35,6 +35,34 @@ export interface ResultatEnvoi {
 
 /** Marqueur du journal, repérable par la suite fonctionnelle. */
 export const MARQUEUR_JOURNAL = "[courriel]";
+
+/**
+ * Domaines réservés par la RFC 2606, qu'aucun utilisateur réel ne peut posséder.
+ *
+ * Ils sont garantis sans enregistrement DNS : rien n'y est jamais acheminé.
+ */
+const DOMAINES_RESERVES = ["test", "example", "invalid", "localhost"];
+const DOMAINES_RESERVES_COMPLETS = ["example.com", "example.net", "example.org"];
+
+/**
+ * Une adresse vers laquelle il est légitime de faire partir un message.
+ *
+ * Nos propres outils — essai de fumée, parcours de bout en bout, suite fonctionnelle —
+ * créent des comptes sur des adresses factices en `@exemple.test`. Depuis que
+ * l'inscription envoie un message de vérification, les laisser partir vers un
+ * prestataire produirait un rebond dur à chaque exécution, et les rebonds abîment
+ * durablement la réputation d'expéditeur d'un domaine.
+ *
+ * Le filtre ne porte pas sur nos adresses d'essai en particulier, mais sur les
+ * domaines que la RFC 2606 réserve précisément à cet usage : aucun compte réel ne
+ * peut s'en réclamer, et tout outil écrit plus tard en hérite sans rien savoir d'ici.
+ */
+export function adresseEnvoyable(adresse: string): boolean {
+  const domaine = adresse.trim().toLowerCase().split("@")[1];
+  if (!domaine) return false;
+  if (DOMAINES_RESERVES_COMPLETS.includes(domaine)) return false;
+  return !DOMAINES_RESERVES.includes(domaine.split(".").pop() ?? "");
+}
 
 function expediteur(): { email: string; nom: string } | null {
   const email = process.env.COURRIEL_EXPEDITEUR;
@@ -68,6 +96,19 @@ async function parBrevo(courriel: Courriel, cle: string, de: { email: string; no
   }
 }
 
+/** Écrit le message en entier au journal du serveur, préfixé pour être retrouvable. */
+function journaliser(courriel: Courriel): void {
+  process.stderr.write(
+    `${MARQUEUR_JOURNAL} → ${courriel.destinataire}\n` +
+      `${MARQUEUR_JOURNAL} sujet : ${courriel.sujet}\n` +
+      courriel.texte
+        .split("\n")
+        .map((l) => `${MARQUEUR_JOURNAL} ${l}`)
+        .join("\n") +
+      "\n"
+  );
+}
+
 /**
  * Envoie un courriel, ou le journalise faute de prestataire configuré.
  *
@@ -79,19 +120,18 @@ export async function envoyerCourriel(courriel: Courriel): Promise<ResultatEnvoi
   const cle = process.env.BREVO_API_KEY;
   const de = expediteur();
 
+  if (!adresseEnvoyable(courriel.destinataire)) {
+    // Adresse d'un domaine réservé : on journalise comme sans prestataire, ce qui
+    // garde le parcours vérifiable, et rien ne part.
+    journaliser(courriel);
+    return { transmis: false, canal: "factice" };
+  }
+
   if (!cle || !de) {
     // Pas de prestataire : le message est écrit au journal, en entier. C'est ce qui
     // rend le parcours vérifiable en développement et en test, et ce qui évite
     // qu'une configuration oubliée passe pour un envoi réussi.
-    process.stderr.write(
-      `${MARQUEUR_JOURNAL} → ${courriel.destinataire}\n` +
-        `${MARQUEUR_JOURNAL} sujet : ${courriel.sujet}\n` +
-        courriel.texte
-          .split("\n")
-          .map((l) => `${MARQUEUR_JOURNAL} ${l}`)
-          .join("\n") +
-        "\n"
-    );
+    journaliser(courriel);
     return { transmis: false, canal: "journal" };
   }
 

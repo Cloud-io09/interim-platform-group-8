@@ -59,6 +59,12 @@ export const TTL = {
   jetonReinitialisation: 3600,
   /** Changement d'adresse : 24 h, l'utilisateur doit pouvoir relever l'autre boîte. */
   jetonChangementEmail: 24 * 3600,
+  /**
+   * Vérification d'adresse : 48 h. Plus long que les deux autres, parce que rien
+   * d'urgent n'en dépend — le compte fonctionne entre-temps — et qu'un maçon qui
+   * s'inscrit un vendredi soir doit pouvoir cliquer le lundi.
+   */
+  jetonVerificationEmail: 48 * 3600,
   /** Fenêtre de comptage des demandes de réinitialisation. */
   demandesReinitialisation: 3600,
 } as const;

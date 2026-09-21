@@ -3,7 +3,7 @@ import { cle, TTL } from "./redis";
 import type { MagasinSession } from "./auth";
 
 /**
- * Jetons à usage unique — réinitialisation de mot de passe, changement d'adresse.
+ * Jetons à usage unique — réinitialisation, vérification et changement d'adresse.
  *
  * Trois propriétés, et chacune répond à une attaque précise.
  *
@@ -19,7 +19,7 @@ import type { MagasinSession } from "./auth";
  * ses courriels, assez peu pour qu'un lien oublié dans une boîte cesse vite de nuire.
  */
 
-export type TypeJeton = "reinitialisation" | "changement_email";
+export type TypeJeton = "reinitialisation" | "changement_email" | "verification_email";
 
 export interface ContenuJeton {
   type: TypeJeton;
@@ -42,6 +42,7 @@ export function empreinteJeton(jeton: string): string {
 const DUREES: Record<TypeJeton, number> = {
   reinitialisation: TTL.jetonReinitialisation,
   changement_email: TTL.jetonChangementEmail,
+  verification_email: TTL.jetonVerificationEmail,
 };
 
 /** Crée un jeton et le range sous son empreinte. Rend le secret, une seule fois. */
@@ -63,11 +64,16 @@ export async function emettreJeton(
  * La suppression précède l'usage. Si l'opération échoue ensuite, l'utilisateur devra
  * redemander un lien — c'est le bon sens de l'échec : mieux vaut un lien à redemander
  * qu'un lien rejouable.
+ *
+ * `typeAttendu` accepte une liste, pour le cas d'un écran qui reçoit un lien sans
+ * savoir lequel des deux parcours d'adresse l'a produit. Passer un seul type reste la
+ * règle : c'est ce qui empêche un jeton de vérification de servir à réinitialiser un
+ * mot de passe.
  */
 export async function consommerJeton(
   magasin: MagasinSession,
   jeton: string | undefined,
-  typeAttendu: TypeJeton
+  typeAttendu: TypeJeton | readonly TypeJeton[]
 ): Promise<ContenuJeton | null> {
   if (!jeton || jeton.length < LONGUEUR_JETON) return null;
 
@@ -79,7 +85,8 @@ export async function consommerJeton(
   const contenu = (typeof brut === "string" ? JSON.parse(brut) : brut) as ContenuJeton;
   // Un jeton de changement d'adresse ne doit pas servir à réinitialiser un mot de
   // passe : le type est vérifié, pas supposé.
-  if (contenu?.type !== typeAttendu || typeof contenu.compteId !== "number") return null;
+  const acceptes = Array.isArray(typeAttendu) ? typeAttendu : [typeAttendu as TypeJeton];
+  if (!acceptes.includes(contenu?.type) || typeof contenu.compteId !== "number") return null;
   return contenu;
 }
 
