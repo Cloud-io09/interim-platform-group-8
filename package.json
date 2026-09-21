@@ -18,7 +18,8 @@
     "build": "npm run -w @interimatch/web build",
     "verifier": "npm run typecheck && npm run test",
     "coverage": "npm run coverage --workspaces --if-present",
-    "fumee": "node outils/fumee-auth.mjs"
+    "fumee": "node outils/fumee-auth.mjs",
+    "parcours": "node outils/parcours-complet.mjs"
   },
   "engines": {
     "node": ">=22"

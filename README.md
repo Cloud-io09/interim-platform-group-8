@@ -77,7 +77,11 @@ Tous les comptes de démonstration utilisent le mot de passe `demonstration-inte
 ```bash
 npm run verifier   # typecheck + tous les tests
 npm run coverage   # rapport de couverture
+npm run parcours   # parcours complet des deux côtés, contre une instance réelle
+npm run fumee      # parcours d'authentification, contre une instance réelle
 ```
+
+Les deux derniers prennent une URL en argument et s'exécutent aussi bien contre un déploiement : `npm run parcours -- https://mon-app.vercel.app`. Ils vérifient la **configuration** là où la suite vérifie le **code**.
 
 `verifier` enchaîne `typecheck` puis `test` **sans pipe** : une redirection masquerait le code de sortie, et une suite rouge passerait pour verte.
 
@@ -158,6 +162,7 @@ Base légale et durées de conservation énoncées sur `/confidentialite`, menti
 | Document | Contenu |
 |---|---|
 | [docs/conformite-sujet.md](docs/conformite-sujet.md) | **état des lieux exigence par exigence**, vérifié dans le code |
+| [docs/parcours.md](docs/parcours.md) | **parcours de bout en bout des deux côtés**, diagrammes et scénarios éprouvés |
 | [docs/plan-implementation.md](docs/plan-implementation.md) | décisions techniques, mesures issues de l'exploration API, arbitrages |
 | [docs/donnees-personnelles.md](docs/donnees-personnelles.md) | cartographie du traitement, chiffrement au repos, durées de conservation |
 | [docs/ecoconception.md](docs/ecoconception.md) | pratiques RGESN appliquées et mesurées |
