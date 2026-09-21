@@ -40,6 +40,13 @@ function fauxMagasin() {
     async smembers(k) {
       return [...(ensembles.get(k) ?? [])];
     },
+    async mget(...k) {
+      return k.map((x) => donnees.get(x) ?? null);
+    },
+    async scan(_curseur, { match }) {
+      const motif = new RegExp(`^${match.replace(/\*/g, ".*")}$`);
+      return ["0", [...donnees.keys()].filter((k) => motif.test(k))];
+    },
     async set(k, v) {
       donnees.set(k, v);
       return "OK";
@@ -114,6 +121,30 @@ describe("cycle de vie d'une session", () => {
     expect(await lireSession(m, a.jeton)).toBeNull();
     expect(await lireSession(m, b.jeton)).toBeNull();
     expect(await lireSession(m, c.jeton)).not.toBeNull();
+  });
+
+  it("révoque aussi une session absente de l'index", async () => {
+    // Constaté le 2026-09-21 : l'index par compte était le seul point de vérité, donc
+    // une session ouverte avant son introduction — ou perdue par une éviction Redis —
+    // survivait à un changement de mot de passe. Une session irrévocable est
+    // exactement ce qu'un changement de mot de passe doit empêcher.
+    const m = fauxMagasin();
+    const oubliee = await ouvrirSession(m, compte);
+    m.ensembles.get(`sess:compte:${compte.id}`)?.delete(oubliee.jeton);
+
+    expect(await lireSession(m, oubliee.jeton), "préalable : la session existe").not.toBeNull();
+    await fermerToutesLesSessions(m, compte.id);
+    expect(await lireSession(m, oubliee.jeton)).toBeNull();
+  });
+
+  it("n'emporte pas les sessions d'un autre compte", async () => {
+    const m = fauxMagasin();
+    const mien = await ouvrirSession(m, compte);
+    const autre = await ouvrirSession(m, { ...compte, id: compte.id + 1 });
+
+    await fermerToutesLesSessions(m, compte.id);
+    expect(await lireSession(m, mien.jeton)).toBeNull();
+    expect(await lireSession(m, autre.jeton), "session d'un tiers emportée").not.toBeNull();
   });
 
   it("retire le jeton de l'index quand la session se ferme", async () => {

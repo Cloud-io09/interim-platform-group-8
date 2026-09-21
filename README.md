@@ -157,6 +157,7 @@ Base légale et durées de conservation énoncées sur `/confidentialite`, menti
 
 | Document | Contenu |
 |---|---|
+| [docs/conformite-sujet.md](docs/conformite-sujet.md) | **état des lieux exigence par exigence**, vérifié dans le code |
 | [docs/plan-implementation.md](docs/plan-implementation.md) | décisions techniques, mesures issues de l'exploration API, arbitrages |
 | [docs/donnees-personnelles.md](docs/donnees-personnelles.md) | cartographie du traitement, chiffrement au repos, durées de conservation |
 | [docs/ecoconception.md](docs/ecoconception.md) | pratiques RGESN appliquées et mesurées |
