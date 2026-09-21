@@ -49,18 +49,27 @@ export async function GET() {
 
   // Acheminement du courriel : configuré ou non.
   //
-  // Sans prestataire, la réinitialisation de mot de passe **répond 200 sans rien
-  // envoyer** — le repli écrit au journal du serveur. Vu de l'extérieur, une
-  // production mal configurée est donc indiscernable d'une production qui marche.
-  // La sonde est le seul endroit où le constater sans lire les logs.
+  // Sans prestataire, la réinitialisation répond 200 sans rien envoyer — le repli
+  // écrit au journal du serveur. Vu de l'extérieur, une production mal configurée
+  // est donc indiscernable d'une production qui marche.
+  //
+  // La sonde nomme **chaque variable manquante** et **l'environnement Vercel**
+  // courant. Une variable cochée pour « Production » seule laisse la préversion sans
+  // rien : c'est l'erreur la plus fréquente, et sans cette ligne il faut deviner.
+  const attendues = ["BREVO_API_KEY", "COURRIEL_EXPEDITEUR"] as const;
+  const manquantes = attendues.filter((v) => !process.env[v]?.trim());
+  const environnement = process.env.VERCEL_ENV ?? "local";
+
   const courriel = {
-    ok: Boolean(process.env.BREVO_API_KEY && process.env.COURRIEL_EXPEDITEUR),
+    ok: manquantes.length === 0,
     latenceMs: 0,
-    detail: process.env.BREVO_API_KEY
-      ? process.env.COURRIEL_EXPEDITEUR
-        ? `prestataire configuré, expéditeur ${process.env.COURRIEL_EXPEDITEUR}`
-        : "clé présente mais COURRIEL_EXPEDITEUR manquante : rien ne partira"
-      : "aucun prestataire : les courriels partent au journal, donc nulle part",
+    detail:
+      manquantes.length === 0
+        ? `prestataire configuré (${environnement}), expéditeur ${process.env.COURRIEL_EXPEDITEUR}`
+        : `environnement « ${environnement} » : ${manquantes.join(" et ")} ${
+            manquantes.length > 1 ? "manquent" : "manque"
+          }. Les courriels partent au journal, donc nulle part. ` +
+          `Vérifier que la variable est cochée pour cet environnement, puis redéployer.`,
   };
 
   // Rien à sonder pour la lecture des CV : elle s'exécute dans le navigateur, à
