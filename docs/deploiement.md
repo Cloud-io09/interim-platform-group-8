@@ -63,3 +63,39 @@ Réponse attendue :
   }
 }
 ```
+
+
+---
+
+## Variables d'environnement sur Vercel
+
+*Ajouté le 2026-09-21, après un lien de réinitialisation resté sans effet en préversion.*
+
+`.env` est ignoré par git : **Vercel n'a que ce qui est saisi dans son tableau de bord**. Une variable oubliée ne fait pas échouer le déploiement, elle change silencieusement le comportement.
+
+| Variable | Portée | Sans elle |
+|---|---|---|
+| `DATABASE_URL` | production + préversion | rien ne fonctionne |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | production + préversion | ni session ni limitation de tentatives |
+| `CLE_CHIFFREMENT` | production + préversion | les colonnes chiffrées deviennent illisibles |
+| `BREVO_API_KEY` | production + préversion | **la réinitialisation répond 200 sans rien envoyer** |
+| `COURRIEL_EXPEDITEUR` | production + préversion | idem : la clé seule ne suffit pas |
+| `COURRIEL_EXPEDITEUR_NOM` | facultatif | « Intérimatch » par défaut |
+| `SECRET_N8N` | production | les deux automatisations renvoient 401 |
+| `FT_CLIENT_ID` / `FT_CLIENT_SECRET` | ingestion seulement | pas d'ingestion ; le site fonctionne |
+
+### `URL_PUBLIQUE` : à renseigner en production, **pas en préversion**
+
+Elle compose les liens envoyés par courriel. En préversion, chaque déploiement a une URL différente : y figer l'adresse de production enverrait les utilisateurs de la préversion vers le site de production. Laissée vide, l'origine de la requête est utilisée, ce qui est le comportement voulu.
+
+En production derrière un proxy, l'origine de la requête peut valoir une adresse interne — d'où la nécessité de la fixer là.
+
+### Constater la configuration sans lire les logs
+
+`GET /api/sante` rend l'état de chaque dépendance, courriel compris :
+
+```json
+"courriel": { "ok": false, "detail": "aucun prestataire : les courriels partent au journal, donc nulle part" }
+```
+
+C'est le premier endroit à regarder quand un parcours « répond bien » mais ne produit rien.
