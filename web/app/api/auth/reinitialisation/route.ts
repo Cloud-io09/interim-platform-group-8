@@ -9,21 +9,9 @@ import {
   TTL,
 } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
+import { origine } from "@/lib/verification-email";
 
 export const dynamic = "force-dynamic";
-
-/**
- * Base publique du site, pour composer un lien cliquable.
- *
- * `||` et non `??` : une variable **présente mais vide** — le cas par défaut du
- * `.env.example` — doit retomber sur l'origine de la requête. Avec `??` elle était
- * retenue telle quelle, et le courriel partait avec un chemin relatif, donc un lien
- * mort. La barre oblique finale est retirée pour ne pas composer un double slash.
- */
-function origine(requete: Request): string {
-  const publique = process.env.URL_PUBLIQUE?.trim();
-  return (publique || new URL(requete.url).origin).replace(/\/+$/, "");
-}
 
 /**
  * Demande de réinitialisation par courriel.
@@ -36,6 +24,12 @@ function origine(requete: Request): string {
  * jeton existe tout de même et l'incident se lit dans le journal du serveur. Faire
  * échouer la requête n'aiderait personne : l'utilisateur redemanderait un lien, et
  * l'attaquant apprendrait que l'adresse existe.
+ *
+ * **Rien n'est envoyé à une adresse non vérifiée.** C'est la condition qui referme la
+ * faille : sans elle, s'inscrire avec « karim@gmial.com » suffit à ce que le
+ * propriétaire réel de cette boîte demande un lien et prenne le compte. Le titulaire
+ * n'est pas pour autant sans recours — ses codes de récupération restent valables, et
+ * ils sont le seul chemin tant qu'il n'a pas confirmé son adresse.
  */
 export async function POST(requete: Request) {
   const saisie = await corpsJson<{ email?: string }>(requete);
@@ -65,8 +59,13 @@ export async function POST(requete: Request) {
 
   const sql = connexion();
   try {
-    const [compte] = await sql<{ id: number }[]>`select id from compte where email = ${email}`;
+    const [compte] = await sql<{ id: number; email_verifie_le: Date | null }[]>`
+      select id, email_verifie_le from compte where email = ${email}`;
     if (!compte) return reponse;
+
+    // Adresse non confirmée : même réponse, aucun envoi. Le distinguer dans le
+    // message rendrait l'endpoint bavard sur l'état des comptes.
+    if (!compte.email_verifie_le) return reponse;
 
     const { jeton } = await emettreJeton(cache, { type: "reinitialisation", compteId: compte.id });
     const lien = `${origine(requete)}/reinitialisation?jeton=${encodeURIComponent(jeton)}`;

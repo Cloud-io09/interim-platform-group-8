@@ -2,12 +2,14 @@ import { connexion } from "@interimatch/core/db";
 import {
   hacherMotDePasse,
   normaliserEmail,
+  redis,
   validerInscription,
   type RoleCompte,
 } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { remettreCodes } from "@/lib/recuperation";
 import { poserCookieSession } from "@/lib/session";
+import { envoyerVerification, origine } from "@/lib/verification-email";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +64,20 @@ export async function POST(requete: Request) {
     // eux, oublier son mot de passe reviendrait à perdre ses habilitations, ses
     // disponibilités et ses candidatures. La base n'en garde que les empreintes.
     const codes = await remettreCodes(sql, compte.id);
+
+    // Vérification de l'adresse, demandée dès l'inscription et **sans bloquer** :
+    // le compte est utilisable immédiatement. Tant qu'elle n'est pas confirmée,
+    // aucun lien de réinitialisation n'y sera envoyé — c'est ce qui empêche qu'une
+    // adresse mal saisie donne prise sur le compte à son propriétaire réel.
+    //
+    // L'échec d'envoi n'échoue pas l'inscription : refuser un compte parce qu'un
+    // prestataire de courriel est indisponible serait un très mauvais échange, et
+    // l'adresse reste vérifiable plus tard depuis l'espace.
+    try {
+      await envoyerVerification(redis(), compte.id, email, origine(requete));
+    } catch {
+      /* journalisé par la couche d'envoi ; l'inscription aboutit tout de même */
+    }
 
     await poserCookieSession({ id: compte.id, role, email });
     return succes(
