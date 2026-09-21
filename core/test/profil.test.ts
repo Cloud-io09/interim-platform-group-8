@@ -7,6 +7,7 @@ import {
   validerCertification,
   validerProfilEntreprise,
   validerProfilInterimaire,
+  ANNEES_EXPERIENCE_MAX,
 } from "../src/profil";
 
 const champs = (p: { champ: string }[]) => p.map((x) => x.champ).sort();
@@ -208,5 +209,43 @@ describe("disponibilités", () => {
     // cesserait de refléter la réalité au bout de quelques semaines.
     expect(champs(validerDisponibilite({ dateDebut: "2027-01-01", dateFin: "2037-01-01" }))).toEqual(["dateFin"]);
     expect(validerDisponibilite({ dateDebut: "2027-01-01", dateFin: "2028-12-30" })).toEqual([]);
+  });
+});
+
+describe("expérience déclarée par métier", () => {
+  const base = {
+    prenom: "Karim", nom: "Benali", codePostal: "51100", ville: "Reims",
+    rayonMobiliteKm: 50,
+  };
+
+  it("accepte un métier sans expérience : elle est facultative", () => {
+    // On ne bloque pas quelqu'un qui débute, ni quelqu'un qui préfère ne pas le dire.
+    expect(champs(validerProfilInterimaire({ ...base, metiers: ["F1703"] }))).not.toContain("metiers");
+    expect(
+      champs(validerProfilInterimaire({ ...base, metiers: [{ code: "F1703", anneesExperience: null }] }))
+    ).not.toContain("metiers");
+  });
+
+  it("accepte zéro année, qui veut dire « je débute »", () => {
+    expect(
+      champs(validerProfilInterimaire({ ...base, metiers: [{ code: "F1703", anneesExperience: 0 }] }))
+    ).not.toContain("metiers");
+  });
+
+  it("refuse une valeur qui ne peut pas être une carrière", () => {
+    for (const aberrante of [-1, 61, 12.5, "huit"]) {
+      expect(
+        champs(validerProfilInterimaire({ ...base, metiers: [{ code: "F1703", anneesExperience: aberrante }] })),
+        `valeur ${aberrante}`
+      ).toContain("metiers");
+    }
+  });
+
+  it("accepte le plafond exact", () => {
+    expect(
+      champs(validerProfilInterimaire({
+        ...base, metiers: [{ code: "F1703", anneesExperience: ANNEES_EXPERIENCE_MAX }],
+      }))
+    ).not.toContain("metiers");
   });
 });

@@ -1094,3 +1094,14 @@ details > summary {
   /* Une impression ne doit sortir que les codes, pas la navigation du site. */
   .entete, .pied, .bandeau-espace, .bouton, .case { display: none !important; }
 }
+
+/* Saisie de l'expérience : une ligne par métier, le nombre d'années à droite.
+   Champ étroit — on saisit deux chiffres, pas une phrase — mais la cible tactile
+   reste à 44 px, le public portant souvent des gants. */
+.ligne-experience label { font-size: 0.9375rem; }
+.saisie-annees { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+.saisie-annees input {
+  width: 5rem;
+  min-height: var(--cible-tactile);
+  text-align: center;
+}

@@ -35,6 +35,15 @@ export const RAYON_MAX_KM = 200;
 /** Périmètre de mobilité du CDI intérimaire. Jamais codé en dur ailleurs. */
 export const RAYON_DEFAUT_KM = 50;
 
+/** Au-delà, ce n'est plus une carrière : la saisie est refusée. */
+export const ANNEES_EXPERIENCE_MAX = 60;
+
+/** Années plausibles sur un métier : entier, de 0 au plafond. */
+export function estAnneesPlausibles(valeur: unknown): boolean {
+  const n = Number(valeur);
+  return Number.isInteger(n) && n >= 0 && n <= ANNEES_EXPERIENCE_MAX;
+}
+
 export interface SaisieProfilInterimaire {
   prenom?: unknown;
   nom?: unknown;
@@ -69,6 +78,25 @@ export function validerProfilInterimaire(saisie: SaisieProfilInterimaire): Probl
 
   if (!Array.isArray(saisie.metiers) || saisie.metiers.length === 0) {
     problemes.push({ champ: "metiers", message: "Choisissez au moins un métier." });
+  } else {
+    // L'expérience est facultative — on ne bloque pas quelqu'un qui débute — mais si
+    // elle est donnée, elle doit être plausible. Soixante ans de métier est au-delà
+    // d'une carrière entière ; une valeur négative n'a pas de sens.
+    const aberrante = saisie.metiers.some(
+      (m) =>
+        typeof m === "object" &&
+        m !== null &&
+        "anneesExperience" in m &&
+        (m as { anneesExperience: unknown }).anneesExperience !== null &&
+        (m as { anneesExperience: unknown }).anneesExperience !== undefined &&
+        !estAnneesPlausibles((m as { anneesExperience: unknown }).anneesExperience)
+    );
+    if (aberrante) {
+      problemes.push({
+        champ: "metiers",
+        message: `L'expérience se compte en années entières, de 0 à ${ANNEES_EXPERIENCE_MAX}.`,
+      });
+    }
   }
 
   // La carte BTP est facultative, mais si un numéro est déclaré, sa date l'est aussi :

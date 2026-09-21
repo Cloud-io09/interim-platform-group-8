@@ -28,13 +28,13 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 | Exigence | État | Détail |
 |---|---|---|
 | Création de mission : poste, dates, lieu, compétences requises, rémunération | **fait** | Les cinq champs existent. Le formulaire se préremplit depuis les offres publiques du métier |
-| Profil intérimaire : compétences, disponibilités, zone géographique, expérience | **partiel** | Compétences, disponibilités et zone : oui. **L'expérience n'est pas un champ structuré** — elle n'apparaît que dans le texte du CV, qui ne décide de rien |
+| Profil intérimaire : compétences, disponibilités, zone géographique, expérience | **fait** | Les quatre existent. L'expérience est déclarée **par métier** — « huit ans en maçonnerie, deux en conduite d'engins » — parce qu'un nombre global mélangerait des métiers sans rapport |
 | Algorithme de matching avec scoring | **fait** | Deux étapes séquentielles : filtre éliminatoire sur les habilitations, puis scoring sur compétences (0,40), distance (0,35), disponibilité (0,25). Le score est exposé **par critère** |
 | Tableau de bord de suivi : ouverte, pourvue, terminée | **fait** | Quatre états : brouillon, publiée, pourvue, close, avec les transitions permises en table |
 
 **La règle centrale**, vérifiée par un test de mutation : la validité d'une habilitation est comparée à la **date de fin de mission**, jamais à la date du jour. `core/src/matching.ts` ne contient aucun `Date.now()`.
 
-**Ce qui reste** : ajouter l'expérience au profil, ou assumer explicitement qu'elle est hors périmètre — le produit se fonde sur les habilitations datées, pas sur l'ancienneté déclarée.
+**L'expérience n'entre pas dans le score, et c'est délibéré.** Le sujet nomme lui-même les trois critères de scoring — compétences, zone, disponibilité — et l'éligibilité vient des habilitations datées, jamais de l'ancienneté déclarée. Elle est montrée à l'entreprise qui décide ; elle ne décide pas à sa place. La fiche profil le dit explicitement, sans quoi on supposerait qu'elle a pesé dans le classement.
 
 ---
 
@@ -53,11 +53,11 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 
 | Exigence | État | Détail |
 |---|---|---|
-| Deux automatisations réalistes | **partiel** | Les deux endpoints existent, sont testés et renvoient des messages prêts à poster. **Le flux n8n n'a jamais été vu s'exécuter** |
+| Deux automatisations réalistes | **fait** | Montées et exécutées : quatre nœuds traversés, message posté sur Discord, aucune erreur. Le second flux, lancé sur une fenêtre vide, montre que le nœud Discord n'est pas exécuté quand il n'y a rien à notifier |
 | Canal webhook plutôt qu'e-mail ou SMS | **fait** | Discord |
-| Export des scénarios livré | **absent** | `docs/n8n/` attend les fichiers |
+| Export des scénarios livré | **fait** | [`n8n/`](n8n/) — réimportés tels quels pour vérifier qu'ils s'importent, et exempts de secret, d'URL de webhook et d'adresse locale |
 
-**Bloquant identifié** : `SECRET_N8N` est absente de l'environnement. La garde échoue fermée — les deux endpoints renvoient `401`, donc les automatisations **ne peuvent pas fonctionner** en l'état. Marche à suivre complète dans [automatisations-n8n.md](automatisations-n8n.md).
+**Vérifié en production le 2026-09-21** : les deux endpoints répondent `200` avec le secret, `401` sans. `SECRET_N8N` est bien posée sur Vercel.
 
 ---
 
@@ -118,9 +118,7 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 
 ## Ce qui reste, par ordre d'urgence
 
-1. **`SECRET_N8N`, puis monter les deux flux et verser leurs exports.** C'est la seule exigence explicite du sujet qui est aujourd'hui *impossible* à satisfaire en l'état, et le cahier interne la classe parmi celles à ne jamais couper.
-2. **Le chiffrage réel.** Il ne se reconstitue pas le dernier jour : l'écart entre estimé et réalisé est précisément ce qui est évalué. À démarrer maintenant, même grossièrement.
-3. **Étude de marché et support de pitch.** Hors code.
-4. **L'expérience au profil intérimaire**, ou une justification écrite de son absence.
-5. **Un paragraphe sur le réemploi d'EPI.** Conditionnel, et peu coûteux.
-6. **Vérification de l'adresse à l'inscription**, maintenant que l'e-mail est le canal de récupération.
+1. **Le chiffrage réel.** Il ne se reconstitue pas le dernier jour : l'écart entre estimé et réalisé est précisément ce qui est évalué. À démarrer maintenant, même grossièrement.
+2. **Étude de marché et support de pitch.** Hors code.
+3. **Un paragraphe sur le réemploi d'EPI.** Conditionnel, et peu coûteux.
+4. **Vérification de l'adresse à l'inscription**, maintenant que l'e-mail est le canal de récupération.

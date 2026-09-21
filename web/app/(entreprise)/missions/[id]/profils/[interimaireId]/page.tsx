@@ -42,15 +42,18 @@ export default async function ProfilPourMission({
     const profil = profils.find((p) => p.interimaireId === interimaireId);
     if (!profil) notFound();
 
-    const [identite] = await sql<{ prenom: string; nom: string; ville: string; metiers: string[] }[]>`
-      select i.prenom, i.nom, i.ville,
-             coalesce(array_agg(m.libelle) filter (where m.libelle is not null), '{}') as metiers
-      from interimaire i
-      left join interimaire_metier im on im.interimaire_id = i.compte_id
-      left join metier m on m.code = im.metier_code
-      where i.compte_id = ${interimaireId}
-      group by i.prenom, i.nom, i.ville`;
+    const [identite] = await sql<{ prenom: string; nom: string; ville: string }[]>`
+      select prenom, nom, ville from interimaire where compte_id = ${interimaireId}`;
     if (!identite) notFound();
+
+    // L'expérience accompagne le métier auquel elle se rapporte : « huit ans en
+    // maçonnerie » veut dire quelque chose, « huit ans » tout court, non.
+    const metiersDeclares = await sql<{ libelle: string; annees_experience: number | null }[]>`
+      select m.libelle, im.annees_experience
+      from interimaire_metier im
+      join metier m on m.code = im.metier_code
+      where im.interimaire_id = ${interimaireId}
+      order by im.annees_experience desc nulls last, m.libelle`;
 
     const pourConformite = (await chargerMissionPourConformite(sql, missionId))!;
     const conformite = await conformiteDetaillee(sql, pourConformite, interimaireId);
@@ -129,15 +132,33 @@ export default async function ProfilPourMission({
             vide="Cette mission n'exige aucune habilitation particulière."
           />
 
-          <h2>Métiers déclarés</h2>
-          {identite.metiers.length === 0 ? (
+          <h2>Métiers et expérience déclarés</h2>
+          {metiersDeclares.length === 0 ? (
             <p className="secondaire">Aucun métier déclaré.</p>
           ) : (
-            <ul className="liste-nue puces">
-              {identite.metiers.map((m) => (
-                <li key={m} className="puce puce--acquise">{m}</li>
-              ))}
-            </ul>
+            <>
+              <ul className="liste-nue lignes">
+                {metiersDeclares.map((m) => (
+                  <li key={m.libelle} className="ligne">
+                    <span className="petit">{m.libelle}</span>
+                    <span className={m.annees_experience === null ? "pastille pastille--info" : "pastille pastille--ok"}>
+                      {m.annees_experience === null
+                        ? "expérience non renseignée"
+                        : m.annees_experience === 0
+                          ? "débute sur ce métier"
+                          : `${m.annees_experience} an${m.annees_experience > 1 ? "s" : ""}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {/* Dit explicitement ce que l'expérience ne fait pas : sans cette ligne,
+                  on supposerait qu'elle a pesé dans le classement. */}
+              <p className="petit secondaire" style={{ marginTop: "0.75rem" }}>
+                L&apos;expérience est déclarée par l&apos;intérimaire et n&apos;entre pas
+                dans le calcul de correspondance. Seules les habilitations et leurs dates
+                décident de l&apos;accès au chantier.
+              </p>
+            </>
           )}
 
           <h2>Disponibilités et distance</h2>

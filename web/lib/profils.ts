@@ -13,6 +13,8 @@ export interface ProfilInterimaireLu {
   carteBtpNumero: string | null;
   carteBtpEcheance: string | null;
   metiers: string[];
+  /** Années déclarées par métier. Informative : elle n'entre pas dans le score. */
+  experienceParMetier: Record<string, number | null>;
   competences: string[];
 }
 
@@ -41,8 +43,9 @@ export const lireProfilInterimaire = cache(async function lireProfilInterimaire(
   if (!ligne) return null;
 
   const [metiers, competences] = await Promise.all([
-    sql<{ metier_code: string }[]>`
-      select metier_code from interimaire_metier where interimaire_id = ${compteId}`,
+    sql<{ metier_code: string; annees_experience: number | null }[]>`
+      select metier_code, annees_experience from interimaire_metier
+      where interimaire_id = ${compteId}`,
     sql<{ competence_code: string }[]>`
       select competence_code from interimaire_competence where interimaire_id = ${compteId}`,
   ]);
@@ -58,6 +61,9 @@ export const lireProfilInterimaire = cache(async function lireProfilInterimaire(
     carteBtpNumero: dechiffrerOptionnel(ligne.carte_btp_numero_chiffre),
     carteBtpEcheance: ligne.carte_btp_echeance,
     metiers: metiers.map((m) => m.metier_code),
+    experienceParMetier: Object.fromEntries(
+      metiers.map((m) => [m.metier_code, m.annees_experience])
+    ),
     competences: competences.map((c) => c.competence_code),
   };
 });

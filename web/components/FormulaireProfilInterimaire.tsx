@@ -34,6 +34,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
   const [rayon, setRayon] = useState(RAYON_DEFAUT_KM);
   const [metiers, setMetiers] = useState<string[]>([]);
   const [competences, setCompetences] = useState<string[]>([]);
+  const [experience, setExperience] = useState<Record<string, string>>({});
   const [refCompetences, setRefCompetences] = useState<Element[]>([]);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -68,6 +69,14 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           setRayon(mien.profil.rayonMobiliteKm);
           setMetiers(mien.profil.metiers);
           setCompetences(mien.profil.competences ?? []);
+          setExperience(
+            Object.fromEntries(
+              Object.entries(mien.profil.experienceParMetier ?? {}).map(([code, annees]) => [
+                code,
+                annees === null || annees === undefined ? "" : String(annees),
+              ])
+            )
+          );
         }
       })
       .catch(() => setErreur("Impossible de charger votre profil."))
@@ -95,7 +104,11 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         rayonMobiliteKm: rayon,
         carteBtpNumero: d.get("carteBtpNumero"),
         carteBtpEcheance: d.get("carteBtpEcheance"),
-        metiers,
+        // Un objet par métier : le code, et l'expérience si elle a été saisie.
+        metiers: metiers.map((code) => ({
+          code,
+          anneesExperience: experience[code]?.trim() ? Number(experience[code]) : null,
+        })),
         competences,
       }
     );
@@ -175,6 +188,45 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           surChangement={setMetiers}
         />
       </div>
+
+      {metiers.length > 0 && (
+        <fieldset>
+          <legend>Votre expérience</legend>
+          <p className="petit secondaire">
+            Le nombre d&apos;années sur chaque métier déclaré. Facultatif, et c&apos;est
+            volontaire : <strong>l&apos;expérience n&apos;entre pas dans le calcul de
+            correspondance</strong> — ce sont vos habilitations et leurs dates qui
+            décident de votre accès aux chantiers. Elle est montrée à l&apos;entreprise
+            qui consulte votre profil.
+          </p>
+          <ul className="liste-nue lignes">
+            {metiers.map((code) => {
+              const libelle =
+                domaines.flatMap((d) => d.metiers).find((m) => m.code === code)?.libelle ?? code;
+              return (
+                <li key={code} className="ligne ligne-experience">
+                  <label htmlFor={`experience-${code}`}>{libelle}</label>
+                  <span className="saisie-annees">
+                    <input
+                      id={`experience-${code}`}
+                      type="number"
+                      min={0}
+                      max={60}
+                      step={1}
+                      inputMode="numeric"
+                      placeholder="—"
+                      value={experience[code] ?? ""}
+                      onChange={(e) => setExperience({ ...experience, [code]: e.target.value })}
+                    />
+                    <span className="petit secondaire">ans</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {problemeDe("metiers") && <p className="petit message-erreur">{problemeDe("metiers")}</p>}
+        </fieldset>
+      )}
 
       {/* Les compétences pèsent 40 % du classement. Avant, elles ne pouvaient venir
           que d'un CV déposé : un intérimaire sans CV partait avec ce critère à zéro
