@@ -142,8 +142,18 @@ verifier("connexion avec le mot de passe récupéré", apres.statut === 200, `st
 cookie = cookieDe(apres);
 
 // --- 6. Demande de lien : répond sans divulguer -----------------------------
-// On ne complète pas le parcours : il enverrait un courriel à une adresse factice.
-const demande = await appel("/api/auth/reinitialisation", "POST", { email }, false);
+//
+// Volontairement sur une adresse **qui n'existe pas**. L'endpoint répond la même
+// chose dans les deux cas — c'est précisément la propriété qu'on vérifie — mais il
+// n'envoie rien quand le compte est inconnu. Le demander pour le compte d'essai
+// enverrait un courriel réel à une adresse factice, donc un rebond, qui abîme la
+// réputation d'expéditeur. Même assertion, aucun envoi.
+const demande = await appel(
+  "/api/auth/reinitialisation",
+  "POST",
+  { email: `inexistant-${Date.now()}@exemple.test` },
+  false
+);
 verifier("la demande de lien répond", demande.statut === 200, `statut ${demande.statut}`);
 verifier(
   "la réponse ne dit pas si le compte existe",
