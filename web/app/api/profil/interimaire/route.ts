@@ -31,7 +31,9 @@ interface Saisie {
   rayonMobiliteKm?: number;
   carteBtpNumero?: string;
   carteBtpEcheance?: string;
-  metiers?: string[];
+  /** Un code seul, ou un objet avec l'expérience déclarée sur ce métier. */
+  metiers?: (string | { code: string; anneesExperience?: number | null })[];
+  competences?: string[];
 }
 
 /**
@@ -98,10 +100,40 @@ export async function POST(requete: Request) {
           carte_btp_echeance = excluded.carte_btp_echeance`;
 
       // Les métiers sont remplacés en bloc : c'est une liste, pas un journal.
+      //
+      // La saisie accepte un code seul ou un objet portant l'expérience : les deux
+      // formes cohabitent, un client plus ancien n'est donc pas cassé par l'ajout.
       await tx`delete from interimaire_metier where interimaire_id = ${compteId}`;
-      const metiers = (saisie.metiers ?? []).map((code) => ({ interimaire_id: compteId, metier_code: code }));
+      const metiers = (saisie.metiers ?? []).map((m) =>
+        typeof m === "string"
+          ? { interimaire_id: compteId, metier_code: m, annees_experience: null }
+          : {
+              interimaire_id: compteId,
+              metier_code: m.code,
+              annees_experience:
+                m.anneesExperience === null || m.anneesExperience === undefined
+                  ? null
+                  : Number(m.anneesExperience),
+            }
+      );
       if (metiers.length > 0) {
-        await tx`insert into interimaire_metier ${tx(metiers, "interimaire_id", "metier_code")}`;
+        await tx`insert into interimaire_metier ${tx(
+          metiers,
+          "interimaire_id",
+          "metier_code",
+          "annees_experience"
+        )}`;
+      }
+
+      // Même principe pour les compétences. Un code hors référentiel est ignoré
+      // plutôt que de faire échouer tout l'enregistrement : le référentiel se remplit
+      // au fil des ingestions, et perdre un profil entier pour un libellé disparu
+      // serait une punition disproportionnée.
+      await tx`delete from interimaire_competence where interimaire_id = ${compteId}`;
+      for (const code of saisie.competences ?? []) {
+        await tx`
+          insert into interimaire_competence (interimaire_id, competence_code)
+          select ${compteId}, ${code} where exists (select 1 from competence where code = ${code})`;
       }
     });
 

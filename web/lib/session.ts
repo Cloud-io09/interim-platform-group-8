@@ -49,6 +49,11 @@ export async function sessionCourante(): Promise<Session | null> {
   return lireSession(redis(), jeton);
 }
 
+/** Jeton de la session en cours, pour l'épargner lors d'une révocation globale. */
+export async function jetonSessionCourant(): Promise<string | undefined> {
+  return (await cookies()).get(NOM_COOKIE)?.value;
+}
+
 export async function retirerSession(): Promise<void> {
   const magasin = await cookies();
   const jeton = magasin.get(NOM_COOKIE)?.value;

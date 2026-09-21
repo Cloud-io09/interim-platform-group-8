@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DUREE_MAX_MOIS, validerExigences, validerMission } from "../src/mission";
+import { validerExigences, validerMission } from "../src/mission";
+import { DUREE_MAX_MOIS } from "../src/droit-travail";
 
 const champs = (p: { champ: string }[]) => p.map((x) => x.champ);
 

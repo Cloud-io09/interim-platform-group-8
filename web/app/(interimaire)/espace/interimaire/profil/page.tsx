@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import FormulaireProfilInterimaire from "@/components/FormulaireProfilInterimaire";
-import SupprimerCompte from "@/components/SupprimerCompte";
+import OngletsProfil from "@/components/OngletsProfil";
 import { exigerSession } from "@/lib/garde";
 
 export const metadata: Metadata = { title: "Mon profil", robots: { index: false, follow: false } };
@@ -18,6 +18,7 @@ export default async function ProfilInterimaire({
       <div className="colonne colonne--formulaire">
         <p className="petit secondaire"><a href="/espace/interimaire">← Mon espace</a></p>
         <h1 className="titre-page">Mon profil</h1>
+        <OngletsProfil role="interimaire" />
         <p className="secondaire">
           Ces informations décident des missions qui vous sont proposées. Vos
           certifications et vos disponibilités se renseignent séparément.
@@ -27,8 +28,6 @@ export default async function ProfilInterimaire({
         <FormulaireProfilInterimaire
           apresEnregistrement={suite === "certifications" ? "/espace/interimaire/certifications" : undefined}
         />
-        <hr className="separateur" />
-        <SupprimerCompte />
       </div>
     </section>
   );

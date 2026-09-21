@@ -11,15 +11,16 @@ export default function Connexion() {
   return (
     <section className="section">
       <div className="colonne colonne--etroite">
-        <div className="carte">
-          <FormulaireAuth
+        <FormulaireAuth
             mode="connexion"
             titre="Se connecter"
             intro="Accédez à votre espace intérimaire ou entreprise."
             libelleBouton="Se connecter"
           />
-        </div>
         <p className="petit secondaire" style={{ marginTop: "1.5rem" }}>
+          <a href="/mot-de-passe-oublie">Mot de passe oublié ?</a>
+        </p>
+        <p className="petit secondaire">
           Pas encore de compte ? <a href="/inscription/interimaire">Créer un profil intérimaire</a>{" "}
           ou <a href="/inscription/entreprise">créer un compte entreprise</a>.
         </p>

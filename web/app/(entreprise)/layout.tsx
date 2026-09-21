@@ -1,5 +1,7 @@
 import { connexion } from "@interimatch/core/db";
+import { configDiscord } from "@interimatch/core";
 import EnteteEspace from "@/components/EnteteEspace";
+import RappelsEspace from "@/components/RappelsEspace";
 import { exigerSession } from "@/lib/garde";
 import { lireProfilEntreprise } from "@/lib/profils";
 
@@ -11,7 +13,15 @@ export default async function LayoutEntreprise({ children }: { children: React.R
 
   const sql = connexion();
   let profil = null;
+  let adresseVerifiee = true;
+  let discordRelie = true;
   try {
+    const [compte] = await sql<
+      { email_verifie_le: Date | null; discord_utilisateur_id: string | null }[]
+    >`select email_verifie_le, discord_utilisateur_id
+        from compte where id = ${session.compteId}`;
+    adresseVerifiee = compte?.email_verifie_le != null;
+    discordRelie = compte?.discord_utilisateur_id != null;
     profil = await lireProfilEntreprise(sql, session.compteId);
   } finally {
     await sql.end();
@@ -49,7 +59,19 @@ export default async function LayoutEntreprise({ children }: { children: React.R
           />
         </div>
       </div>
+      <RappelsEspace
+        email={session.email}
+        role="entreprise"
+        adresseVerifiee={adresseVerifiee}
+        discordRelie={discordRelie}
+        discordDisponible={relaisDiscordMonte()}
+      />
       {children}
     </>
   );
+}
+
+/** Le relais est-il monté ? Proposer un rattachement qui échouera ne sert personne. */
+function relaisDiscordMonte(): boolean {
+  return configDiscord() !== null && Boolean(process.env.DISCORD_CLIENT_SECRET?.trim());
 }

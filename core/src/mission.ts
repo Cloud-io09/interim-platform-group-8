@@ -1,12 +1,10 @@
+import { ARTICLE_DUREE_MAX, DUREE_MAX_MOIS, verifierDuree } from "./droit-travail";
 import { enMsUTC } from "./dates";
 import { exigeCategorie, typeCertification } from "./referentiel";
 import type { DateISO, Probleme } from "./index";
 
 const MOTIF_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MOTIF_CODE_POSTAL = /^\d{5}$/;
-
-/** Durée maximale d'une mission d'intérim, renouvellements compris (Code du travail). */
-export const DUREE_MAX_MOIS = 18;
 
 export interface SaisieMission {
   titre?: unknown;
@@ -35,6 +33,9 @@ export interface ExigenceSaisie {
  * contre laquelle le filtre éliminatoire compare les échéances de certification.
  * Sans elle, la règle centrale du produit est inapplicable.
  */
+/** Les messages d'erreur s'adressent à un humain : jamais de date ISO. */
+const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
+
 export function validerMission(saisie: SaisieMission): Probleme[] {
   const problemes: Probleme[] = [];
 
@@ -69,12 +70,17 @@ export function validerMission(saisie: SaisieMission): Probleme[] {
     if (fin < debut) {
       problemes.push({ champ: "dateFin", message: "La date de fin ne peut pas précéder la date de début." });
     } else {
-      const limite = new Date(debut);
-      limite.setUTCMonth(limite.getUTCMonth() + DUREE_MAX_MOIS);
-      if (fin > limite.getTime()) {
+      // Le plafond légal vient du module de droit du travail, pas d'un calcul local :
+      // il est opposé ici comme il le sera au document de mission, et il est testé
+      // aux bornes — dont les mois trop courts pour accueillir le quantième.
+      const verdict = verifierDuree(saisie.dateDebut as DateISO, saisie.dateFin as DateISO);
+      if (!verdict.conforme) {
         problemes.push({
           champ: "dateFin",
-          message: `Une mission d'intérim ne peut pas dépasser ${DUREE_MAX_MOIS} mois, renouvellements compris.`,
+          message:
+            `Une mission d'intérim ne peut pas dépasser ${DUREE_MAX_MOIS} mois, ` +
+            `renouvellements compris (${ARTICLE_DUREE_MAX}). ` +
+            `Pour un début au ${enDateFr(saisie.dateDebut as DateISO)}, la fin ne peut pas aller au-delà du ${enDateFr(verdict.finMaximale)}.`,
         });
       }
     }

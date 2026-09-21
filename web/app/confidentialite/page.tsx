@@ -83,9 +83,46 @@ export default function Confidentialite() {
           </li>
           <li>Aucun profilage au-delà des critères annoncés.</li>
           <li>Aucune notation des intérimaires.</li>
-          <li>Aucune revente ni transmission à des tiers.</li>
+          <li>
+            Aucune revente. Aucune transmission à un tiers, <strong>sauf une, et
+            seulement si vous la demandez</strong> : le relais de vos notifications
+            vers Discord, décrit ci-dessous.
+          </li>
           <li>Aucun traceur publicitaire. Le seul cookie déposé est celui de session.</li>
         </ul>
+
+        <h2>Notifications sur Discord</h2>
+        <p>
+          Facultatif, et inactif tant que vous ne l&apos;avez pas demandé depuis votre
+          profil. Si vous rattachez un compte Discord, un{" "}
+          <strong>salon privé</strong> est créé pour vous sur notre serveur : vous seul
+          pouvez le lire, ni les autres membres ni les entreprises.
+        </p>
+        <ul>
+          <li>
+            <strong>Ce qui y est envoyé</strong> : vos habilitations qui approchent de
+            leur échéance, et les missions qui correspondent à votre profil. Ni votre
+            adresse, ni votre téléphone, ni vos numéros d&apos;habilitation, ni le texte
+            de votre CV.
+          </li>
+          <li>
+            <strong>Ce que nous demandons à Discord</strong> : votre identifiant, et le
+            droit de vous ajouter à notre serveur — sans quoi vous ne verriez pas votre
+            salon. Ni votre adresse e-mail, ni vos messages. Votre adresse Discord
+            n&apos;a pas besoin d&apos;être celle de votre compte ici.
+          </li>
+          <li>
+            <strong>Pour arrêter</strong> : un bouton dans votre profil. Le salon est
+            supprimé, avec tout ce qui y a été posté. La suppression de votre compte
+            fait de même.
+          </li>
+        </ul>
+        <p>
+          Ce traitement repose sur votre <strong>consentement</strong> (article 6.1.a du
+          RGPD), distinct de celui qui fonde le reste. Le retirer ne demande pas votre
+          mot de passe : un consentement doit se retirer aussi facilement qu&apos;il se
+          donne.
+        </p>
 
         <h2>Durées de conservation</h2>
         <ul>
@@ -94,6 +131,7 @@ export default function Confidentialite() {
           <li><strong>Session</strong> : 7 jours d&apos;inactivité, en base non relationnelle.</li>
           <li><strong>Tentatives de connexion</strong> : 15 minutes.</li>
           <li><strong>Traces de calcul de correspondance</strong> : 1 heure. Elles servent à expliquer un résultat, pas à archiver.</li>
+          <li><strong>Salon Discord privé</strong> : jusqu&apos;à son détachement, ou la suppression du compte.</li>
         </ul>
 
         <h2>Vos droits</h2>

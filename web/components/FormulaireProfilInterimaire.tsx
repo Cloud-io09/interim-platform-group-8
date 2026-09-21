@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
+import SelecteurReferentiel, { type Element } from "./SelecteurReferentiel";
 import { envoyerJson } from "@/lib/client";
 
 interface Domaine {
@@ -21,6 +22,7 @@ interface Profil {
   carteBtpNumero: string | null;
   carteBtpEcheance: string | null;
   metiers: string[];
+  competences: string[];
 }
 
 const RAYON_DEFAUT_KM = 50;
@@ -31,6 +33,9 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
   const [charge, setCharge] = useState(false);
   const [rayon, setRayon] = useState(RAYON_DEFAUT_KM);
   const [metiers, setMetiers] = useState<string[]>([]);
+  const [competences, setCompetences] = useState<string[]>([]);
+  const [experience, setExperience] = useState<Record<string, string>>({});
+  const [refCompetences, setRefCompetences] = useState<Element[]>([]);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
@@ -41,6 +46,14 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
   };
 
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ)?.message;
+
+  useEffect(() => {
+    const parametre = metiers.length ? `?metiers=${metiers.join(",")}` : "";
+    fetch(`/api/referentiel/competences${parametre}`)
+      .then((r) => (r.ok ? r.json() : { competences: [] }))
+      .then((d) => setRefCompetences(d.competences ?? []))
+      .catch(() => {});
+  }, [metiers]);
 
   useEffect(() => {
     Promise.all([
@@ -55,6 +68,15 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           setProfil(mien.profil);
           setRayon(mien.profil.rayonMobiliteKm);
           setMetiers(mien.profil.metiers);
+          setCompetences(mien.profil.competences ?? []);
+          setExperience(
+            Object.fromEntries(
+              Object.entries(mien.profil.experienceParMetier ?? {}).map(([code, annees]) => [
+                code,
+                annees === null || annees === undefined ? "" : String(annees),
+              ])
+            )
+          );
         }
       })
       .catch(() => setErreur("Impossible de charger votre profil."))
@@ -82,7 +104,12 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         rayonMobiliteKm: rayon,
         carteBtpNumero: d.get("carteBtpNumero"),
         carteBtpEcheance: d.get("carteBtpEcheance"),
-        metiers,
+        // Un objet par métier : le code, et l'expérience si elle a été saisie.
+        metiers: metiers.map((code) => ({
+          code,
+          anneesExperience: experience[code]?.trim() ? Number(experience[code]) : null,
+        })),
+        competences,
       }
     );
     setEnCours(false);
@@ -94,10 +121,6 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
     }
     setSucces(`Profil enregistré. Adresse retenue : ${corps.position.libelle}.`);
     if (apresEnregistrement) setTimeout(() => window.location.assign(apresEnregistrement), 900);
-  }
-
-  function basculerMetier(code: string) {
-    setMetiers((a) => (a.includes(code) ? a.filter((x) => x !== code) : [...a, code]));
   }
 
   if (!charge) return <p className="secondaire">Chargement de votre profil…</p>;
@@ -154,23 +177,72 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Vos métiers</legend>
+      <div>
         {problemeDe("metiers") && <p className="petit message-erreur">{problemeDe("metiers")}</p>}
-        {domaines.map((d) => (
-          <div key={d.domaine} className="groupe-cases">
-            <h3 className="petit sur-titre">{d.libelle}</h3>
-            <div className="cases">
-              {d.metiers.map((m) => (
-                <label key={m.code} className="case">
-                  <input type="checkbox" checked={metiers.includes(m.code)} onChange={() => basculerMetier(m.code)} />
-                  <span>{m.libelle}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-      </fieldset>
+        <SelecteurReferentiel
+          legende="Vos métiers"
+          aide="Ils décident des missions qui vous sont proposées. Cherchez par mot — « maçon », « engins », « couverture »."
+          placeholder="Maçon, grutier, coffreur…"
+          elements={domaines.flatMap((d) => d.metiers.map((m) => ({ ...m, groupe: d.libelle })))}
+          selection={metiers}
+          surChangement={setMetiers}
+        />
+      </div>
+
+      {metiers.length > 0 && (
+        <fieldset>
+          <legend>Votre expérience</legend>
+          <p className="petit secondaire">
+            Le nombre d&apos;années sur chaque métier déclaré. Facultatif, et c&apos;est
+            volontaire : <strong>l&apos;expérience n&apos;entre pas dans le calcul de
+            correspondance</strong> — ce sont vos habilitations et leurs dates qui
+            décident de votre accès aux chantiers. Elle est montrée à l&apos;entreprise
+            qui consulte votre profil.
+          </p>
+          <ul className="liste-nue lignes">
+            {metiers.map((code) => {
+              const libelle =
+                domaines.flatMap((d) => d.metiers).find((m) => m.code === code)?.libelle ?? code;
+              return (
+                <li key={code} className="ligne ligne-experience">
+                  <label htmlFor={`experience-${code}`}>{libelle}</label>
+                  <span className="saisie-annees">
+                    <input
+                      id={`experience-${code}`}
+                      type="number"
+                      min={0}
+                      max={60}
+                      step={1}
+                      inputMode="numeric"
+                      placeholder="—"
+                      value={experience[code] ?? ""}
+                      onChange={(e) => setExperience({ ...experience, [code]: e.target.value })}
+                    />
+                    <span className="petit secondaire">ans</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {problemeDe("metiers") && <p className="petit message-erreur">{problemeDe("metiers")}</p>}
+        </fieldset>
+      )}
+
+      {/* Les compétences pèsent 40 % du classement. Avant, elles ne pouvaient venir
+          que d'un CV déposé : un intérimaire sans CV partait avec ce critère à zéro
+          sans jamais l'apprendre. */}
+      <SelecteurReferentiel
+        legende="Vos compétences de chantier"
+        aide={
+          metiers.length > 0
+            ? "Classées par fréquence dans les offres réelles de vos métiers. Facultatif, mais elles comptent pour beaucoup dans votre classement."
+            : "Choisissez d'abord vos métiers : la liste sera classée par pertinence pour eux."
+        }
+        placeholder="Coffrage, ferraillage, lecture de plans…"
+        elements={refCompetences}
+        selection={competences}
+        surChangement={setCompetences}
+      />
 
       <fieldset>
         {/* Bloc séparé des certifications : la carte BTP atteste d'une situation

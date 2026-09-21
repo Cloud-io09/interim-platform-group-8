@@ -7,6 +7,8 @@ import { ListeConformite, PastilleConformite } from "@/components/Conformite";
 import { exigerSession } from "@/lib/garde";
 import { chargerMission, chargerProfils } from "@/lib/depot";
 import { chargerMissionPourConformite, conformiteDetaillee } from "@/lib/candidatures";
+import { chargerExperience } from "@/lib/experience";
+import Experience from "@/components/Experience";
 
 export const metadata: Metadata = { title: "Profil du candidat", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -42,15 +44,19 @@ export default async function ProfilPourMission({
     const profil = profils.find((p) => p.interimaireId === interimaireId);
     if (!profil) notFound();
 
-    const [identite] = await sql<{ prenom: string; nom: string; ville: string; metiers: string[] }[]>`
-      select i.prenom, i.nom, i.ville,
-             coalesce(array_agg(m.libelle) filter (where m.libelle is not null), '{}') as metiers
-      from interimaire i
-      left join interimaire_metier im on im.interimaire_id = i.compte_id
-      left join metier m on m.code = im.metier_code
-      where i.compte_id = ${interimaireId}
-      group by i.prenom, i.nom, i.ville`;
+    const [identite] = await sql<{ prenom: string; nom: string; ville: string }[]>`
+      select prenom, nom, ville from interimaire where compte_id = ${interimaireId}`;
     if (!identite) notFound();
+
+    // L'expérience accompagne le métier auquel elle se rapporte : « huit ans en
+    // maçonnerie » veut dire quelque chose, « huit ans » tout court, non.
+    const metiersDeclares = await sql<{ code: string; libelle: string; annees_experience: number | null }[]>`
+      select m.code, m.libelle, im.annees_experience
+      from interimaire_metier im
+      join metier m on m.code = im.metier_code
+      where im.interimaire_id = ${interimaireId}
+      order by im.annees_experience desc nulls last, m.libelle`;
+    const experience = await chargerExperience(sql, interimaireId);
 
     const pourConformite = (await chargerMissionPourConformite(sql, missionId))!;
     const conformite = await conformiteDetaillee(sql, pourConformite, interimaireId);
@@ -129,16 +135,16 @@ export default async function ProfilPourMission({
             vide="Cette mission n'exige aucune habilitation particulière."
           />
 
-          <h2>Métiers déclarés</h2>
-          {identite.metiers.length === 0 ? (
-            <p className="secondaire">Aucun métier déclaré.</p>
-          ) : (
-            <ul className="liste-nue puces">
-              {identite.metiers.map((m) => (
-                <li key={m} className="puce puce--acquise">{m}</li>
-              ))}
-            </ul>
-          )}
+          <h2>Métiers et expérience</h2>
+          <Experience
+            vue="entreprise"
+            constatee={experience}
+            declaree={metiersDeclares.map((m) => ({
+              code: m.code,
+              libelle: m.libelle,
+              annees: m.annees_experience,
+            }))}
+          />
 
           <h2>Disponibilités et distance</h2>
           <ul className="liste-nue lignes">

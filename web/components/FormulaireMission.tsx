@@ -46,6 +46,7 @@ export default function FormulaireMission() {
   const ids = {
     titre: useId(), metier: useId(), desc: useId(), adresse: useId(), cp: useId(),
     ville: useId(), debut: useId(), fin: useId(), min: useId(), max: useId(),
+    horaires: useId(),
   };
 
   const problemeDe = (champ: string) => problemes.find((p) => p.champ === champ)?.message;
@@ -95,6 +96,7 @@ export default function FormulaireMission() {
         ville: d.get("ville"),
         dateDebut: d.get("dateDebut"),
         dateFin: d.get("dateFin"),
+        horaires: d.get("horaires"),
         tauxHoraireMin: d.get("tauxHoraireMin") ? Number(d.get("tauxHoraireMin")) : null,
         tauxHoraireMax: d.get("tauxHoraireMax") ? Number(d.get("tauxHoraireMax")) : null,
         certificationsRequises: exigences.map((e) => ({
@@ -300,6 +302,25 @@ export default function FormulaireMission() {
             {problemeDe("dateFin") && <p className="petit message-erreur">{problemeDe("dateFin")}</p>}
           </div>
         </div>
+
+        {/* Mention obligatoire du contrat de mission. Texte libre : un chantier
+            alterne des journées de 7 h et de 9 h, une grille mentirait. */}
+        <div className="champ">
+          <label htmlFor={ids.horaires}>Horaires de travail</label>
+          <input
+            id={ids.horaires}
+            name="horaires"
+            type="text"
+            maxLength={300}
+            placeholder="7h30-12h / 13h-16h30, 35 h par semaine"
+          />
+          <p className="petit secondaire">
+            Mention obligatoire du contrat de mission. Sans elle, le document de mission
+            est incomplet.
+          </p>
+          {problemeDe("horaires") && <p className="petit message-erreur">{problemeDe("horaires")}</p>}
+        </div>
+
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.min}>Taux horaire minimum</label>

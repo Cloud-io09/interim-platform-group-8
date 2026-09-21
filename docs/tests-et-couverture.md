@@ -70,3 +70,52 @@ alternatives d'images, information jamais portée par la seule couleur.
 Ce qui ne se vérifie pas mécaniquement — ordre de tabulation perçu, restitution par un
 lecteur d'écran, parcours avec un utilisateur en situation de handicap — est listé comme
 limite connue sur la page `/accessibilite`.
+
+---
+
+## Ce que le rapport de couverture dit — et ce qu'il ne dit pas
+
+*Section ajoutée le 18 septembre 2026, à l'occasion de l'audit de conformité au sujet.*
+
+`npm run coverage` produit un rapport pour `core` : **96,71 % des lignes** sur 351 tests,
+avec les
+détails par fichier en HTML et en lcov. C'est le livrable attendu par le sujet.
+
+**Il n'y a volontairement pas de rapport équivalent pour `web`, et c'est une décision,
+pas un oubli.** Les 182 tests de `web` démarrent un vrai serveur `next start` dans un
+autre processus et l'interrogent en HTTP. Le fournisseur v8 de Vitest n'instrumente
+que le processus de test : il rendrait **0 % sur chaque fichier de `web/lib`**, ce qui
+laisserait croire que rien n'est testé alors que ces modules sont traversés à chaque
+parcours. Publier ce chiffre serait plus trompeur que de ne pas le publier.
+
+Instrumenter le serveur avec `NODE_V8_COVERAGE` reste possible. Ça n'a pas été fait :
+le code exécuté est celui du bundle Turbopack, et le remonter au source demande une
+chaîne de cartes de sources qui produirait un rapport approximatif — un chiffre faux
+est pire qu'un chiffre absent.
+
+### Ce que la suite fonctionnelle couvre réellement
+
+La mesure qui a du sens ici n'est pas la ligne exécutée, c'est le comportement vérifié.
+
+**36 des 39 routes d'API** sont appelées par la suite fonctionnelle ou par le parcours
+de bout en bout. Les trois restantes sont en lecture seule et sans effet de bord :
+
+| Route non couverte | Pourquoi |
+|---|---|
+| `/api/referentiel/metiers` | lecture d'un référentiel semé par migration |
+| `/api/referentiel/certifications` | idem |
+| `/api/referentiel/competences` | idem, classement par fréquence d'ingestion |
+
+Ce sont des candidates à couvrir si le temps le permet, listées ici plutôt que tues.
+
+*Recompté le 21 septembre 2026. Le chiffre précédent — 23 sur 28 — datait du 18 et ne
+valait plus : huit routes ont été ajoutées depuis, et `/api/enrichissement` comme
+`/api/notifications`, alors annoncées non couvertes, sont désormais traversées par
+`npm run parcours`.*
+
+### Pourquoi le délai de test est à 45 secondes
+
+La base et le cache sont hébergés au loin : un parcours enchaîne une quinzaine
+d'allers-retours réseau. À 20 secondes, deux tests tombaient un jour sur deux sans
+qu'aucune ligne de code ait changé. Un test qui échoue au hasard ne protège plus de
+rien — il apprend seulement à ignorer le rouge.

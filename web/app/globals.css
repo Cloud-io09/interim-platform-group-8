@@ -1004,3 +1004,145 @@ details > summary {
 /* Titre d'écran sous le bandeau d'espace : plus discret qu'un h1 de page publique,
    qui viserait 3 rem — ici le bandeau tient déjà le haut de la page. */
 .titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: 0.35rem; }
+
+/* --- Sélecteur dans un référentiel long ------------------------------------ */
+.selecteur { margin-bottom: 1.5rem; }
+.selecteur input[type="search"] { width: 100%; }
+.selecteur .groupe-cases { margin-top: 0.75rem; }
+
+/* Puces retirables : ce sont des boutons, donc la cible tactile doit tenir la
+   règle des 44 px comme le reste — public d'ouvriers, souvent avec des gants. */
+.puces--retirables { margin: 0.5rem 0 1rem; }
+.puces--retirables .puce {
+  min-height: var(--cible-tactile);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+}
+.puces--retirables .puce:hover { border-color: var(--alerte); color: var(--alerte); }
+
+/* Contenu réservé aux technologies d'assistance : visible pour elles, pas à l'écran. */
+.hors-ecran {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Barre de filtres ------------------------------------------------------
+   Rail à gauche sur grand écran, empilé au-dessus de la liste sur téléphone. Il
+   reste visible pendant le défilement : régler un filtre puis remonter pour le
+   corriger est le geste le plus fréquent d'une recherche. */
+.barre-filtres { display: grid; gap: 1rem; margin-bottom: 2rem; }
+.filtre-criteres,
+.filtre-portee {
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  padding: 1.1rem 1.25rem;
+  margin: 0;
+}
+.filtre-criteres legend,
+.filtre-portee legend {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texte-secondaire);
+  padding-inline: 0.35rem;
+}
+.filtre-criteres .champ { margin-bottom: 1rem; }
+.filtre-criteres input[type="search"],
+.filtre-criteres input[type="number"],
+.filtre-criteres input[type="date"] { width: 100%; }
+.filtre-criteres input[type="range"] {
+  width: 100%;
+  accent-color: var(--surface-sombre);
+  min-height: var(--cible-tactile);
+}
+
+@media (min-width: 900px) {
+  .page-opportunites { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .page-opportunites .barre-filtres { position: sticky; top: 1.5rem; margin-bottom: 0; }
+}
+
+/* Codes de récupération : chasse fixe et groupes séparés, parce qu'ils seront
+   recopiés à la main depuis un écran vers un bout de papier. */
+.codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.codes code {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 0.75rem;
+  background: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  text-align: center;
+}
+@media print {
+  /* Une impression ne doit sortir que les codes, pas la navigation du site. */
+  .entete, .pied, .bandeau-espace, .bouton, .case { display: none !important; }
+}
+
+/* Saisie de l'expérience : une ligne par métier, le nombre d'années à droite.
+   Champ étroit — on saisit deux chiffres, pas une phrase — mais la cible tactile
+   reste à 44 px, le public portant souvent des gants. */
+.ligne-experience label { font-size: 0.9375rem; }
+.saisie-annees { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+.saisie-annees input {
+  width: 5rem;
+  min-height: var(--cible-tactile);
+  text-align: center;
+}
+
+/* Les deux volets de l'expérience — constatée, déclarée — doivent se lire comme
+   deux blocs distincts. Sans cet espace, le second titre colle à la dernière ligne
+   du premier et on croit lire une suite. */
+.section-experience h3 { margin-top: 1.75rem; }
+.section-experience h3:first-child { margin-top: 0; }
+
+/* Proposition de rattachement Discord, sous le fil d'activité.
+   Discrète par construction : c'est une offre, pas une alerte. Un liseré et non un
+   fond coloré, qui la ferait lire comme un avertissement. */
+.proposition-discord {
+  border-left: 4px solid var(--texte-secondaire);
+  display: grid;
+  gap: 0.75rem;
+}
+.actions-proposition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+/* Le refus reste un bouton atteignable — 44 px de haut comme les autres cibles
+   tactiles (RGAA) — mais sans le poids visuel d'une action qu'on encourage. */
+.bouton-discret {
+  background: none;
+  border: none;
+  color: var(--texte-secondaire);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  min-height: 44px;
+  padding: 0 0.5rem;
+}
+.bouton-discret:hover { color: var(--texte); }
+
+/* Liseré de section, pour que trois cartes empilées ne se lisent plus comme une.
+   La couleur porte un sens — le rouge est réservé à ce qui est irréversible — et
+   ne porte jamais l'information seule : chaque carte a son titre (RGAA 3.1). */
+.carte--notification { border-left: 4px solid #5865f2; }            /* le bleu de Discord */
+.carte--securite     { border-left: 4px solid var(--texte-secondaire); }

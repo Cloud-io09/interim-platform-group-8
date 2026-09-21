@@ -14,6 +14,12 @@ const JOURS_PAR_DEFAUT = 60;
  * « votre CACES expire », on dit combien de missions ouvertes un renouvellement
  * rouvrirait. Sans ce chiffre, l'alerte est une contrainte ; avec, c'est un
  * argument.
+ *
+ * **Chaque alerte porte le salon privé de son destinataire.** Elle nomme la personne,
+ * son habilitation et sa date d'expiration : la poster dans un salon commun, comme le
+ * faisait le webhook unique, revenait à diffuser des données personnelles à tous les
+ * membres du serveur. `discordSalonId` vaut `null` pour qui n'a pas relié son compte
+ * — le scénario n8n l'écarte, et la notification reste lisible dans l'application.
  */
 export async function GET(requete: Request) {
   if (!n8nAutorise(requete)) return refusN8n();
@@ -28,12 +34,12 @@ export async function GET(requete: Request) {
     const lignes = await sql<
       {
         compte_id: number; prenom: string; nom: string; email: string;
-        webhook_discord: string | null; type_code: string; categorie_code: string | null;
+        discord_salon_id: string | null; type_code: string; categorie_code: string | null;
         date_echeance: string; jours_restants: number; missions_debloquees: number;
       }[]
     >`
       select
-        i.compte_id, i.prenom, i.nom, c.email, i.webhook_discord,
+        i.compte_id, i.prenom, i.nom, c.email, c.discord_salon_id,
         cert.type_code, cat.code as categorie_code,
         cert.date_echeance::text,
         (cert.date_echeance - current_date)::int as jours_restants,
@@ -67,7 +73,7 @@ export async function GET(requete: Request) {
           interimaireId: l.compte_id,
           nomComplet: `${l.prenom} ${l.nom}`,
           email: l.email,
-          webhookDiscord: l.webhook_discord,
+          discordSalonId: l.discord_salon_id,
           certification: titre,
           dateEcheance: l.date_echeance,
           joursRestants: l.jours_restants,

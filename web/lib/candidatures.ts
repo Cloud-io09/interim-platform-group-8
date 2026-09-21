@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
 import {
+  attendUneReponseDe,
   conformitePourMission,
   estConforme,
   libelleConformite,
@@ -172,11 +173,23 @@ export async function agir(
   const depuis: EtatCandidature = existante?.statut ?? "proposee";
 
   if (!transitionPermise(depuis, acteur, vers)) {
-    return {
-      ok: false,
-      statut: 409,
-      message: "Cette action n'est plus possible sur cette candidature.",
-    };
+    // Dire « impossible » sans dire pourquoi laisse croire à une panne. Le cas le
+    // plus fréquent est qu'on a déjà engagé et que c'est à l'autre de répondre :
+    // il faut le nommer, sinon on réessaie indéfiniment.
+    const autre = acteur === "interimaire" ? "entreprise" : "interimaire";
+    const message = attendUneReponseDe(depuis, autre)
+      ? acteur === "entreprise"
+        ? "Vous avez sollicité ce profil : c'est à lui d'accepter ou de décliner."
+        : "Votre candidature est envoyée : c'est à l'entreprise de répondre."
+      : depuis === "acceptee"
+        ? "Cette candidature est déjà conclue."
+        : depuis === "declinee"
+          ? "Cette candidature a été écartée et ne peut plus évoluer."
+          : depuis === "expiree"
+            ? "La mission a été pourvue entre-temps : cette candidature est caduque."
+            : "Cette action n'est plus possible sur cette candidature.";
+
+    return { ok: false, statut: 409, message };
   }
 
   let conformite: ConformiteLisible[] = [];

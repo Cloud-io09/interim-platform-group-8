@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { connexion } from "@interimatch/core/db";
 import { dechiffrerOptionnel } from "@interimatch/core";
 
@@ -12,6 +13,9 @@ export interface ProfilInterimaireLu {
   carteBtpNumero: string | null;
   carteBtpEcheance: string | null;
   metiers: string[];
+  /** Années déclarées par métier. Informative : elle n'entre pas dans le score. */
+  experienceParMetier: Record<string, number | null>;
+  competences: string[];
 }
 
 /**
@@ -21,7 +25,7 @@ export interface ProfilInterimaireLu {
  * revenir sur son profil affichait des champs vides et un enregistrement écrasait
  * silencieusement les données déjà saisies.
  */
-export async function lireProfilInterimaire(
+export const lireProfilInterimaire = cache(async function lireProfilInterimaire(
   sql: ReturnType<typeof connexion>,
   compteId: number
 ): Promise<ProfilInterimaireLu | null> {
@@ -38,8 +42,13 @@ export async function lireProfilInterimaire(
     from interimaire where compte_id = ${compteId}`;
   if (!ligne) return null;
 
-  const metiers = await sql<{ metier_code: string }[]>`
-    select metier_code from interimaire_metier where interimaire_id = ${compteId}`;
+  const [metiers, competences] = await Promise.all([
+    sql<{ metier_code: string; annees_experience: number | null }[]>`
+      select metier_code, annees_experience from interimaire_metier
+      where interimaire_id = ${compteId}`,
+    sql<{ competence_code: string }[]>`
+      select competence_code from interimaire_competence where interimaire_id = ${compteId}`,
+  ]);
 
   return {
     prenom: ligne.prenom,
@@ -52,8 +61,12 @@ export async function lireProfilInterimaire(
     carteBtpNumero: dechiffrerOptionnel(ligne.carte_btp_numero_chiffre),
     carteBtpEcheance: ligne.carte_btp_echeance,
     metiers: metiers.map((m) => m.metier_code),
+    experienceParMetier: Object.fromEntries(
+      metiers.map((m) => [m.metier_code, m.annees_experience])
+    ),
+    competences: competences.map((c) => c.competence_code),
   };
-}
+});
 
 export interface ProfilEntrepriseLu {
   raisonSociale: string;
@@ -64,7 +77,7 @@ export interface ProfilEntrepriseLu {
   telephone: string | null;
 }
 
-export async function lireProfilEntreprise(
+export const lireProfilEntreprise = cache(async function lireProfilEntreprise(
   sql: ReturnType<typeof connexion>,
   compteId: number
 ): Promise<ProfilEntrepriseLu | null> {
@@ -86,4 +99,4 @@ export async function lireProfilEntreprise(
     ville: ligne.ville,
     telephone: dechiffrerOptionnel(ligne.telephone_chiffre),
   };
-}
+});
