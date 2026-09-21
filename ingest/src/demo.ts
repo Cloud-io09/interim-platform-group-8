@@ -20,6 +20,31 @@ export const DOMAINE_DEMO = "@demo.interimatch.test";
 export const MISSION_DEBUT = "2026-10-01";
 export const MISSION_FIN = "2026-10-21";
 
+/**
+ * Deux chantiers déjà terminés, affectés au profil conforme.
+ *
+ * Sans eux, l'expérience constatée serait vide partout et la fonctionnalité
+ * paraîtrait inutile là où elle est justement ce qui distingue un fait d'une
+ * déclaration. Dates passées et fixes : le jeu de démonstration ne doit pas changer
+ * de sens selon le jour où on le sème.
+ */
+const CHANTIERS_PASSES = [
+  {
+    titre: "Maçon coffreur — réfection de murs porteurs",
+    metier: "F1703",
+    debut: "2026-03-02",
+    fin: "2026-03-27",
+    taux: 14.5,
+  },
+  {
+    titre: "Conducteur de mini-pelle — réseaux secs",
+    metier: "F1302",
+    debut: "2026-06-08",
+    fin: "2026-06-19",
+    taux: 15.2,
+  },
+] as const;
+
 interface Lieu {
   ville: string;
   codePostal: string;
@@ -214,6 +239,30 @@ export async function semerDemo(sql: Sql): Promise<ResultatSeed> {
         )`;
     }
     profils.push({ cle: p.cle, compteId: id, demontre: p.demontre });
+  }
+
+  // Historique : l'expérience constatée se lit sur des missions terminées dont la
+  // candidature a été acceptée. Affectées au profil conforme, qui sert de référence.
+  const conforme = profils.find((p) => p.cle === "conforme");
+  if (conforme) {
+    for (const c of CHANTIERS_PASSES) {
+      const [passee] = await sql<{ id: number }[]>`
+        insert into mission (
+          entreprise_id, titre, metier_code, description, adresse, code_postal, ville,
+          lat, lon, date_debut, date_fin, horaires, taux_horaire_min, statut,
+          publiee_le, interimaire_affecte_id
+        ) values (
+          ${entrepriseId}, ${c.titre}, ${c.metier},
+          'Chantier terminé, conservé pour l''historique.',
+          '25 rue de Vesle', ${REIMS.codePostal}, ${REIMS.ville}, ${REIMS.lat}, ${REIMS.lon},
+          ${c.debut}, ${c.fin}, '7h30-12h / 13h-16h30, 35 h par semaine', ${c.taux},
+          'close', ${c.debut}, ${conforme.compteId}
+        ) returning id`;
+
+      await sql`
+        insert into candidature (mission_id, interimaire_id, statut, decide_par, decide_le)
+        values (${passee!.id}, ${conforme.compteId}, 'acceptee', 'entreprise', ${c.fin})`;
+    }
   }
 
   return { entrepriseId, missionId, profils };

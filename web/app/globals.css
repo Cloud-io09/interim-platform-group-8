@@ -1105,3 +1105,9 @@ details > summary {
   min-height: var(--cible-tactile);
   text-align: center;
 }
+
+/* Les deux volets de l'expérience — constatée, déclarée — doivent se lire comme
+   deux blocs distincts. Sans cet espace, le second titre colle à la dernière ligne
+   du premier et on croit lire une suite. */
+.section-experience h3 { margin-top: 1.75rem; }
+.section-experience h3:first-child { margin-top: 0; }

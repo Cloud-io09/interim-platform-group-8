@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { connexion } from "@interimatch/core/db";
+import Experience from "@/components/Experience";
 import { exigerSession } from "@/lib/garde";
+import { chargerExperience } from "@/lib/experience";
 
 export const metadata: Metadata = { title: "Mes missions", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -48,6 +50,16 @@ export default async function MesMissions() {
 
     const aujourdhui = lignes.filter((l) => joursAvant(l.date_fin) >= 0);
     const passees = lignes.filter((l) => joursAvant(l.date_fin) < 0);
+
+    const [experience, metiersDeclares] = await Promise.all([
+      chargerExperience(sql, session.compteId),
+      sql<{ code: string; libelle: string; annees_experience: number | null }[]>`
+        select m.code, m.libelle, im.annees_experience
+        from interimaire_metier im
+        join metier m on m.code = im.metier_code
+        where im.interimaire_id = ${session.compteId}
+        order by im.annees_experience desc nulls last, m.libelle`,
+    ]);
 
     const Carte = ({ l, terminee }: { l: Ligne; terminee: boolean }) => {
       const debut = joursAvant(l.date_debut);
@@ -99,6 +111,24 @@ export default async function MesMissions() {
               ))}
             </ul>
           )}
+
+          {/* L'expérience vit ici, sous les affectations : c'est le même sujet vu
+              sur la durée, et c'est l'écran qu'un intérimaire ouvre pour savoir ce
+              qu'il a fait. */}
+          <hr className="separateur" />
+          <h2>Mon expérience</h2>
+          <Experience
+            vue="titulaire"
+            constatee={experience}
+            declaree={metiersDeclares.map((m) => ({
+              code: m.code,
+              libelle: m.libelle,
+              annees: m.annees_experience,
+            }))}
+          />
+          <p className="petit secondaire">
+            <a href="/espace/interimaire/profil">Modifier l&apos;expérience que je déclare</a>
+          </p>
 
           {passees.length > 0 && (
             <>

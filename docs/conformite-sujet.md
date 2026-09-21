@@ -28,11 +28,13 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 | Exigence | État | Détail |
 |---|---|---|
 | Création de mission : poste, dates, lieu, compétences requises, rémunération | **fait** | Les cinq champs existent. Le formulaire se préremplit depuis les offres publiques du métier |
-| Profil intérimaire : compétences, disponibilités, zone géographique, expérience | **fait** | Les quatre existent. L'expérience est déclarée **par métier** — « huit ans en maçonnerie, deux en conduite d'engins » — parce qu'un nombre global mélangerait des métiers sans rapport |
+| Profil intérimaire : compétences, disponibilités, zone géographique, expérience | **fait** | Les quatre existent. L'expérience est rendue **sur deux plans** : déclarée par métier, et **constatée** — missions réellement effectuées via la plateforme, avec leurs jours et leurs employeurs |
 | Algorithme de matching avec scoring | **fait** | Deux étapes séquentielles : filtre éliminatoire sur les habilitations, puis scoring sur compétences (0,40), distance (0,35), disponibilité (0,25). Le score est exposé **par critère** |
 | Tableau de bord de suivi : ouverte, pourvue, terminée | **fait** | Quatre états : brouillon, publiée, pourvue, close, avec les transitions permises en table |
 
 **La règle centrale**, vérifiée par un test de mutation : la validité d'une habilitation est comparée à la **date de fin de mission**, jamais à la date du jour. `core/src/matching.ts` ne contient aucun `Date.now()`.
+
+**Deux expériences, jamais confondues.** Le produit repose sur une distinction : une date d'échéance est un fait, un mot-clé de CV une affirmation. Elle vaut ici aussi. « Huit ans en maçonnerie » est utile et invérifiable ; « 2 missions, 38 jours travaillés, pour 1 entreprise » est établi par la plateforme elle-même, à partir des candidatures acceptées sur des chantiers terminés. Les additionner donnerait une ancienneté qui n'existe nulle part : elles sont montrées côte à côte, chacune étiquetée.
 
 **L'expérience n'entre pas dans le score, et c'est délibéré.** Le sujet nomme lui-même les trois critères de scoring — compétences, zone, disponibilité — et l'éligibilité vient des habilitations datées, jamais de l'ancienneté déclarée. Elle est montrée à l'entreprise qui décide ; elle ne décide pas à sa place. La fiche profil le dit explicitement, sans quoi on supposerait qu'elle a pesé dans le classement.
 
