@@ -1,5 +1,6 @@
 import { connexion } from "@interimatch/core/db";
 import EnteteEspace from "@/components/EnteteEspace";
+import RappelVerification from "@/components/RappelVerification";
 import { exigerSession } from "@/lib/garde";
 import { lireProfilEntreprise } from "@/lib/profils";
 
@@ -11,7 +12,11 @@ export default async function LayoutEntreprise({ children }: { children: React.R
 
   const sql = connexion();
   let profil = null;
+  let adresseVerifiee = true;
   try {
+    const [compte] = await sql<{ email_verifie_le: Date | null }[]>`
+      select email_verifie_le from compte where id = ${session.compteId}`;
+    adresseVerifiee = compte?.email_verifie_le != null;
     profil = await lireProfilEntreprise(sql, session.compteId);
   } finally {
     await sql.end();
@@ -49,6 +54,7 @@ export default async function LayoutEntreprise({ children }: { children: React.R
           />
         </div>
       </div>
+      {!adresseVerifiee && <RappelVerification email={session.email} role="entreprise" />}
       {children}
     </>
   );

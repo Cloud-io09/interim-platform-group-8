@@ -1,5 +1,6 @@
 import { connexion } from "@interimatch/core/db";
 import EnteteEspace from "@/components/EnteteEspace";
+import RappelVerification from "@/components/RappelVerification";
 import { exigerSession } from "@/lib/garde";
 import { lireProfilInterimaire } from "@/lib/profils";
 
@@ -21,7 +22,11 @@ export default async function LayoutInterimaire({ children }: { children: React.
 
   const sql = connexion();
   let profil = null;
+  let adresseVerifiee = true;
   try {
+    const [compte] = await sql<{ email_verifie_le: Date | null }[]>`
+      select email_verifie_le from compte where id = ${session.compteId}`;
+    adresseVerifiee = compte?.email_verifie_le != null;
     profil = await lireProfilInterimaire(sql, session.compteId);
   } finally {
     await sql.end();
@@ -55,6 +60,7 @@ export default async function LayoutInterimaire({ children }: { children: React.
           />
         </div>
       </div>
+      {!adresseVerifiee && <RappelVerification email={session.email} role="interimaire" />}
       {children}
     </>
   );

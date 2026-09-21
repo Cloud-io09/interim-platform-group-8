@@ -6,16 +6,25 @@ import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
 import { envoyerJson } from "@/lib/client";
 
 /**
- * Sécurité du compte : mot de passe et codes de récupération.
+ * Sécurité du compte : adresse e-mail, mot de passe et codes de récupération.
  *
- * Les deux opérations exigent le mot de passe actuel, même pour quelqu'un de déjà
+ * Toutes ces opérations exigent le mot de passe actuel, même pour quelqu'un de déjà
  * connecté. Un cookie volé, ou une session laissée ouverte sur une tablette de
- * chantier, ne doit pas suffire à verrouiller le compte de son propriétaire ni à se
- * fabriquer un accès permanent.
+ * chantier, ne doit pas suffire à verrouiller le compte de son propriétaire, à se
+ * fabriquer un accès permanent, ni à détourner l'adresse qui sert à le récupérer.
  */
 export default function SecuriteCompte() {
-  const ids = { ancien: useId(), nouveau: useId(), confirmation: useId() };
+  const ids = {
+    ancien: useId(),
+    nouveau: useId(),
+    confirmation: useId(),
+    email: useId(),
+    motDePasseEmail: useId(),
+  };
   const [restants, setRestants] = useState<number | null>(null);
+  const [adresse, setAdresse] = useState<{ email: string; verifie: boolean } | null>(null);
+  const [retourAdresse, setRetourAdresse] = useState<string | null>(null);
+  const [erreurAdresse, setErreurAdresse] = useState<string | null>(null);
   const [nouveauxCodes, setNouveauxCodes] = useState<string[] | null>(null);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -30,6 +39,49 @@ export default function SecuriteCompte() {
       .then((d) => setRestants(d?.restants ?? null))
       .catch(() => {});
   }, [nouveauxCodes]);
+
+  useEffect(() => {
+    fetch("/api/compte/email")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setAdresse(d ? { email: d.email, verifie: d.verifie } : null))
+      .catch(() => {});
+  }, []);
+
+  async function renvoyerVerification() {
+    setEnCours(true);
+    setErreurAdresse(null);
+    setRetourAdresse(null);
+    const { ok, corps } = await envoyerJson<{ message: string }>(
+      "/api/compte/verification",
+      "POST",
+      {}
+    );
+    setEnCours(false);
+    if (ok) setRetourAdresse(corps.message);
+    else setErreurAdresse(corps.message ?? "Envoi impossible.");
+  }
+
+  async function demanderChangementAdresse(evenement: React.FormEvent<HTMLFormElement>) {
+    evenement.preventDefault();
+    const formulaire = evenement.currentTarget;
+    const d = new FormData(formulaire);
+
+    setEnCours(true);
+    setErreurAdresse(null);
+    setRetourAdresse(null);
+    const { ok, corps } = await envoyerJson<{ message: string }>("/api/compte/email", "POST", {
+      email: String(d.get("email") ?? ""),
+      motDePasse: String(d.get("motDePasseEmail") ?? ""),
+    });
+    setEnCours(false);
+
+    if (!ok) {
+      setErreurAdresse(corps.message ?? "Changement impossible.");
+      return;
+    }
+    formulaire.reset();
+    setRetourAdresse(corps.message);
+  }
 
   async function changerMotDePasse(evenement: React.FormEvent<HTMLFormElement>) {
     evenement.preventDefault();
@@ -102,7 +154,66 @@ export default function SecuriteCompte() {
     <section aria-labelledby="titre-securite">
       <h2 id="titre-securite">Sécurité du compte</h2>
 
-      <form onSubmit={changerMotDePasse} className="carte" noValidate>
+      <div className={`carte${adresse && !adresse.verifie ? " carte--verdict-bloque" : ""}`}>
+        <div className="tete-carte">
+          <h3 style={{ fontSize: "1rem", margin: 0 }}>Adresse e-mail</h3>
+          {adresse && (
+            <span
+              className={adresse.verifie ? "pastille pastille--ok" : "pastille pastille--attention"}
+            >
+              {adresse.verifie ? "✓ confirmée" : "△ non confirmée"}
+            </span>
+          )}
+        </div>
+
+        <p className="petit" style={{ marginBottom: "0.25rem" }}>
+          {adresse?.email ?? "…"}
+        </p>
+
+        {adresse && !adresse.verifie && (
+          <>
+            <p className="petit secondaire">
+              Tant qu'elle n'est pas confirmée, aucun lien de réinitialisation ne peut y
+              être envoyé : c'est ce qui évite qu'une adresse saisie de travers donne accès
+              à votre compte. Vos codes de récupération, eux, fonctionnent déjà.
+            </p>
+            <button
+              className="bouton bouton--secondaire"
+              onClick={renvoyerVerification}
+              disabled={enCours}
+            >
+              M'envoyer un lien de confirmation
+            </button>
+          </>
+        )}
+
+        <form onSubmit={demanderChangementAdresse} noValidate style={{ marginTop: "1rem" }}>
+          <div className="champ">
+            <label htmlFor={ids.email}>Nouvelle adresse</label>
+            <input id={ids.email} name="email" type="email" autoComplete="email" required />
+          </div>
+          <div className="champ">
+            <label htmlFor={ids.motDePasseEmail}>Votre mot de passe</label>
+            <input
+              id={ids.motDePasseEmail}
+              name="motDePasseEmail"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <p className="petit secondaire">
+            Votre adresse actuelle reste celle du compte tant que vous n'avez pas ouvert le
+            lien envoyé à la nouvelle. Vos sessions seront alors fermées.
+          </p>
+          <RetourFormulaire erreur={erreurAdresse} succes={retourAdresse} problemes={[]} />
+          <button className="bouton bouton--secondaire" type="submit" disabled={enCours}>
+            Changer mon adresse
+          </button>
+        </form>
+      </div>
+
+      <form onSubmit={changerMotDePasse} className="carte" noValidate style={{ marginTop: "1rem" }}>
         <h3 style={{ fontSize: "1rem", marginTop: 0 }}>Changer mon mot de passe</h3>
 
         <div className="champ">
