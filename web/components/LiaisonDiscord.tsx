@@ -24,6 +24,8 @@ type Etat = {
   relie: boolean;
   salonId: string | null;
   relieLe: string | null;
+  /** Adresse directe du salon, pour ne pas le faire chercher dans une liste. */
+  lienSalon: string | null;
 };
 
 /** Ce que le retour d'OAuth range dans l'URL, traduit en phrase compréhensible. */
@@ -57,7 +59,19 @@ export default function LiaisonDiscord() {
   const relire = useCallback(() => {
     fetch("/api/discord")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setEtat(d ? { disponible: d.disponible, relie: d.relie, salonId: d.salonId, relieLe: d.relieLe } : null))
+      .then((d) =>
+        setEtat(
+          d
+            ? {
+                disponible: d.disponible,
+                relie: d.relie,
+                salonId: d.salonId,
+                relieLe: d.relieLe,
+                lienSalon: d.lienSalon,
+              }
+            : null
+        )
+      )
       .catch(() => {});
   }, []);
 
@@ -121,9 +135,21 @@ export default function LiaisonDiscord() {
           <p className="petit secondaire">
             Détacher supprime le salon et tout ce qui y a été posté.
           </p>
-          <button className="bouton bouton--secondaire" onClick={detacher} disabled={enCours}>
-            {enCours ? "Détachement…" : "Détacher mon compte Discord"}
-          </button>
+          <div className="actions-proposition">
+            {etat.lienSalon && (
+              <a
+                className="bouton lien-bloc"
+                href={etat.lienSalon}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ouvrir mon salon
+              </a>
+            )}
+            <button className="bouton bouton--secondaire" onClick={detacher} disabled={enCours}>
+              {enCours ? "Détachement…" : "Détacher mon compte Discord"}
+            </button>
+          </div>
         </>
       ) : (
         <>

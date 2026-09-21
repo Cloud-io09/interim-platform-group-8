@@ -19,13 +19,24 @@ export async function GET() {
         from compte where id = ${garde.session.compteId}`;
     if (!compte) return erreur("Compte introuvable.", 404);
 
+    const config = configDiscord();
     return succes({
       // Le relais est-il monté côté serveur ? L'écran doit pouvoir le dire plutôt
       // que de proposer un bouton qui échouera.
-      disponible: oauthConfigure() && configDiscord() !== null,
+      disponible: oauthConfigure() && config !== null,
       relie: compte.discord_utilisateur_id !== null,
       salonId: compte.discord_salon_id,
       relieLe: compte.discord_relie_le,
+      // Adresse directe du salon. Sans elle, on annonce à quelqu'un qu'un salon
+      // existe pour lui en le laissant le chercher dans une liste — or il vient
+      // d'être créé, il est tout en bas, et son nom ne lui dit rien.
+      //
+      // L'identifiant du serveur n'est pas un secret : il est visible de tout
+      // membre, et il ne donne accès à rien sans y avoir été invité.
+      lienSalon:
+        config && compte.discord_salon_id
+          ? `https://discord.com/channels/${config.serveurId}/${compte.discord_salon_id}`
+          : null,
     });
   } finally {
     await sql.end();

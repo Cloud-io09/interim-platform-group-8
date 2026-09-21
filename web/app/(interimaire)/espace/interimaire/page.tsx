@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connexion } from "@interimatch/core/db";
 import Notifications from "@/components/Notifications";
+import ProposerDiscord from "@/components/ProposerDiscord";
 import ActionCandidature from "@/components/ActionCandidature";
 import { exigerSession } from "@/lib/garde";
 import { tableauBordInterimaire, type EcheanceCertification, type MissionSuggeree } from "@/lib/tableau-bord";
@@ -247,6 +248,11 @@ export default async function EspaceInterimaire() {
                     messageVide="Rien de neuf. Vous serez prévenu ici dès qu'une mission publiée vous correspondra, ou qu'une habilitation approchera de son échéance."
                   />
                 </section>
+
+                {/* Juste sous le fil : on propose de recevoir ailleurs ce qu'on est
+                    en train de regarder. La même offre ailleurs demanderait un
+                    paragraphe d'explication. */}
+                <ProposerDiscord />
 
                 <section className="carte" aria-labelledby="titre-habilitations">
                   <div className="tete-carte">

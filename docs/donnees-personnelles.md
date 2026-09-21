@@ -130,6 +130,16 @@ reste du traitement. Il se retire aussi facilement qu'il se donne — le détach
 n'exige pas le mot de passe, contrairement au changement d'adresse : rendre coûteux un
 retrait de consentement serait contraire à son esprit.
 
+**Comment il est demandé, et pourquoi pas par un bandeau.** La proposition est
+**contextuelle** — sous le fil d'activité, à côté de ce qu'elle améliore — et non un
+bandeau global. Une bannière qui revient à chaque écran est une pression au
+consentement, exactement ce qu'on reproche aux bandeaux de cookies. Elle porte un
+refus explicite, *Non merci*, retenu dans le navigateur : refuser une fois suffit.
+
+L'espace porte bien un bandeau permanent, mais pour l'adresse e-mail non vérifiée —
+là il s'agit d'un trou de sécurité sur le compte de la personne, pas d'une offre. En
+ajouter un second pour une fonctionnalité facultative banaliserait le premier.
+
 ---
 
 ## Base légale

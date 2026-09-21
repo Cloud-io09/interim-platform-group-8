@@ -99,6 +99,26 @@ describe("état du rattachement", () => {
   it("n'est pas lisible sans session", async () => {
     expect((await appel("/api/discord")).statut).toBe(401);
   });
+
+  it("donne l'adresse directe du salon une fois relié", async () => {
+    // Annoncer qu'un salon existe en laissant le chercher dans une liste est une
+    // demi-mesure : il vient d'être créé, il est tout en bas, et son nom ne lui dit
+    // rien. Avant rattachement, l'adresse n'a pas de sens et vaut null.
+    const { id, cookie } = await inscrire("lien-salon");
+    expect((await appel("/api/discord", "GET", undefined, cookie)).corps.lienSalon).toBeNull();
+
+    const sql = connexion();
+    try {
+      await sql`update compte set discord_salon_id = '555000000000000021' where id = ${id}`;
+      const r = await appel("/api/discord", "GET", undefined, cookie);
+      if (!r.corps.disponible) return; // relais non configuré sur ce déploiement
+      expect(r.corps.lienSalon).toMatch(
+        /^https:\/\/discord\.com\/channels\/\d+\/555000000000000021$/
+      );
+    } finally {
+      await sql.end();
+    }
+  });
 });
 
 describe("départ de la liaison", () => {

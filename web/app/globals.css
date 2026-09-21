@@ -1111,3 +1111,32 @@ details > summary {
    du premier et on croit lire une suite. */
 .section-experience h3 { margin-top: 1.75rem; }
 .section-experience h3:first-child { margin-top: 0; }
+
+/* Proposition de rattachement Discord, sous le fil d'activité.
+   Discrète par construction : c'est une offre, pas une alerte. Un liseré et non un
+   fond coloré, qui la ferait lire comme un avertissement. */
+.proposition-discord {
+  border-left: 4px solid var(--texte-secondaire);
+  display: grid;
+  gap: 0.75rem;
+}
+.actions-proposition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+/* Le refus reste un bouton atteignable — 44 px de haut comme les autres cibles
+   tactiles (RGAA) — mais sans le poids visuel d'une action qu'on encourage. */
+.bouton-discret {
+  background: none;
+  border: none;
+  color: var(--texte-secondaire);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  min-height: 44px;
+  padding: 0 0.5rem;
+}
+.bouton-discret:hover { color: var(--texte); }
