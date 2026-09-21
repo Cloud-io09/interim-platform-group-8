@@ -19,7 +19,8 @@
     "verifier": "npm run typecheck && npm run test",
     "coverage": "npm run coverage --workspaces --if-present",
     "fumee": "node outils/fumee-auth.mjs",
-    "parcours": "node outils/parcours-complet.mjs"
+    "parcours": "node outils/parcours-complet.mjs",
+    "discord": "node --env-file-if-exists=.env outils/discord-verif.mjs"
   },
   "engines": {
     "node": ">=22"

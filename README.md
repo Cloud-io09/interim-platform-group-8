@@ -156,6 +156,8 @@ personne, son habilitation et sa date d'expiration. Un webhook ne sachant qu'éc
 dans le salon auquel il est attaché, créer un salon par personne et le restreindre à
 elle impose de passer par un bot : c'est la seule voie.
 
+La mise en place se vérifie par `npm run discord`, qui interroge Discord et nomme ce qui manque plutôt que de laisser chercher parmi six causes possibles.
+
 Le rattachement se fait en un clic, par OAuth. **Aucune adresse e-mail n'est
 comparée** : la preuve tient à la simultanéité — la même personne tient une session
 ouverte ici *et* autorise sur Discord dans le même aller-retour. On demande

@@ -68,7 +68,8 @@ quoi la personne ne verrait pas le salon créé pour elle.
 
 ### 4. Les quatre variables
 
-Sur Vercel, cochées pour **tous** les environnements où le produit tourne :
+Dans `.env`, et sur Vercel cochées pour **tous** les environnements où le produit
+tourne :
 
 ```
 DISCORD_CLIENT_ID=
@@ -77,8 +78,24 @@ DISCORD_BOT_TOKEN=
 DISCORD_SERVEUR_ID=
 ```
 
-Vérifiez d'un coup : `GET /api/sante` nomme chaque variable manquante et
-l'environnement courant.
+### Vérifier, plutôt que deviner
+
+```bash
+npm run discord
+```
+
+Six choses peuvent manquer, et aucune ne se signale clairement à l'usage : un
+rattachement qui échoue affiche « Discord a refusé la création du salon » sans dire
+laquelle. L'outil interroge Discord et nomme le point en cause — jeton refusé,
+identifiant d'application qui ne correspond pas au bot, URL de retour non déclarée,
+bot absent des serveurs, permission manquante.
+
+Quand le bot n'est dans aucun serveur, il rend **l'adresse d'invitation toute faite**,
+avec les bonnes permissions. Une fois l'invitation acceptée, il rend le
+`DISCORD_SERVEUR_ID` à copier.
+
+`GET /api/sante` couvre le même terrain côté déploiement : il nomme chaque variable
+manquante et l'environnement courant.
 
 ### 5. Relier un compte
 
