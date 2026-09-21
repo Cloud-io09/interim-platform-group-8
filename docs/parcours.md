@@ -131,7 +131,7 @@ sequenceDiagram
 
 | # | Étape | Ce que le produit garantit |
 |---|---|---|
-| 1 | **Inscription** | 8 codes de récupération remis, affichés une seule fois, écran bloqué tant qu'on n'a pas confirmé les avoir notés |
+| 1 | **Inscription** | 8 codes de récupération remis, affichés une seule fois, écran bloqué tant qu'on n'a pas confirmé les avoir notés. Un lien de confirmation part vers l'adresse saisie, **sans rien bloquer** |
 | 2 | **Profil** | Métiers cherchables parmi 52, expérience déclarée par métier, commune géocodée, rayon de mobilité à 50 km par défaut |
 | 3 | **Compétences** | Classées par fréquence réelle dans les offres France Travail du métier déclaré |
 | 4 | **Habilitations** | Type dans une liste fermée, catégorie quand le type l'exige, organisme, numéro chiffré, dates d'obtention et d'échéance |
@@ -146,7 +146,7 @@ sequenceDiagram
 
 | # | Étape | Ce que le produit garantit |
 |---|---|---|
-| 1 | **Inscription** | Idem, parcours distinct et permissions distinctes |
+| 1 | **Inscription** | Idem, parcours distinct et permissions distinctes. Même confirmation d'adresse |
 | 2 | **Profil** | Raison sociale, SIRET, adresse géocodée — c'est d'elle que se calculent les distances |
 | 3 | **Fiche de poste** | Préremplie depuis les offres publiques du métier : intitulés normalisés, habilitations typiques, **fourchette de rémunération observée localement** |
 | 4 | **Contrôle légal** | Durée plafonnée à 18 mois (L1251-12), refus citant l'article **et donnant la date limite** |
@@ -170,6 +170,17 @@ Ce que `npm run parcours` vérifie à chaque exécution, avec le résultat obser
 | **Titre valide aujourd'hui, périmé avant la fin** | **écarté** | écarté, motif `certification_expiree` |
 | Aucun titre déclaré | écarté | écarté, motif `certification_absente` |
 | Score exposé par critère | trois valeurs séparées | compétences 1 · distance 0,96 · disponibilité 1 |
+
+### L'adresse comme facteur de reprise en main
+
+| Scénario | Attendu | Observé |
+|---|---|---|
+| Demande de lien sur une adresse **non confirmée** | rien n'est envoyé | rien dans le journal |
+| …et la réponse rendue | identique à celle d'une adresse confirmée | même statut, même phrase |
+| Codes de récupération sur cette même adresse | utilisables | `200`, mot de passe changé |
+| Changement d'adresse avec un mauvais mot de passe | refusé | `403` |
+| Changement demandé, non confirmé | l'ancienne adresse reste l'identifiant | ancienne `200`, nouvelle `401` |
+| Changement confirmé | identifiant remplacé, sessions fermées | ancienne `401`, cookie antérieur `401` |
 
 ### Le caractère bilatéral
 
@@ -209,7 +220,7 @@ Ce que `npm run parcours` vérifie à chaque exécution, avec le résultat obser
 
 Dit ici plutôt que laissé supposer.
 
-- **La réinitialisation par courriel.** Aucune étape ne la déclenche : sur un déploiement où le prestataire est configuré, elle enverrait un message réel à une adresse factice, donc un rebond. Elle est couverte par la suite fonctionnelle, qui lit le journal du serveur.
+- **Ce qui exige d'ouvrir une boîte aux lettres** — réinitialisation par lien, confirmation d'adresse, changement d'adresse. Un script en ligne de commande ne relève pas les courriels d'une adresse factice : il éprouve donc ce qui précède le lien (l'état de l'adresse, le renvoi, le refus d'un jeton inventé, le mot de passe exigé pour changer d'adresse) et laisse le reste à la suite fonctionnelle, qui lit le journal du serveur. Rien ne part réellement : les adresses d'essai relèvent d'un domaine réservé par la RFC 2606, que la couche d'envoi journalise au lieu de transmettre.
 - **La lecture de CV.** Elle s'exécute dans le navigateur ; un script en ligne de commande ne peut pas l'éprouver. Vérifiée à part, sous Chrome piloté : couche texte 0,5 s, PDF scanné 2,1 s, photo 1,5 s.
 - **Les flux n8n.** Éprouvés séparément, sur une instance n8n réelle. Voir [automatisations-n8n.md](automatisations-n8n.md).
 - **Le rendu visuel.** Vérifié en captures à 1280 px et 390 px, pas par ce script.

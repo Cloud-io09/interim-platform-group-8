@@ -16,10 +16,16 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 | Protection contre les attaques basiques | **fait** | Deux compteurs de tentatives (10 par e-mail, 100 par IP, fenêtre 15 min) ; hash factice sur adresse inconnue pour que le temps de réponse ne trahisse pas l'existence d'un compte ; message de refus identique dans les deux cas |
 | Chiffrement des données sensibles **au repos** | **fait** | AES-256-GCM sur six colonnes. Démontré par `web/test/chiffrement-au-repos.test.ts`, qui relit la base hors de l'application. Un test refuse toute colonne ajoutée sans classification |
 | Chiffrement **en transit** | **fait** | HTTPS par Vercel, HSTS. Les appels sortants (France Travail, BAN, Upstash, Brevo) sont tous en HTTPS |
+| Vérification de l'adresse e-mail | **fait** | Lien envoyé dès l'inscription, renvoyable depuis l'espace. Tant que l'adresse n'est pas confirmée, **aucun lien de réinitialisation n'y part** |
+| Changement d'adresse e-mail | **fait** | Mot de passe exigé, lien envoyé à la nouvelle adresse, avertissement à l'ancienne. Rien n'est écrit avant la confirmation |
 
-**Parcours d'authentification complets** — au-delà de l'exigence : changement de mot de passe connecté, réinitialisation par lien envoyé à l'adresse du compte, codes de récupération en repli. Toute reprise en main ferme **toutes** les sessions.
+**Parcours d'authentification complets** — au-delà de l'exigence : changement de mot de passe connecté, réinitialisation par lien envoyé à l'adresse du compte, codes de récupération en repli, vérification et changement d'adresse. Toute reprise en main ferme **toutes** les sessions.
 
-**Ce qui reste** : la vérification de l'adresse à l'inscription. Tant qu'elle n'est pas faite, une adresse mal saisie donne une prise sur le compte à son propriétaire réel. Le changement d'adresse e-mail n'existe pas non plus.
+**Pourquoi la vérification d'adresse était une faille, et pas un confort.** Depuis que le lien envoyé par courriel est le chemin principal de récupération, l'adresse saisie à l'inscription est devenue un facteur d'authentification. Qui s'inscrit avec « karim@gmial.com » — une coquille ordinaire — remet au propriétaire réel de cette boîte le moyen de réinitialiser son mot de passe, donc de prendre le compte.
+
+**Le correctif est proportionné.** La vérification ne bloque ni l'inscription, ni la connexion, ni la moindre fonctionnalité : le public visé abandonnerait au premier obstacle, et une configuration d'envoi défaillante enfermerait tout le monde dehors. Elle conditionne une seule chose — l'envoi d'un lien de réinitialisation — soit exactement la surface de la faille. Les codes de récupération restent utilisables quelle que soit l'adresse, donc personne n'est sans recours. Le refus est silencieux : l'endpoint répond mot pour mot comme pour une adresse confirmée, sans quoi il deviendrait un moyen de savoir quels comptes ont confirmé la leur.
+
+**Nos propres outils n'envoient toujours rien.** Une inscription déclenche désormais un courriel, et l'essai de fumée comme le parcours de bout en bout créent des comptes à chaque exécution. La couche d'envoi reconnaît les domaines que la **RFC 2606** réserve — `.test`, `.invalid`, `.example` — et journalise au lieu de transmettre. Sans ce filtre, chaque exécution produirait des rebonds durs, qui abîment durablement la réputation d'expéditeur. Vérifié le 2026-09-21 contre un serveur où Brevo *était* configuré : six messages journalisés, zéro transmis.
 
 ---
 
@@ -93,11 +99,11 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 |---|---|---|
 | Frontend : framework JS en TypeScript, responsive | **fait** | Next.js 16, TypeScript strict. Vérifié en capture réelle à 1280 px et 390 px |
 | Backend : framework Node en TypeScript | **fait** | Routes Next.js en TypeScript |
-| Base relationnelle | **fait** | PostgreSQL / Supabase, 20 tables, 10 migrations |
+| Base relationnelle | **fait** | PostgreSQL / Supabase, 20 tables, 12 migrations |
 | Base non relationnelle, usage complémentaire | **fait** | Redis : sessions, limitation de tentatives, cache de matching, traces de calcul, cache de géocodage, jetons à usage unique |
-| Tests unitaires | **fait** | 302 dans `core` |
-| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 149 dans `web`, contre un vrai serveur en HTTP |
-| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,67 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — 23 des 28 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
+| Tests unitaires | **fait** | 335 dans `core` |
+| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 167 dans `web`, contre un vrai serveur en HTTP |
+| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,69 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — 33 des 36 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
 | Au moins une bibliothèque CLI | **fait** | `commander`, dans `ingest/` |
 | Authentification classique écrite soi-même | **fait** | Aucune librairie d'authentification, aucune solution managée. Supabase n'est qu'une base de données |
 | OAuth par librairie **si** connexion tierce proposée | **sans objet** | Aucune connexion tierce n'est proposée. Décision et justification dans le `CLAUDE.md` |
@@ -123,4 +129,3 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 1. **Le chiffrage réel.** Il ne se reconstitue pas le dernier jour : l'écart entre estimé et réalisé est précisément ce qui est évalué. À démarrer maintenant, même grossièrement.
 2. **Étude de marché et support de pitch.** Hors code.
 3. **Un paragraphe sur le réemploi d'EPI.** Conditionnel, et peu coûteux.
-4. **Vérification de l'adresse à l'inscription**, maintenant que l'e-mail est le canal de récupération.

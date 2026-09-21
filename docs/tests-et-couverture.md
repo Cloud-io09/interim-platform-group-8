@@ -77,11 +77,12 @@ limite connue sur la page `/accessibilite`.
 
 *Section ajoutée le 18 septembre 2026, à l'occasion de l'audit de conformité au sujet.*
 
-`npm run coverage` produit un rapport pour `core` : **96,67 % des lignes**, avec les
+`npm run coverage` produit un rapport pour `core` : **96,69 % des lignes** sur 335 tests,
+avec les
 détails par fichier en HTML et en lcov. C'est le livrable attendu par le sujet.
 
 **Il n'y a volontairement pas de rapport équivalent pour `web`, et c'est une décision,
-pas un oubli.** Les 126 tests de `web` démarrent un vrai serveur `next start` dans un
+pas un oubli.** Les 167 tests de `web` démarrent un vrai serveur `next start` dans un
 autre processus et l'interrogent en HTTP. Le fournisseur v8 de Vitest n'instrumente
 que le processus de test : il rendrait **0 % sur chaque fichier de `web/lib`**, ce qui
 laisserait croire que rien n'est testé alors que ces modules sont traversés à chaque
@@ -96,18 +97,21 @@ est pire qu'un chiffre absent.
 
 La mesure qui a du sens ici n'est pas la ligne exécutée, c'est le comportement vérifié.
 
-**23 des 28 routes d'API** sont appelées par la suite. Les cinq restantes sont en
-lecture seule et sans effet de bord :
+**33 des 36 routes d'API** sont appelées par la suite fonctionnelle ou par le parcours
+de bout en bout. Les trois restantes sont en lecture seule et sans effet de bord :
 
 | Route non couverte | Pourquoi |
 |---|---|
 | `/api/referentiel/metiers` | lecture d'un référentiel semé par migration |
 | `/api/referentiel/certifications` | idem |
 | `/api/referentiel/competences` | idem, classement par fréquence d'ingestion |
-| `/api/enrichissement` | préremplissage ; sa logique de calcul est testée dans `core` |
-| `/api/notifications` | lecture du fil ; l'écriture est testée via les parcours |
 
 Ce sont des candidates à couvrir si le temps le permet, listées ici plutôt que tues.
+
+*Recompté le 21 septembre 2026. Le chiffre précédent — 23 sur 28 — datait du 18 et ne
+valait plus : huit routes ont été ajoutées depuis, et `/api/enrichissement` comme
+`/api/notifications`, alors annoncées non couvertes, sont désormais traversées par
+`npm run parcours`.*
 
 ### Pourquoi le délai de test est à 45 secondes
 

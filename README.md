@@ -106,6 +106,8 @@ Monorepo npm workspaces.
 
 **Récupération d'accès, deux chemins.** Un lien de réinitialisation envoyé à l'adresse du compte, valable une heure et à usage unique ; et, pour qui a aussi perdu l'accès à sa boîte, des codes de récupération remis à l'inscription. Le jeton est indexé par son empreinte SHA-256 : un dump de Redis ne donne aucun lien exploitable. Toute reprise en main ferme toutes les sessions.
 
+**L'adresse est vérifiée, parce qu'elle est devenue un facteur d'authentification.** Dès lors qu'un lien envoyé par courriel permet de reprendre un compte, une adresse mal saisie — « karim@gmial.com » — offre cette prise au propriétaire réel de cette boîte. La vérification ne bloque donc rien : ni l'inscription, ni la connexion, ni aucune fonctionnalité. Elle conditionne une seule chose, l'envoi d'un lien de réinitialisation, et les codes de récupération restent ouverts à tous. Le changement d'adresse suit la même logique : mot de passe exigé, lien à la nouvelle boîte, avertissement à l'ancienne, et rien n'est écrit avant la confirmation.
+
 Sans clé d'envoi configurée, les courriels partent au journal du serveur : le parcours reste complet et testable, et une configuration oubliée se voit au lieu d'échouer en silence. Voir `BREVO_API_KEY` dans `.env.example`.
 
 **Deux bases, deux usages.** PostgreSQL pour les données structurées. Redis pour cinq usages complémentaires : sessions, limitation des tentatives de connexion, cache des résultats de matching, traces d'exclusion, cache de géocodage. Une colonne JSONB ne satisferait pas l'exigence : il faut un second stockage réel.

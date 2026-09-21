@@ -44,6 +44,7 @@ Une donnée qu'on chiffrerait sans pouvoir s'en servir rendrait le produit inop�
 | `compte.email` | Identifiant de connexion : il doit être cherchable |
 | `compte.mot_de_passe_hash` | Empreinte **scrypt**, non réversible par construction. Le mot de passe lui-même n'est jamais stocké |
 | `compte.mot_de_passe_sel` | Un sel n'est pas un secret : il doit être lisible pour vérifier une empreinte |
+| `compte.email_verifie_le` | Date seule, sans contenu personnel. Relue à chaque demande de réinitialisation pour décider si un lien peut partir vers cette adresse |
 | `interimaire.prenom`, `nom` | Affichés à l'entreprise qui reçoit une candidature — c'est la finalité du produit |
 | `code_postal`, `ville`, `lat`, `lon` | Servent au géocodage et au calcul de distance. Les coordonnées sont celles de **la commune**, pas du domicile |
 | `certification.type_code`, `categorie_id` | Le filtre éliminatoire s'appuie dessus. Les chiffrer rendrait le matching impossible |
