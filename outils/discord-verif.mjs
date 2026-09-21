@@ -100,8 +100,11 @@ if (!Array.isArray(serveurs) || serveurs.length === 0) {
 
     // Être présent ne suffit pas : sans ces permissions, la création échoue à
     // l'exécution, et c'est le pire moment pour l'apprendre.
-    const detail = await (await fetch(`${API}/users/@me/guilds`, { headers: entetes })).json();
-    const courant = detail.find((s) => s.id === serveurId);
+    //
+    // Les droits viennent de la réponse déjà obtenue. La redemander était inutile, et
+    // surtout Discord limitait le second appel : l'outil tombait alors en annonçant
+    // une erreur de programmation là où tout était correctement configuré.
+    const courant = serveurs.find((s) => s.id === serveurId);
     const droits = BigInt(courant?.permissions ?? "0");
     const nommees = [
       ["Manage Channels", 1n << 4n],
