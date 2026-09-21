@@ -36,6 +36,8 @@ export const cle = {
    * dump de Redis ne permet donc pas de réinitialiser un mot de passe.
    */
   jetonUsageUnique: (empreinte: string) => `jeton:${empreinte}`,
+  /** Anti-rejeu de la liaison Discord : un état par demande, lié à la session. */
+  etatDiscord: (etat: string) => `discord:etat:${etat}`,
   /** Fenêtre de comptage des demandes de réinitialisation, par compte visé. */
   demandesReinitialisation: (email: string) => `rl:reinit:${email.toLowerCase()}`,
   cacheMatching: (missionId: number) => `match:cache:${missionId}`,
@@ -67,6 +69,11 @@ export const TTL = {
   jetonVerificationEmail: 48 * 3600,
   /** Fenêtre de comptage des demandes de réinitialisation. */
   demandesReinitialisation: 3600,
+  /**
+   * Aller-retour OAuth vers Discord : dix minutes. Assez pour se connecter et
+   * autoriser, assez peu pour qu'un état oublié cesse vite d'être rejouable.
+   */
+  etatDiscord: 600,
 } as const;
 
 /**

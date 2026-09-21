@@ -5,6 +5,7 @@ export * from "./candidature";
 export * from "./droit-travail";
 export * from "./experience";
 export * from "./courriel";
+export * from "./discord";
 export * from "./jetons";
 export * from "./recuperation";
 export * from "./conformite";
