@@ -1,3 +1,4 @@
+import LiaisonDiscord from "@/components/LiaisonDiscord";
 import SecuriteCompte from "@/components/SecuriteCompte";
 import type { Metadata } from "next";
 import FormulaireProfilEntreprise from "@/components/FormulaireProfilEntreprise";
@@ -30,6 +31,7 @@ export default async function ProfilEntreprise({
         />
         <hr className="separateur" />
         <hr className="separateur" />
+        <LiaisonDiscord />
         <SecuriteCompte />
 
         <SupprimerCompte />
