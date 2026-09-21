@@ -143,6 +143,25 @@ Elles alimentent une fonctionnalité visible : **la fiche de poste enrichie**. �
 
 ---
 
+## Notifications
+
+Chaque personne reçoit ses alertes dans un **salon Discord créé pour elle seule** —
+habilitations qui approchent de leur échéance, missions correspondantes. Le relais est
+facultatif : les mêmes informations vivent dans l'espace, dont Discord n'est qu'un
+écho.
+
+Ce n'était pas le premier choix. La première version postait vers un webhook unique,
+et tout le monde lisait donc les alertes de tout le monde — or une alerte nomme la
+personne, son habilitation et sa date d'expiration. Un webhook ne sachant qu'écrire
+dans le salon auquel il est attaché, créer un salon par personne et le restreindre à
+elle impose de passer par un bot : c'est la seule voie.
+
+Le rattachement se fait en un clic, par OAuth. **Aucune adresse e-mail n'est
+comparée** : la preuve tient à la simultanéité — la même personne tient une session
+ouverte ici *et* autorise sur Discord dans le même aller-retour. On demande
+l'identifiant et le droit d'ajouter au serveur, rien d'autre. Se détacher supprime le
+salon.
+
 ## Conformité
 
 **Droit du travail.** Durée de mission plafonnée à 18 mois renouvellements compris (article L1251-12), opposée à la saisie avec la date limite calculée. Document de mission portant les six mentions obligatoires vérifiables par un logiciel — poste, qualification, terme, lieu, horaires, rémunération — avec la liste de ce qui manque quand il est incomplet.
@@ -169,5 +188,6 @@ Base légale et durées de conservation énoncées sur `/confidentialite`, menti
 | [docs/donnees-personnelles.md](docs/donnees-personnelles.md) | cartographie du traitement, chiffrement au repos, durées de conservation |
 | [docs/ecoconception.md](docs/ecoconception.md) | pratiques RGESN appliquées et mesurées |
 | [docs/automatisations-n8n.md](docs/automatisations-n8n.md) | les deux scénarios, leurs endpoints et leur configuration |
+| [docs/n8n/LISEZ-MOI.md](docs/n8n/LISEZ-MOI.md) | **monter le bot Discord et les salons privés**, pas à pas |
 | [docs/tests-et-couverture.md](docs/tests-et-couverture.md) | ce que la suite couvre, et ce qu'elle ne couvre pas |
 | [docs/deploiement.md](docs/deploiement.md) | mise en ligne sur Vercel |

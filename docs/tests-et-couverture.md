@@ -77,12 +77,12 @@ limite connue sur la page `/accessibilite`.
 
 *Section ajoutée le 18 septembre 2026, à l'occasion de l'audit de conformité au sujet.*
 
-`npm run coverage` produit un rapport pour `core` : **96,69 % des lignes** sur 335 tests,
+`npm run coverage` produit un rapport pour `core` : **96,71 % des lignes** sur 351 tests,
 avec les
 détails par fichier en HTML et en lcov. C'est le livrable attendu par le sujet.
 
 **Il n'y a volontairement pas de rapport équivalent pour `web`, et c'est une décision,
-pas un oubli.** Les 167 tests de `web` démarrent un vrai serveur `next start` dans un
+pas un oubli.** Les 182 tests de `web` démarrent un vrai serveur `next start` dans un
 autre processus et l'interrogent en HTTP. Le fournisseur v8 de Vitest n'instrumente
 que le processus de test : il rendrait **0 % sur chaque fichier de `web/lib`**, ce qui
 laisserait croire que rien n'est testé alors que ces modules sont traversés à chaque
@@ -97,7 +97,7 @@ est pire qu'un chiffre absent.
 
 La mesure qui a du sens ici n'est pas la ligne exécutée, c'est le comportement vérifié.
 
-**33 des 36 routes d'API** sont appelées par la suite fonctionnelle ou par le parcours
+**36 des 39 routes d'API** sont appelées par la suite fonctionnelle ou par le parcours
 de bout en bout. Les trois restantes sont en lecture seule et sans effet de bord :
 
 | Route non couverte | Pourquoi |

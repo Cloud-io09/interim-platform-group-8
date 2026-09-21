@@ -45,6 +45,8 @@ Une donnée qu'on chiffrerait sans pouvoir s'en servir rendrait le produit inop�
 | `compte.mot_de_passe_hash` | Empreinte **scrypt**, non réversible par construction. Le mot de passe lui-même n'est jamais stocké |
 | `compte.mot_de_passe_sel` | Un sel n'est pas un secret : il doit être lisible pour vérifier une empreinte |
 | `compte.email_verifie_le` | Date seule, sans contenu personnel. Relue à chaque demande de réinitialisation pour décider si un lien peut partir vers cette adresse |
+| `compte.discord_utilisateur_id` | Identifiant du compte Discord que la personne a elle-même rattaché. Contraint unique, donc comparable — un chiffrement à vecteur aléatoire l'en empêcherait. Il n'ouvre aucun accès et se retire d'un clic |
+| `compte.discord_salon_id` | Identifiant d'un salon, pas une donnée personnelle. Sert à y poster et à le supprimer |
 | `interimaire.prenom`, `nom` | Affichés à l'entreprise qui reçoit une candidature — c'est la finalité du produit |
 | `code_postal`, `ville`, `lat`, `lon` | Servent au géocodage et au calcul de distance. Les coordonnées sont celles de **la commune**, pas du domicile |
 | `certification.type_code`, `categorie_id` | Le filtre éliminatoire s'appuie dessus. Les chiffrer rendrait le matching impossible |
@@ -90,8 +92,43 @@ Annoncées sur [`/confidentialite`](../web/app/confidentialite/page.tsx) et appl
 | Session | 7 jours d'inactivité, en base non relationnelle |
 | Tentatives de connexion | 15 minutes |
 | Traces de calcul de correspondance | 1 heure — elles expliquent un résultat, elles n'archivent pas |
+| Salon Discord privé | Jusqu'au détachement, ou la suppression du compte |
 
 La suppression de compte efface profil, habilitations, disponibilités, candidatures et texte de CV : les cascades du schéma le garantissent, et un test fonctionnel le vérifie.
+
+---
+
+## Ce qui sort de la plateforme : le salon Discord
+
+Facultatif, et **désactivé tant que la personne ne l'a pas demandé**. C'est le seul
+traitement qui expédie des données personnelles chez un tiers, il est donc décrit à
+part plutôt que noyé dans un tableau.
+
+**Ce qui part.** Le texte des notifications — nom, habilitation concernée, date
+d'échéance, intitulé et lieu d'une mission. Rien d'autre : ni adresse, ni téléphone, ni
+numéro d'habilitation, ni texte de CV.
+
+**Ce qui est demandé à Discord.** L'identifiant du compte, et le droit d'ajouter la
+personne au serveur. Pas son adresse e-mail — que nous avons déjà, et par un chemin que
+nous vérifions nous-mêmes — pas ses messages, pas la liste des serveurs qu'elle
+fréquente. Le rattachement ne compare aucune adresse : il repose sur le fait que la
+même personne tient une session ouverte ici *et* autorise là-bas dans le même
+aller-retour.
+
+**Qui peut lire.** La personne seule. Le salon refuse `@everyone` et n'autorise
+qu'elle et le bot ; ces exceptions de permission sont éprouvées par un test, parce
+qu'une erreur à cet endroit produirait un salon lisible par tout le serveur sans que
+rien ne le signale à l'exécution.
+
+**Retrait.** Un bouton dans le profil. Le salon est supprimé — pas seulement délié :
+il porte des messages nominatifs, et le laisser derrière soi contredirait ce que
+`/confidentialite` annonce. La suppression de compte fait de même, explicitement,
+puisque aucune cascade du schéma n'atteint Discord.
+
+**Base légale : le consentement** (article 6.1.a), distinct de celui qui fonde le
+reste du traitement. Il se retire aussi facilement qu'il se donne — le détachement
+n'exige pas le mot de passe, contrairement au changement d'adresse : rendre coûteux un
+retrait de consentement serait contraire à son esprit.
 
 ---
 

@@ -1,7 +1,7 @@
 # Automatisations n8n
 
 Deux scénarios, tous deux en **flux tiré** : n8n interroge l'application, met en forme,
-et poste sur Discord.
+et poste dans le salon Discord privé de chaque destinataire.
 
 ## Pourquoi tiré et non poussé
 
@@ -129,7 +129,7 @@ suffisant pour un service en production détenant des données de paie.
 
 Les deux scénarios sont dans [`n8n/`](n8n/), **importés et exécutés** sur n8n 2.8.4 le
 2026-09-21 contre l'application réelle. Trois valeurs à remplacer, et c'est monté :
-l'adresse de l'application, la credential, l'URL du webhook Discord. Marche à suivre
+l'adresse de l'application, les deux credentials. Marche à suivre
 dans [`n8n/LISEZ-MOI.md`](n8n/LISEZ-MOI.md).
 
 La section qui suit reste utile pour comprendre ce que fait chaque nœud, ou pour
@@ -215,28 +215,53 @@ Après ce nœud, chaque élément est une alerte, et `{{ $json.message }}` dési
 message. S'il n'y a aucune alerte, le nœud ne produit rien et la suite ne s'exécute
 pas : le flux ne poste donc jamais dans le vide.
 
-### 5. Poster sur Discord
+### 5. Écarter qui n'a pas relié son Discord
 
-Le plus simple et le plus stable d'une version de n8n à l'autre : un second **HTTP
-Request**.
+**+** → **Filter**. Condition : `{{ $json.discordSalonId }}` — *String* → *is not
+empty*.
+
+Ce nœud n'est pas décoratif. `discordSalonId` vaut `null` pour qui n'a pas rattaché son
+compte, et sans lui l'appel suivant partirait vers `/channels/null/messages` et
+échouerait à chaque exécution. Ceux qui sont écartés ne perdent rien : la notification
+reste dans leur espace, dont Discord n'est qu'un relais.
+
+### 6. Poster dans le salon privé du destinataire
+
+Un second **HTTP Request** — plus stable d'une version de n8n à l'autre que le nœud
+Discord natif, dont l'interface bouge.
 
 | Champ | Valeur |
 |---|---|
 | Method | `POST` |
-| URL | l'URL du webhook Discord |
+| URL | `https://discord.com/api/v10/channels/{{ $json.discordSalonId }}/messages` |
+| Authentication | `Generic Credential Type` → `Header Auth` |
+| Credential | *Bot Discord Intérimatch* |
 | Send Body | activé |
 | Body Content Type | `JSON` |
 | Specify Body | `Using Fields Below` |
 | Name | `content` |
 | Value | `{{ $json.message }}` |
 
-Le webhook Discord se crée dans : salon dédié → *Paramètres du salon* → *Intégrations*
-→ *Webhooks* → *Nouveau webhook* → *Copier l'URL*.
+**L'URL porte l'identifiant du salon de chaque destinataire**, et c'est tout l'objet du
+changement : la première version postait vers un webhook unique, donc tout le monde
+lisait les alertes de tout le monde. Une alerte d'échéance nomme la personne, son
+habilitation et sa date d'expiration — la diffuser à tout un serveur était un défaut de
+confidentialité.
 
-n8n a aussi un nœud **Discord** natif, qui fait la même chose avec un champ de moins.
-Son interface change selon les versions ; l'appel HTTP ci-dessus, lui, ne bouge pas.
+La credential *Bot Discord Intérimatch* est une **Header Auth** :
 
-### 6. Éprouver le flux
+| Champ | Valeur |
+|---|---|
+| Name | `Authorization` |
+| Value | `Bot <DISCORD_BOT_TOKEN>` |
+
+Le mot `Bot`, un espace, puis le jeton. Discord refuse toute autre forme, et répond
+`401`.
+
+La création du bot, ses permissions et le rattachement des comptes sont décrits dans
+[`n8n/LISEZ-MOI.md`](n8n/LISEZ-MOI.md).
+
+### 7. Éprouver le flux
 
 Bouton **Test workflow**, en bas de la toile. Chaque nœud s'allume vert l'un après
 l'autre, et le message doit apparaître dans Discord.
@@ -245,7 +270,7 @@ Si un nœud passe au rouge, son panneau de sortie affiche la réponse HTTP reçu
 `401` vient du secret, un `400` d'un paramètre d'URL, un `404` d'une faute dans le
 chemin.
 
-### 7. Le second scénario
+### 8. Le second scénario
 
 Dupliquer le flux (*⋯ → Duplicate*) et changer deux choses :
 
