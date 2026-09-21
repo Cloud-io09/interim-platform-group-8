@@ -61,8 +61,45 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "missions-filtre-condition",
+              "leftValue": "={{ $json.discordSalonId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "missions-filtre",
+      "name": "A un salon privé",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "Écarte qui n'a pas relié son compte Discord : « discordSalonId » vaut alors null. Sans ce nœud, l'appel partirait vers /channels/null/messages et échouerait à chaque exécution. La notification reste lisible dans l'application — Discord n'est qu'un relais."
+    },
+    {
+      "parameters": {
         "method": "POST",
-        "url": "https://discord.com/api/webhooks/REMPLACER",
+        "url": "=https://discord.com/api/v10/channels/{{ $json.discordSalonId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -74,15 +111,21 @@
         },
         "options": {}
       },
-      "id": "notifications-discord",
-      "name": "Poster sur Discord",
+      "id": "missions-discord",
+      "name": "Poster dans le salon privé",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        660,
+        880,
         0
       ],
-      "notes": "Le champ « message » est rédigé côté serveur : n8n ne connaît aucune règle métier, il transporte."
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REMPLACER",
+          "name": "Bot Discord Intérimatch"
+        }
+      },
+      "notes": "Poste dans le salon PRIVÉ du destinataire, pas dans un salon commun. L'alerte nomme la personne, son habilitation et sa date d'échéance : un webhook unique la diffusait à tous les membres du serveur. L'identité du salon vient de l'API, le message aussi — n8n transporte, il ne décide pas."
     }
   ],
   "connections": {
@@ -112,7 +155,18 @@
       "main": [
         [
           {
-            "node": "Poster sur Discord",
+            "node": "A un salon privé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A un salon privé": {
+      "main": [
+        [
+          {
+            "node": "Poster dans le salon privé",
             "type": "main",
             "index": 0
           }

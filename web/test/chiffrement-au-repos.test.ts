@@ -51,6 +51,16 @@ const CLASSIFICATION: Record<string, Record<string, { etat: "chiffre" | "clair";
       raison:
         "Date seule, sans contenu personnel, lue à chaque demande de réinitialisation pour décider si un lien peut partir.",
     },
+    discord_utilisateur_id: {
+      etat: "clair",
+      raison:
+        "Identifiant du compte Discord que la personne a elle-même rattaché. Contraint unique, donc comparable : un chiffrement à vecteur aléatoire l'en empêcherait. Il n'ouvre aucun accès et se retire d'un clic.",
+    },
+    discord_salon_id: {
+      etat: "clair",
+      raison: "Identifiant d'un salon, pas une donnée personnelle. Sert à y poster et à le supprimer.",
+    },
+    discord_relie_le: { etat: "clair", raison: "Horodatage technique." },
   },
   interimaire: {
     compte_id: { etat: "clair", raison: "Clé technique." },
@@ -65,7 +75,6 @@ const CLASSIFICATION: Record<string, Record<string, { etat: "chiffre" | "clair";
     rayon_mobilite_km: { etat: "clair", raison: "Critère de scoring." },
     carte_btp_numero_chiffre: { etat: "chiffre", raison: "Identifiant nominatif rattaché à une situation d'emploi." },
     carte_btp_echeance: { etat: "clair", raison: "Date seule, sans identifiant : inexploitable isolément." },
-    webhook_discord: { etat: "clair", raison: "Adresse de notification fournie par l'utilisateur, non nominative." },
     cv_texte_chiffre: { etat: "chiffre", raison: "Historique d'emploi complet : la donnée la plus riche du produit." },
     cv_nom_fichier: { etat: "clair", raison: "Nom du fichier, affiché pour que l'utilisateur reconnaisse son dépôt." },
     cv_depose_le: { etat: "clair", raison: "Horodatage technique." },
@@ -80,7 +89,6 @@ const CLASSIFICATION: Record<string, Record<string, { etat: "chiffre" | "clair";
     lat: { etat: "clair", raison: "Idem." },
     lon: { etat: "clair", raison: "Idem." },
     telephone_chiffre: { etat: "chiffre", raison: "Coordonnée directe d'un interlocuteur." },
-    webhook_discord: { etat: "clair", raison: "Adresse de notification, non nominative." },
   },
   certification: {
     id: { etat: "clair", raison: "Clé technique." },
