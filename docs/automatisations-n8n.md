@@ -70,6 +70,61 @@ n'est plus conforme reviendrait à l'inviter sur un chantier où il ne peut pas 
 `heures=24`. Fenêtre et cadence doivent correspondre, sinon on notifie deux fois ou
 on manque des missions.
 
+## Partager le secret quand n8n tourne sur un autre poste
+
+*Ajouté le 2026-09-21 : n8n tourne sur le portable d'une collègue, pas sur le serveur.*
+
+Ce n'est pas un problème, parce que le flux est **tiré**. n8n fait des appels sortants
+vers une URL publique ; il n'a jamais besoin d'être joignable depuis l'extérieur, donc
+ni tunnel, ni ouverture de port, ni adresse fixe. Un portable derrière une box suffit.
+
+Il reste une seule chose à faire circuler : une chaîne de caractères.
+
+### 1. Générer le secret
+
+```bash
+openssl rand -base64 32
+```
+
+### 2. Le poser côté application
+
+Dans Vercel → Settings → Environment Variables → `SECRET_N8N`. **Cocher les
+environnements où les tests auront lieu** : une variable ajoutée à « Production » seule
+laisse la préversion répondre `401`. Puis **relancer un déploiement** — une variable
+ajoutée ne s'applique pas à un déploiement déjà en ligne.
+
+### 3. Le poser côté n8n, **comme une credential et non dans le nœud**
+
+Dans n8n : *Credentials → New → Header Auth*, nom de l'en-tête `x-secret-n8n`, valeur
+le secret. Le nœud HTTP Request s'y rattache ensuite par référence.
+
+**Ce point n'est pas cosmétique.** Le sujet demande de livrer l'export des scénarios
+n8n. Un secret saisi directement dans le nœud **part dans le JSON exporté**, donc dans
+le dépôt. Une credential est stockée à part et n'apparaît pas dans l'export : on peut
+donc verser le scénario au dépôt sans verser le secret avec.
+
+### 4. Quelle URL viser
+
+L'adresse d'un déploiement de préversion change à chaque commit. n8n doit donc viser
+soit le domaine de production, soit **l'alias de branche** que Vercel maintient stable :
+
+```
+https://<projet>-git-<branche>-<compte>.vercel.app
+```
+
+### 5. Transmettre le secret
+
+Par un canal privé — gestionnaire de mots de passe, message direct. Pas dans un salon
+d'équipe, pas dans le dépôt. S'il fuite, le remplacer coûte une variable d'environnement
+et une credential : c'est la raison même du secret partagé plutôt que d'un compte.
+
+### Ce que ça protège, et ce que ça ne protège pas
+
+Ces endpoints sont publics, protégés par un secret partagé posé sur un poste de
+travail. C'est proportionné à ce qu'ils exposent — des rappels d'échéance et des
+rapprochements déjà calculés — et à la durée de vie d'un POC. Ce ne serait pas
+suffisant pour un service en production détenant des données de paie.
+
 ## Montage du flux n8n
 
 ```
@@ -88,3 +143,8 @@ SECRET=$(grep '^SECRET_N8N=' .env | cut -d= -f2-)
 curl -s -H "x-secret-n8n: $SECRET" \
   "https://<domaine>/api/n8n/certifications-expirantes?jours=60" | python3 -m json.tool
 ```
+
+Un `401` signifie l'une de deux choses, et une seule : le secret ne correspond pas, ou
+`SECRET_N8N` est absente de l'environnement visé. La garde échoue fermée — secret
+absent, accès refusé — donc un déploiement sans la variable rend les automatisations
+inutilisables plutôt que ouvertes.
