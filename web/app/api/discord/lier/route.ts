@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(requete: Request) {
   const session = await exigerSession();
-  const profil = session.role === "entreprise" ? "/espace/entreprise/profil" : "/espace/interimaire/profil";
+  const profil = session.role === "entreprise" ? "/espace/entreprise/profil/notifications"
+      : "/espace/interimaire/profil/notifications";
 
   if (!oauthConfigure()) {
     return Response.redirect(`${origine(requete)}${profil}?discord=non-configure`, 302);

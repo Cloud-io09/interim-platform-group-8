@@ -101,7 +101,7 @@ export default function LiaisonDiscord() {
   if (!etat) return null;
 
   return (
-    <section aria-labelledby="titre-discord" className="carte" style={{ marginTop: "1rem" }}>
+    <section aria-labelledby="titre-discord" className="carte carte--notification">
       <div className="tete-carte">
         <h3 id="titre-discord" style={{ fontSize: "1rem", margin: 0 }}>
           Notifications sur Discord
@@ -118,22 +118,15 @@ export default function LiaisonDiscord() {
 
       {!etat.disponible ? (
         <p className="petit secondaire">
-          Le relais Discord n&apos;est pas configuré sur ce déploiement. Vos notifications
-          restent consultables dans votre espace.
+          Relais non configuré sur ce déploiement. Vos notifications restent dans votre
+          espace.
         </p>
       ) : etat.relie ? (
         <>
           <p className="petit secondaire">
-            Vous avez un <strong>salon privé</strong> sur notre serveur Discord. Vous seul
-            pouvez le lire — ni les autres membres, ni les entreprises. Vous y recevez vos
-            habilitations qui approchent de leur échéance, et les missions qui correspondent
-            à votre profil.
-            {etat.relieLe && (
-              <> Rattaché le {new Date(etat.relieLe).toLocaleDateString("fr-FR")}.</>
-            )}
-          </p>
-          <p className="petit secondaire">
-            Détacher supprime le salon et tout ce qui y a été posté.
+            Salon privé, lisible de vous seul.
+            {etat.relieLe && <> Rattaché le {new Date(etat.relieLe).toLocaleDateString("fr-FR")}.</>}{" "}
+            Le détacher le supprime.
           </p>
           <div className="actions-proposition">
             {etat.lienSalon && (
@@ -154,18 +147,22 @@ export default function LiaisonDiscord() {
       ) : (
         <>
           <p className="petit secondaire">
-            Recevez vos alertes d&apos;échéance et vos missions correspondantes dans un{" "}
-            <strong>salon Discord créé pour vous seul</strong>. C&apos;est facultatif : les
-            mêmes informations restent dans votre espace.
-          </p>
-          <p className="petit secondaire">
-            Nous demandons à Discord votre identifiant et le droit de vous ajouter à notre
-            serveur — <strong>ni votre adresse e-mail, ni vos messages</strong>. Votre
-            adresse Discord n&apos;a pas besoin d&apos;être la même qu&apos;ici.
+            Vos échéances et vos missions correspondantes, dans un{" "}
+            <strong>salon lisible de vous seul</strong>. Facultatif.
           </p>
           <a className="bouton lien-bloc" href="/api/discord/lier">
             Relier mon compte Discord
           </a>
+          {/* Replié : ce qui rassure quand on se pose la question, sans alourdir
+              l'écran de ceux qui ne se la posent pas. */}
+          <details className="petit secondaire">
+            <summary>Quelles données Discord reçoit-il&nbsp;?</summary>
+            <p>
+              Nous lui demandons votre identifiant et le droit de vous ajouter à notre
+              serveur. <strong>Ni votre adresse e-mail, ni vos messages.</strong> Votre
+              adresse Discord n&apos;a pas besoin d&apos;être la même qu&apos;ici.
+            </p>
+          </details>
         </>
       )}
     </section>

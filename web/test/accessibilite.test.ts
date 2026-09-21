@@ -59,6 +59,8 @@ const PAGES: Page[] = [
   { chemin: "/verification" },
   { chemin: "/espace/interimaire", cookie: () => cookieInterimaire },
   { chemin: "/espace/interimaire/profil", cookie: () => cookieInterimaire },
+  { chemin: "/espace/interimaire/profil/notifications", cookie: () => cookieInterimaire },
+  { chemin: "/espace/interimaire/profil/securite", cookie: () => cookieInterimaire },
   { chemin: "/espace/interimaire/certifications", cookie: () => cookieInterimaire },
   { chemin: "/espace/interimaire/disponibilites", cookie: () => cookieInterimaire },
   { chemin: "/espace/interimaire/cv", cookie: () => cookieInterimaire },

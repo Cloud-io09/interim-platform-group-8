@@ -1140,3 +1140,9 @@ details > summary {
   padding: 0 0.5rem;
 }
 .bouton-discret:hover { color: var(--texte); }
+
+/* Liseré de section, pour que trois cartes empilées ne se lisent plus comme une.
+   La couleur porte un sens — le rouge est réservé à ce qui est irréversible — et
+   ne porte jamais l'information seule : chaque carte a son titre (RGAA 3.1). */
+.carte--notification { border-left: 4px solid #5865f2; }            /* le bleu de Discord */
+.carte--securite     { border-left: 4px solid var(--texte-secondaire); }

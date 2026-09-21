@@ -154,7 +154,7 @@ export default function SecuriteCompte() {
     <section aria-labelledby="titre-securite">
       <h2 id="titre-securite">Sécurité du compte</h2>
 
-      <div className={`carte${adresse && !adresse.verifie ? " carte--verdict-bloque" : ""}`}>
+      <div className={`carte ${adresse && !adresse.verifie ? "carte--verdict-bloque" : "carte--securite"}`}>
         <div className="tete-carte">
           <h3 style={{ fontSize: "1rem", margin: 0 }}>Adresse e-mail</h3>
           {adresse && (
@@ -173,9 +173,8 @@ export default function SecuriteCompte() {
         {adresse && !adresse.verifie && (
           <>
             <p className="petit secondaire">
-              Tant qu'elle n'est pas confirmée, aucun lien de réinitialisation ne peut y
-              être envoyé : c'est ce qui évite qu'une adresse saisie de travers donne accès
-              à votre compte. Vos codes de récupération, eux, fonctionnent déjà.
+              Tant qu&apos;elle n&apos;est pas confirmée, aucun lien de réinitialisation ne
+              peut y être envoyé. Vos codes de récupération, eux, fonctionnent déjà.
             </p>
             <button
               className="bouton bouton--secondaire"
@@ -203,8 +202,8 @@ export default function SecuriteCompte() {
             />
           </div>
           <p className="petit secondaire">
-            Votre adresse actuelle reste celle du compte tant que vous n'avez pas ouvert le
-            lien envoyé à la nouvelle. Vos sessions seront alors fermées.
+            Rien ne change avant que vous n&apos;ouvriez le lien envoyé à la nouvelle
+            adresse. Vos sessions seront alors fermées.
           </p>
           <RetourFormulaire erreur={erreurAdresse} succes={retourAdresse} problemes={[]} />
           <button className="bouton bouton--secondaire" type="submit" disabled={enCours}>
@@ -213,7 +212,7 @@ export default function SecuriteCompte() {
         </form>
       </div>
 
-      <form onSubmit={changerMotDePasse} className="carte" noValidate style={{ marginTop: "1rem" }}>
+      <form onSubmit={changerMotDePasse} className="carte carte--securite" noValidate style={{ marginTop: "1rem" }}>
         <h3 style={{ fontSize: "1rem", marginTop: 0 }}>Changer mon mot de passe</h3>
 
         <div className="champ">
@@ -245,7 +244,7 @@ export default function SecuriteCompte() {
         </button>
       </form>
 
-      <div className="carte" style={{ marginTop: "1rem" }}>
+      <div className="carte carte--securite" style={{ marginTop: "1rem" }}>
         <div className="tete-carte">
           <h3 style={{ fontSize: "1rem", margin: 0 }}>Codes de récupération</h3>
           {restants !== null && (
@@ -255,9 +254,8 @@ export default function SecuriteCompte() {
           )}
         </div>
         <p className="petit secondaire">
-          Ce sont eux qui vous permettront de reprendre la main si vous oubliez votre mot
-          de passe. Ils ne peuvent pas être relus : régénérer en produit de nouveaux et
-          annule les précédents.
+          Votre secours si vous oubliez votre mot de passe. Ils ne peuvent pas être relus :
+          en régénérer annule les précédents.
         </p>
         <button className="bouton bouton--secondaire" onClick={regenerer} disabled={enCours}>
           Régénérer mes codes

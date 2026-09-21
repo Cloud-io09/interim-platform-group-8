@@ -1,8 +1,6 @@
-import LiaisonDiscord from "@/components/LiaisonDiscord";
-import SecuriteCompte from "@/components/SecuriteCompte";
 import type { Metadata } from "next";
 import FormulaireProfilEntreprise from "@/components/FormulaireProfilEntreprise";
-import SupprimerCompte from "@/components/SupprimerCompte";
+import OngletsProfil from "@/components/OngletsProfil";
 import { exigerSession } from "@/lib/garde";
 
 export const metadata: Metadata = { title: "Mon entreprise", robots: { index: false, follow: false } };
@@ -20,6 +18,7 @@ export default async function ProfilEntreprise({
       <div className="colonne colonne--formulaire">
         <p className="petit secondaire"><a href="/espace/entreprise">← Mon espace</a></p>
         <h1 className="titre-page">Mon entreprise</h1>
+        <OngletsProfil role="entreprise" />
         <p className="secondaire">
           Ces informations servent de référence à vos fiches de poste. Chaque mission
           pourra avoir sa propre adresse de chantier.
@@ -29,12 +28,6 @@ export default async function ProfilEntreprise({
         <FormulaireProfilEntreprise
           apresEnregistrement={suite === "premiere-mission" ? "/missions/nouvelle" : undefined}
         />
-        <hr className="separateur" />
-        <hr className="separateur" />
-        <LiaisonDiscord />
-        <SecuriteCompte />
-
-        <SupprimerCompte />
       </div>
     </section>
   );

@@ -26,7 +26,8 @@ export async function GET(requete: Request) {
   const session = await exigerSession();
   const base = origine(requete);
   const profil =
-    session.role === "entreprise" ? "/espace/entreprise/profil" : "/espace/interimaire/profil";
+    session.role === "entreprise" ? "/espace/entreprise/profil/notifications"
+      : "/espace/interimaire/profil/notifications";
   const vers = (etat: string) => Response.redirect(`${base}${profil}?discord=${etat}`, 302);
 
   const parametres = new URL(requete.url).searchParams;
