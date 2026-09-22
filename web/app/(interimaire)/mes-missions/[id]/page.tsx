@@ -126,6 +126,16 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
                         : "Votre candidature est en cours d'examen par l'entreprise."
                 }
               />
+              {/* Une fois l'affectation conclue, c'est le document qui compte : il
+                  porte les six mentions obligatoires, et c'est l'intérimaire qui doit
+                  pouvoir le présenter sur le chantier. */}
+              {etat === "acceptee" && (
+                <p className="petit" style={{ margin: "0.75rem 0 0" }}>
+                  <a className="bouton bouton--secondaire lien-bloc" href={`/mes-missions/${missionId}/document`}>
+                    Mon document de mission
+                  </a>
+                </p>
+              )}
             </div>
           </div>
 

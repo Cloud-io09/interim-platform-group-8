@@ -16,6 +16,14 @@ export interface Session {
   role: RoleCompte;
   email: string;
   creeeLe: string;
+  /**
+   * Dernière fois que la durée de vie a été repoussée.
+   *
+   * Sert à ne pas la repousser à chaque requête : voir `lireSession`. Absent des
+   * sessions ouvertes avant l'introduction du seuil — elles sont alors prolongées
+   * une fois, puis rentrent dans le régime normal.
+   */
+  prolongeeLe?: string;
 }
 
 /** Sous-ensemble de Redis utilisé ici — injectable pour tester sans réseau. */
@@ -34,6 +42,14 @@ export interface MagasinSession {
   mget(...cles: string[]): Promise<unknown>;
 }
 
+/**
+ * Au-delà de ce délai depuis la dernière prolongation, la session est repoussée.
+ *
+ * Un jour : assez court pour qu'une session active ne meure jamais, assez long pour
+ * qu'une navigation ordinaire ne provoque qu'une écriture par jour.
+ */
+const SEUIL_PROLONGATION_MS = 24 * 3600 * 1000;
+
 export interface SessionOuverte {
   jeton: string;
   session: Session;
@@ -51,6 +67,7 @@ export async function ouvrirSession(
     role: compte.role,
     email: compte.email,
     creeeLe: new Date().toISOString(),
+    prolongeeLe: new Date().toISOString(),
   };
   await magasin.set(cle.session(jeton), JSON.stringify(session), { ex: TTL.session });
   // Index par compte : c'est ce qui rend possible « déconnecter partout », exigé dès
@@ -80,7 +97,25 @@ export async function lireSession(
   const session = typeof brut === "string" ? (JSON.parse(brut) as Session) : (brut as Session);
   if (typeof session?.compteId !== "number" || !session.role) return null;
 
-  await magasin.expire(cle.session(jeton), TTL.session);
+  // **La durée de vie n'est repoussée qu'une fois par jour.**
+  //
+  // Elle l'était à chaque requête : toute page authentifiée coûtait deux commandes
+  // au lieu d'une, pour repousser un délai de sept jours auquel il en restait
+  // presque sept. Sur un forfait compté en commandes par mois, c'est la moitié du
+  // budget de session dépensée pour rien.
+  //
+  // Le glissement reste entier : une session utilisée chaque jour ne meurt jamais,
+  // et une session oubliée expire toujours sept jours après son dernier usage, à un
+  // jour près. On écrit alors la session entière plutôt qu'un `expire` séparé —
+  // c'est une commande, pas deux, et elle porte la nouvelle date.
+  const prolongeeLe = Date.parse(session.prolongeeLe ?? session.creeeLe);
+  if (!Number.isFinite(prolongeeLe) || Date.now() - prolongeeLe > SEUIL_PROLONGATION_MS) {
+    await magasin.set(
+      cle.session(jeton),
+      JSON.stringify({ ...session, prolongeeLe: new Date().toISOString() }),
+      { ex: TTL.session }
+    );
+  }
   return session;
 }
 

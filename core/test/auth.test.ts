@@ -18,14 +18,18 @@ function fauxMagasin() {
   const donnees = new Map<string, string>();
   const ensembles = new Map<string, Set<string>>();
   const prolongations: { cle: string; secondes: number }[] = [];
+  /** Clés écrites, pour compter les commandes et non seulement les effets. */
+  const ecritures: string[] = [];
   const magasin: MagasinSession & {
     donnees: typeof donnees;
     ensembles: typeof ensembles;
     prolongations: typeof prolongations;
+    ecritures: typeof ecritures;
   } = {
     donnees,
     ensembles,
     prolongations,
+    ecritures,
     async sadd(k, ...membres) {
       const lot = ensembles.get(k) ?? new Set<string>();
       membres.forEach((m) => lot.add(m));
@@ -48,7 +52,8 @@ function fauxMagasin() {
       return ["0", [...donnees.keys()].filter((k) => motif.test(k))];
     },
     async set(k, v) {
-      donnees.set(k, v);
+      ecritures.push(k);
+      donnees.set(k, String(v));
       return "OK";
     },
     async get(k) {
@@ -93,19 +98,55 @@ describe("cycle de vie d'une session", () => {
     expect(a.jeton).not.toBe(b.jeton);
   });
 
-  it("prolonge la session à chaque lecture", async () => {
-    // Glissement voulu ici : la session s'éteint sur l'inactivité, pas sur l'ancienneté.
-    // C'est l'inverse du compteur de tentatives, dont la fenêtre ne doit pas glisser.
+  it("ne repousse pas la durée de vie à chaque lecture", async () => {
+    // Elle l'était : toute page authentifiée coûtait deux commandes au lieu d'une,
+    // pour repousser un délai de sept jours auquel il en restait presque sept. Sur
+    // un forfait compté en commandes par mois, c'était la moitié du budget de
+    // session dépensée pour rien.
     const m = fauxMagasin();
     const { jeton } = await ouvrirSession(m, compte);
+    const ecrituresApresOuverture = m.ecritures.filter((c) => c === `sess:${jeton}`).length;
+
+    await lireSession(m, jeton);
     await lireSession(m, jeton);
     await lireSession(m, jeton);
 
-    // On ne compte que les prolongations de la session elle-même : l'index des
-    // sessions du compte est prolongé lui aussi, ce qui est voulu mais hors sujet ici.
-    const duJeton = m.prolongations.filter((p) => p.cle === `sess:${jeton}`);
-    expect(duJeton).toHaveLength(2);
-    expect(duJeton[0]).toEqual({ cle: `sess:${jeton}`, secondes: TTL.session });
+    expect(m.ecritures.filter((c) => c === `sess:${jeton}`).length).toBe(ecrituresApresOuverture);
+  });
+
+  it("la repousse dès que la dernière prolongation date de plus d'un jour", async () => {
+    // Le glissement reste entier : une session utilisée chaque jour ne meurt jamais,
+    // et une session oubliée expire sept jours après son dernier usage.
+    const m = fauxMagasin();
+    const { jeton } = await ouvrirSession(m, compte);
+
+    // On vieillit la session dans le magasin, comme le ferait le temps qui passe.
+    const rangee = JSON.parse(m.donnees.get(`sess:${jeton}`)!);
+    const hier = new Date(Date.now() - 25 * 3600 * 1000).toISOString();
+    m.donnees.set(`sess:${jeton}`, JSON.stringify({ ...rangee, prolongeeLe: hier }));
+
+    const avant = m.ecritures.filter((c) => c === `sess:${jeton}`).length;
+    expect(await lireSession(m, jeton)).toMatchObject({ compteId: compte.id });
+    expect(m.ecritures.filter((c) => c === `sess:${jeton}`).length).toBe(avant + 1);
+
+    // Et la date est remise à jour, sinon chaque lecture suivante réécrirait.
+    const apres = JSON.parse(m.donnees.get(`sess:${jeton}`)!);
+    expect(Date.parse(apres.prolongeeLe)).toBeGreaterThan(Date.parse(hier));
+  });
+
+  it("prolonge une session ouverte avant l'introduction du seuil", async () => {
+    // Elles n'ont pas de « prolongeeLe » : on retombe sur la date de création plutôt
+    // que de les laisser expirer sans jamais être repoussées.
+    const m = fauxMagasin();
+    const { jeton } = await ouvrirSession(m, compte);
+    const rangee = JSON.parse(m.donnees.get(`sess:${jeton}`)!);
+    delete rangee.prolongeeLe;
+    rangee.creeeLe = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+    m.donnees.set(`sess:${jeton}`, JSON.stringify(rangee));
+
+    const avant = m.ecritures.filter((c) => c === `sess:${jeton}`).length;
+    await lireSession(m, jeton);
+    expect(m.ecritures.filter((c) => c === `sess:${jeton}`).length).toBe(avant + 1);
   });
 
   it("révoque toutes les sessions d'un compte, en épargnant celle qui le demande", async () => {
