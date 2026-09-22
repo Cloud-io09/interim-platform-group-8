@@ -72,6 +72,12 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
   );
   const [competences, setCompetences] = useState<string[]>(initiale?.competencesRequises ?? []);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
+  // Les deux taux sont tenus en état pour pouvoir les comparer pendant la saisie.
+  // La règle existe déjà côté serveur ; la répéter ici ne la déplace pas, elle
+  // avance seulement le moment où on l'apprend — après l'envoi, il faut retrouver
+  // le champ fautif en haut d'un formulaire long.
+  const [tauxMin, setTauxMin] = useState(String(initiale?.tauxHoraireMin ?? ""));
+  const [tauxMax, setTauxMax] = useState(String(initiale?.tauxHoraireMax ?? ""));
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = {
@@ -151,6 +157,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
     }
     rechargerVers(`/missions/${initiale?.id ?? corps.id}`);
   }
+
+  /** Incohérence visible dès la seconde valeur saisie, avant tout envoi. */
+  const tauxIncoherents =
+    tauxMin !== "" && tauxMax !== "" && Number(tauxMax) <= Number(tauxMin);
 
   const typeDe = (code: string) => types.find((t) => t.code === code);
 
@@ -361,20 +371,49 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.min}>Taux horaire minimum</label>
-            <input id={ids.min} name="tauxHoraireMin" defaultValue={initiale?.tauxHoraireMin ?? ""} type="number" step="0.01" min="0" inputMode="decimal" />
+            <input
+              id={ids.min}
+              name="tauxHoraireMin"
+              type="number"
+              step="0.01"
+              min="0"
+              inputMode="decimal"
+              value={tauxMin}
+              onChange={(e) => setTauxMin(e.target.value)}
+            />
             {problemeDe("tauxHoraireMin") && <p className="petit message-erreur">{problemeDe("tauxHoraireMin")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.max}>Taux horaire maximum</label>
-            <input id={ids.max} name="tauxHoraireMax" defaultValue={initiale?.tauxHoraireMax ?? ""} type="number" step="0.01" min="0" inputMode="decimal" />
-            {problemeDe("tauxHoraireMax") && <p className="petit message-erreur">{problemeDe("tauxHoraireMax")}</p>}
+            <input
+              id={ids.max}
+              name="tauxHoraireMax"
+              type="number"
+              step="0.01"
+              min="0"
+              inputMode="decimal"
+              value={tauxMax}
+              onChange={(e) => setTauxMax(e.target.value)}
+              aria-invalid={tauxIncoherents || undefined}
+              aria-describedby={tauxIncoherents ? `${ids.max}-err` : undefined}
+            />
+            {tauxIncoherents ? (
+              <p id={`${ids.max}-err`} className="petit message-erreur" role="status">
+                Le maximum doit dépasser le minimum ({tauxMin} €). Laissez-le vide si le
+                taux est fixe.
+              </p>
+            ) : (
+              problemeDe("tauxHoraireMax") && (
+                <p className="petit message-erreur">{problemeDe("tauxHoraireMax")}</p>
+              )
+            )}
           </div>
         </div>
       </fieldset>
 
       <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
 
-      <button className="bouton" type="submit" disabled={enCours}>
+      <button className="bouton" type="submit" disabled={enCours || tauxIncoherents}>
         {enCours ? "Publication…" : "Publier la fiche de poste"}
       </button>
     </form>

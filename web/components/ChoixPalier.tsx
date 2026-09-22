@@ -36,14 +36,6 @@ export default function ChoixPalier({
 
   return (
     <>
-      <p className="bandeau bandeau--neutre" role="status">
-        <span>
-          <strong>Paiement simulé.</strong> Aucune carte n&apos;est demandée et aucun
-          prestataire n&apos;est appelé : ce sont les quotas, l&apos;imputation et le
-          registre des déblocages qui sont réels.
-        </span>
-      </p>
-
       {message && (
         <p className="encart-succes" role="status">
           {message}

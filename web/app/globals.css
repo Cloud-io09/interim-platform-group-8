@@ -61,7 +61,20 @@ body {
   line-height: 1.6;
 }
 
-h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 0.5em; }
+/* **Une marge haute, et pas seulement basse.**
+   Les titres n'en avaient aucune : un h2 posé sous une carte venait toucher son
+   bord, et les deux se lisaient comme un seul bloc — « Entreprise utilisatrice »
+   collé au verdict qui le précédait. La marge du haut est plus grande que celle du
+   bas, parce qu'un titre appartient à ce qui le suit, pas à ce qui le précède. */
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 2rem 0 0.5em; }
+h2 { margin-top: 2.75rem; }
+h3 { margin-top: 2rem; }
+/* En tête de conteneur, la marge ferait un trou : le conteneur a déjà la sienne. */
+:is(h1, h2, h3, h4):first-child { margin-top: 0; }
+/* Dans une carte, le titre est l'entrée en matière, pas une nouvelle section. */
+.carte :is(h2, h3, h4) { margin-top: 1.25rem; }
+.carte :is(h2, h3, h4):first-child,
+.tete-carte :is(h2, h3, h4) { margin-top: 0; }
 h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 600; }
 h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 600; }
 h3 { font-size: 1.125rem; font-weight: 600; }

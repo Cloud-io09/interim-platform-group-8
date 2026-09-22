@@ -42,6 +42,26 @@ function echeanceCalculee(obtention: string, validiteMois: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Organismes testeurs les plus fréquents sur les habilitations du bâtiment.
+ *
+ * Proposés, jamais imposés : la liste réelle compte des dizaines de centres
+ * certifiés, et refuser celui qui n'y figure pas empêcherait de déclarer un titre
+ * valable — exactement ce que ce produit existe pour éviter.
+ */
+const ORGANISMES = [
+  "AFPA",
+  "AFTRAL",
+  "APAVE",
+  "Bureau Veritas",
+  "CACES Formation",
+  "Dekra",
+  "ECF",
+  "GRETA",
+  "Promotrans",
+  "Socotec",
+] as const;
+
 const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
 
 /** Jours restants avant échéance. Négatif si le titre est déjà périmé. */
@@ -255,9 +275,19 @@ export default function Certifications() {
             name="organismeEmetteur"
             required
             maxLength={160}
+            list={`${ids.org}-liste`}
             placeholder="APAVE, Bureau Veritas, AFTRAL…"
             aria-describedby={`${ids.org}-aide`}
           />
+          {/* Une liste de suggestions, pas une liste fermée : les organismes
+              testeurs certifiés sont des dizaines, et en refuser un absent de notre
+              liste empêcherait quelqu'un de déclarer un titre parfaitement valable.
+              Les plus fréquents épargnent la frappe, le champ reste libre. */}
+          <datalist id={`${ids.org}-liste`}>
+            {ORGANISMES.map((o) => (
+              <option key={o} value={o} />
+            ))}
+          </datalist>
           {/* Un champ libre sans exemple laisse deviner ce qu'on attend : le centre de
               formation ? l'employeur ? Ce sont les organismes testeurs certifiés, et
               trois noms réels le disent mieux qu'une définition. */}

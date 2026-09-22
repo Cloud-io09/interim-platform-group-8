@@ -5,7 +5,7 @@ import { exigerSession } from "@/lib/garde";
 import { lireDroits } from "@/lib/deblocage";
 
 export const metadata: Metadata = {
-  title: "Mon palier",
+  title: "Mon abonnement",
   robots: { index: false, follow: false },
 };
 
@@ -22,7 +22,7 @@ export default async function Abonnement() {
       <section className="section">
         <div className="colonne">
           <p className="petit secondaire"><a href="/espace/entreprise">← Mon espace</a></p>
-          <h1 className="titre-page">Mon palier</h1>
+          <h1 className="titre-page">Mon abonnement</h1>
           <p className="secondaire">
             Le rapprochement, le score et la conformité de chaque profil sont gratuits et
             le resteront. Ce qui se paie, c&apos;est l&apos;accès aux coordonnées d&apos;un

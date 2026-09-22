@@ -54,7 +54,7 @@ export default async function LayoutEntreprise({ children }: { children: React.R
               { href: "/missions", libelle: "Mes fiches" },
               { href: "/candidatures", libelle: "Candidatures" },
               { href: "/missions/nouvelle", libelle: "Publier" },
-              { href: "/espace/entreprise/abonnement", libelle: "Mon palier" },
+              { href: "/espace/entreprise/abonnement", libelle: "Mon abonnement" },
               { href: "/espace/entreprise/profil", libelle: "Mon entreprise" },
             ]}
           />

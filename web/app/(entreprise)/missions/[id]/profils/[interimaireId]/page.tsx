@@ -4,6 +4,7 @@ import { connexion } from "@interimatch/core/db";
 import { distanceKm, estConforme, joursDeChevauchement, libelleEtat, nombreDeJours, type EtatCandidature } from "@interimatch/core";
 import ActionCandidature from "@/components/ActionCandidature";
 import { ListeConformite, PastilleConformite } from "@/components/Conformite";
+import { dechiffrerOptionnel } from "@interimatch/core";
 import { exigerSession } from "@/lib/garde";
 import { dejaDebloque, lireDroits } from "@/lib/deblocage";
 import Paywall from "@/components/Paywall";
@@ -46,8 +47,12 @@ export default async function ProfilPourMission({
     const profil = profils.find((p) => p.interimaireId === interimaireId);
     if (!profil) notFound();
 
-    const [identite] = await sql<{ prenom: string; nom: string; ville: string }[]>`
-      select prenom, nom, ville from interimaire where compte_id = ${interimaireId}`;
+    const [identite] = await sql<
+      { prenom: string; nom: string; ville: string; telephone_chiffre: string | null; email: string }[]
+    >`
+      select i.prenom, i.nom, i.ville, i.telephone_chiffre, c.email
+        from interimaire i join compte c on c.id = i.compte_id
+       where i.compte_id = ${interimaireId}`;
     if (!identite) notFound();
 
     // L'expérience accompagne le métier auquel elle se rapporte : « huit ans en
@@ -112,6 +117,40 @@ export default async function ProfilPourMission({
             </span>
             <span className="pastille pastille--info">{libelleEtat(etat)}</span>
           </p>
+
+          {/* **Ce que le déblocage rend.** Il ne donnait qu'un nom de famille, ce qui
+              ne valait pas son prix : on paie pour pouvoir joindre quelqu'un, pas
+              pour lire une identité. Téléphone et adresse apparaissent ici, et nulle
+              part ailleurs — c'est la seule page où le déblocage a été payé. */}
+          {debloque && (
+            <div className="carte carte--notification">
+              <h2 className="titre-carte">Coordonnées</h2>
+              <ul className="liste-nue">
+                <li className="ligne">
+                  <span>Téléphone</span>
+                  {dechiffrerOptionnel(identite.telephone_chiffre) ? (
+                    <strong>
+                      <a href={`tel:${dechiffrerOptionnel(identite.telephone_chiffre)}`}>
+                        {dechiffrerOptionnel(identite.telephone_chiffre)}
+                      </a>
+                    </strong>
+                  ) : (
+                    <span className="petit secondaire">non renseigné</span>
+                  )}
+                </li>
+                <li className="ligne">
+                  <span>Adresse e-mail</span>
+                  <strong>
+                    <a href={`mailto:${identite.email}`}>{identite.email}</a>
+                  </strong>
+                </li>
+              </ul>
+              <p className="petit secondaire">
+                {identite.prenom} sait qu&apos;une entreprise a accédé à ses coordonnées
+                pour cette mission. Elles ne servent qu&apos;à ce chantier.
+              </p>
+            </div>
+          )}
 
           {droits && (
             <Paywall

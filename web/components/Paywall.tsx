@@ -91,13 +91,19 @@ export default function Paywall({
           <button className="bouton" onClick={debloquer} disabled={enCours}>
             {enCours ? "Déblocage…" : "Débloquer les coordonnées"}
           </button>
+          {/* Ce qu'il restera après, pas seulement ce qu'il reste avant : c'est la
+              question qu'on se pose la main sur le bouton. */}
           <p className="petit secondaire" style={{ margin: "0.6rem 0 0" }}>
-            Paiement simulé : aucune carte n&apos;est demandée sur cette démonstration.
+            {quotaRestant === null
+              ? "Votre palier ne limite pas les déblocages."
+              : quotaRestant > 0
+                ? `Il vous en restera ${quotaRestant - 1} ce mois-ci.`
+                : `Il vous restera ${credits - 1} crédit${credits - 1 > 1 ? "s" : ""}.`}
           </p>
         </>
       ) : (
         <a className="bouton lien-bloc" href="/espace/entreprise/abonnement">
-          Choisir un palier ou acheter des crédits
+          Voir les formules
         </a>
       )}
     </div>
