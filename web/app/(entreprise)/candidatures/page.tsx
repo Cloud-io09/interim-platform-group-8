@@ -16,6 +16,8 @@ interface Ligne {
   interimaire_id: number;
   prenom: string;
   nom: string;
+  /** Les coordonnées ont-elles été débloquées pour cette mission ? */
+  debloque: boolean;
   ville: string;
   statut: EtatCandidature;
   motif: string | null;
@@ -47,7 +49,17 @@ export default async function CandidaturesEntreprise() {
     const lignes = await sql<Ligne[]>`
       select c.mission_id, m.titre, m.date_debut::text, m.date_fin::text,
              c.interimaire_id, i.prenom, i.nom, i.ville,
-             c.statut, c.motif, c.decide_par
+             c.statut, c.motif, c.decide_par,
+             -- **Le nom complet fuitait ici.** Il était masqué sur la fiche profil
+             -- et rendu en clair dans cette liste : la barrière ne tenait qu'à
+             -- l'écran où on avait pensé à la poser. On rapporte le déblocage avec
+             -- la candidature, pour que l'affichage suive la même règle partout.
+             exists (
+               select 1 from deblocage d
+               where d.entreprise_id = ${session.compteId}
+                 and d.interimaire_id = c.interimaire_id
+                 and d.mission_id = c.mission_id
+             ) as debloque
       from candidature c
       join mission m on m.id = c.mission_id
       join interimaire i on i.compte_id = c.interimaire_id
@@ -112,7 +124,7 @@ export default async function CandidaturesEntreprise() {
                               className="lien-bloc"
                               href={`/missions/${missionId}/profils/${l.interimaire_id}`}
                             >
-                              {l.prenom} {l.nom}
+                              {l.debloque ? `${l.prenom} ${l.nom}` : `${l.prenom} ${l.nom.charAt(0)}.`}
                             </a>
                           </strong>
                           <span className="petit secondaire"> — {l.ville}</span>

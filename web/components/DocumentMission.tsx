@@ -173,7 +173,7 @@ export default async function DocumentMission({
             <div className="carte carte--verdict-ok">
               <h2 className="titre-carte">Toutes les mentions obligatoires sont renseignées</h2>
               <p className="petit secondaire" style={{ margin: 0 }}>
-                Durée de {mois === 0 ? "moins d&apos;un mois" : `${mois} mois`}, dans la limite
+                Durée de {mois === 0 ? "moins d'un mois" : `${mois} mois`}, dans la limite
                 de {DUREE_MAX_MOIS} mois fixée par l&apos;{ARTICLE_DUREE_MAX}.
               </p>
             </div>

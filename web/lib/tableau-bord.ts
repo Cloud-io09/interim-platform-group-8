@@ -76,6 +76,11 @@ export interface EcheanceCertification {
   joursRestants: number;
 }
 
+/** Date du jour en ISO court, pour comparer des dates de chantier stockées ainsi. */
+function dateDuJour(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export interface TableauBordInterimaire {
   profil: ProfilInterimaireLu | null;
   initiales: string;
@@ -159,7 +164,15 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
     nonLues,
     propositions: enCandidature.filter((c) => attendUneReponseDe(c.statut, "interimaire")),
     candidaturesEnvoyees: enCandidature.filter((c) => c.statut === "candidatee"),
-    prochaine: enCandidature.find((c) => c.statut === "acceptee") ?? null,
+    // **La prochaine, pas n'importe laquelle.** On prenait la première affectation
+    // trouvée, sans regarder ses dates : un chantier terminé en septembre
+    // s'affichait en octobre sous le titre « Votre prochaine mission », avec la
+    // mention « il y a 21 jours ». On écarte ce qui est fini, et on prend la plus
+    // proche — sans quoi deux affectations donneraient la mauvaise.
+    prochaine:
+      enCandidature
+        .filter((c) => c.statut === "acceptee" && c.dateFin >= dateDuJour())
+        .sort((a, b) => a.dateDebut.localeCompare(b.dateDebut))[0] ?? null,
     suggestions,
     bloquees,
     certifications: certifs.map((c) => ({

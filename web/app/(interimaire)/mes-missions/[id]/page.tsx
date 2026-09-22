@@ -34,11 +34,23 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
     if (!mission) notFound();
 
     // Une mission pourvue reste consultable par l'intérimaire affecté : c'est son
-    // chantier. Elle disparaît pour les autres.
+    // chantier.
+    //
+    // **Et par quiconque s'y est porté candidat**, même si elle a été pourvue par un
+    // autre. Sans cette seconde condition, un lien parfaitement légitime depuis
+    // « Mes candidatures » tombait sur un 404 brut : le produit répondait « cette
+    // page n'existe pas » à quelqu'un qui demandait des nouvelles de sa candidature.
+    // L'écran sait déjà dire « pourvue par quelqu'un d'autre » — encore fallait-il
+    // le laisser s'afficher.
     const [affectation] = await sql<{ interimaire_affecte_id: number | null }[]>`
       select interimaire_affecte_id from mission where id = ${missionId}`;
     const jeSuisAffecte = affectation?.interimaire_affecte_id === session.compteId;
-    if (mission.statut !== "publiee" && !jeSuisAffecte) notFound();
+
+    const [maCandidature] = await sql<{ id: number }[]>`
+      select id from candidature
+       where mission_id = ${missionId} and interimaire_id = ${session.compteId}`;
+
+    if (mission.statut !== "publiee" && !jeSuisAffecte && !maCandidature) notFound();
 
     const pourConformite = (await chargerMissionPourConformite(sql, missionId))!;
     const conformite = await conformiteDetaillee(sql, pourConformite, session.compteId);
