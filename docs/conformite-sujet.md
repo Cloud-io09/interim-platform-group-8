@@ -107,11 +107,11 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 |---|---|---|
 | Frontend : framework JS en TypeScript, responsive | **fait** | Next.js 16, TypeScript strict. Vérifié en capture réelle à 1280 px et 390 px |
 | Backend : framework Node en TypeScript | **fait** | Routes Next.js en TypeScript |
-| Base relationnelle | **fait** | PostgreSQL / Supabase, 20 tables, 13 migrations |
+| Base relationnelle | **fait** | PostgreSQL / Supabase, 21 tables, 14 migrations |
 | Base non relationnelle, usage complémentaire | **fait** | Redis : sessions, limitation de tentatives, cache de matching, traces de calcul, cache de géocodage, jetons à usage unique |
-| Tests unitaires | **fait** | 351 dans `core` |
-| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 182 dans `web`, contre un vrai serveur en HTTP |
-| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,71 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — 36 des 39 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
+| Tests unitaires | **fait** | 374 dans `core` |
+| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 199 dans `web`, contre un vrai serveur en HTTP |
+| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,8 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — 39 des 42 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
 | Au moins une bibliothèque CLI | **fait** | `commander`, dans `ingest/` |
 | Authentification classique écrite soi-même | **fait** | Aucune librairie d'authentification, aucune solution managée. Supabase n'est qu'une base de données |
 | OAuth par librairie **si** connexion tierce proposée | **sans objet** | Aucune connexion tierce n'est proposée. Décision et justification dans le `CLAUDE.md` |
