@@ -1,5 +1,5 @@
 import { connexion } from "@interimatch/core/db";
-import { matcher, typeCertification } from "@interimatch/core";
+import { distanceKm, matcher, typeCertification } from "@interimatch/core";
 import { succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
 import { chargerMissions, chargerProfilsParMetiers } from "@/lib/depot";
@@ -50,6 +50,16 @@ export async function GET(requete: Request) {
     const bloquees = [];
     const horsMetier = [];
 
+    // Coordonnées du domicile, lues une fois.
+    //
+    // Le moteur ne calcule la distance que pour les profils qu'il évalue, donc elle
+    // n'existait que sur les missions accessibles. Le curseur « distance maximale »
+    // ne mordait alors sur aucune des deux autres listes : de l'extérieur, il
+    // paraissait mort. La distance ne dépend pourtant d'aucun rapprochement — deux
+    // couples de coordonnées suffisent.
+    const [chezMoi] = await sql<{ lat: number; lon: number }[]>`
+      select lat, lon from interimaire where compte_id = ${moi}`;
+
     const missions = await chargerMissions(sql, candidates.map((c) => c.id));
     // Tous les profils concernés en une fois : l'union des métiers des missions.
     const profilsParMetier = await chargerProfilsParMetiers(sql, missions.map((m) => m.metierCode));
@@ -67,6 +77,12 @@ export async function GET(requete: Request) {
         dateFin: mission.dateFin,
         tauxHoraireMin: mission.tauxHoraireMin,
         tauxHoraireMax: mission.tauxHoraireMax,
+        // `null` seulement si le profil n'a pas encore d'adresse géocodée : on ne
+        // montre alors aucune distance plutôt qu'un zéro qui mentirait.
+        distanceKm:
+          chezMoi && mission.lat != null && mission.lon != null
+            ? Math.round(distanceKm(chezMoi, { lat: mission.lat, lon: mission.lon }) * 10) / 10
+            : null,
       };
 
       const retenu = resultat.retenus.find((r) => r.interimaireId === moi);
@@ -74,6 +90,8 @@ export async function GET(requete: Request) {
         accessibles.push({
           ...resume,
           score: Math.round(retenu.total * 100),
+          // Celle du moteur, pas la nôtre : c'est elle qui a servi au score, et en
+          // afficher une autre à côté du score le contredirait.
           distanceKm: retenu.detail.distanceKm,
           joursCouverts: retenu.detail.joursChevauchement,
           joursMission: retenu.detail.joursMission,
@@ -108,8 +126,13 @@ export async function GET(requete: Request) {
     // classées par échéance, la plus proche d'abord — c'est celle qu'un
     // renouvellement rouvrirait le plus vite.
     accessibles.sort((a, b) => b.score - a.score || a.distanceKm - b.distanceKm);
-    bloquees.sort((a, b) => (a.dateEcheance ?? "9999").localeCompare(b.dateEcheance ?? "9999"));
-    horsMetier.sort((a, b) => a.dateDebut.localeCompare(b.dateDebut));
+    // Les deux autres listes se classent par proximité quand la distance est connue.
+    const parDistance = (a: { distanceKm: number | null }, b: { distanceKm: number | null }) =>
+      (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity);
+    bloquees.sort(
+      (a, b) => (a.dateEcheance ?? "9999").localeCompare(b.dateEcheance ?? "9999") || parDistance(a, b)
+    );
+    horsMetier.sort((a, b) => a.dateDebut.localeCompare(b.dateDebut) || parDistance(a, b));
 
     return succes({ portee: toutes ? "toutes" : "mes-metiers", accessibles, bloquees, horsMetier });
   } finally {
