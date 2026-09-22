@@ -89,10 +89,24 @@ export function libelleEtat(etat: EtatCandidature): string {
  * intérimaire décline un chantier, une entreprise écarte un profil. Employer le même
  * mot des deux côtés effacerait qui a décidé quoi.
  */
-export function libelleAction(vers: EtatCandidature, acteur: Acteur): string {
+export function libelleAction(
+  vers: EtatCandidature,
+  acteur: Acteur,
+  /** État d'où l'on part. Il change le sens du refus, et donc son libellé. */
+  depuis?: EtatCandidature
+): string {
   if (vers === "candidatee") return "Postuler";
   if (vers === "sollicitee") return "Solliciter ce profil";
   if (vers === "acceptee") return acteur === "interimaire" ? "Accepter la mission" : "Retenir ce profil";
-  if (vers === "declinee") return acteur === "interimaire" ? "Décliner" : "Écarter";
+
+  if (vers === "declinee") {
+    // **Décliner et se retirer ne sont pas le même geste.** On décline ce qu'on
+    // vous propose ; on retire ce qu'on a soi-même envoyé. Le bouton disait
+    // « Décliner » sur sa propre candidature en cours, ce qui se lit comme un refus
+    // adressé à soi-même — et laisse croire qu'on refuse une offre qu'on n'a pas
+    // reçue. Même transition, même état d'arrivée, deux situations distinctes.
+    if (acteur === "interimaire") return depuis === "candidatee" ? "Retirer ma candidature" : "Décliner";
+    return depuis === "sollicitee" ? "Annuler ma sollicitation" : "Écarter ce profil";
+  }
   return vers;
 }

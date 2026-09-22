@@ -32,14 +32,45 @@ interface Exigence {
   categorieCode: string;
 }
 
-export default function FormulaireMission() {
+/** Fiche déjà enregistrée, quand le formulaire sert à la modifier. */
+export interface MissionAModifier {
+  id: number;
+  titre: string;
+  metierCode: string;
+  description: string | null;
+  adresse: string | null;
+  codePostal: string;
+  ville: string;
+  dateDebut: string;
+  dateFin: string;
+  horaires: string | null;
+  tauxHoraireMin: number | null;
+  tauxHoraireMax: number | null;
+  certificationsRequises: { typeCode: string; categorieCode: string | null }[];
+  competencesRequises: string[];
+}
+
+/**
+ * Formulaire de fiche de poste, en création comme en modification.
+ *
+ * **La modification n'existait pas.** Une faute de frappe dans un intitulé, une date
+ * décalée d'un jour, une habilitation oubliée : il fallait clore la fiche et tout
+ * ressaisir. Un même formulaire sert les deux cas, sans quoi les deux divergeraient
+ * au premier champ ajouté.
+ */
+export default function FormulaireMission({ initiale }: { initiale?: MissionAModifier }) {
   const [domaines, setDomaines] = useState<Domaine[]>([]);
   const [types, setTypes] = useState<TypeCertification[]>([]);
-  const [metierCode, setMetierCode] = useState("");
-  const [codePostal, setCodePostal] = useState("");
+  const [metierCode, setMetierCode] = useState(initiale?.metierCode ?? "");
+  const [codePostal, setCodePostal] = useState(initiale?.codePostal ?? "");
   const [enrichissement, setEnrichissement] = useState<Enrichissement | null>(null);
-  const [exigences, setExigences] = useState<Exigence[]>([]);
-  const [competences, setCompetences] = useState<string[]>([]);
+  const [exigences, setExigences] = useState<Exigence[]>(
+    initiale?.certificationsRequises.map((e) => ({
+      typeCode: e.typeCode,
+      categorieCode: e.categorieCode ?? "",
+    })) ?? []
+  );
+  const [competences, setCompetences] = useState<string[]>(initiale?.competencesRequises ?? []);
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
@@ -87,7 +118,10 @@ export default function FormulaireMission() {
     setProblemes([]);
     setErreur(null);
 
-    const { ok, corps } = await envoyerJson<{ id: number }>("/api/missions", "POST", {
+    const { ok, corps } = await envoyerJson<{ id: number }>(
+      initiale ? `/api/missions/${initiale.id}` : "/api/missions",
+      initiale ? "PATCH" : "POST",
+      {
         titre: d.get("titre"),
         metierCode,
         description: d.get("description"),
@@ -104,16 +138,18 @@ export default function FormulaireMission() {
           categorieCode: e.categorieCode || null,
         })),
         competencesRequises: competences,
-      publier: true,
-    });
+        // Une fiche modifiée ne change pas d'état : elle reste où elle en est.
+        ...(initiale ? {} : { publier: true }),
+      }
+    );
     setEnCours(false);
 
     if (!ok) {
       setProblemes(corps.problemes ?? []);
-      setErreur(corps.message ?? "Publication impossible.");
+      setErreur(corps.message ?? (initiale ? "Modification impossible." : "Publication impossible."));
       return;
     }
-    rechargerVers(`/missions/${corps.id}`);
+    rechargerVers(`/missions/${initiale?.id ?? corps.id}`);
   }
 
   const typeDe = (code: string) => types.find((t) => t.code === code);
@@ -162,10 +198,9 @@ export default function FormulaireMission() {
           <label htmlFor={ids.titre}>Intitulé de la fiche de poste</label>
           <input
             id={ids.titre}
-            name="titre"
+            name="titre" defaultValue={initiale?.titre ?? ""}
             required
             maxLength={160}
-            defaultValue=""
             placeholder={enrichissement?.intitulesFrequents[0] ?? ""}
           />
           {enrichissement && enrichissement.intitulesFrequents.length > 0 && (
@@ -178,7 +213,7 @@ export default function FormulaireMission() {
 
         <div className="champ">
           <label htmlFor={ids.desc}>Description du chantier</label>
-          <textarea id={ids.desc} name="description" rows={4} maxLength={2000} />
+          <textarea id={ids.desc} name="description" rows={4} maxLength={2000} defaultValue={initiale?.description ?? ""} />
         </div>
       </fieldset>
 
@@ -270,32 +305,33 @@ export default function FormulaireMission() {
         <legend>Lieu et dates</legend>
         <div className="champ">
           <label htmlFor={ids.adresse}>Adresse du chantier</label>
-          <input id={ids.adresse} name="adresse" />
+          <input id={ids.adresse} name="adresse" defaultValue={initiale?.adresse ?? ""} />
         </div>
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.cp}>Code postal</label>
             <input
               id={ids.cp} name="codePostal" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5}
+              defaultValue={initiale?.codePostal ?? ""}
               value={codePostal} onChange={(e) => setCodePostal(e.target.value)}
             />
             {problemeDe("codePostal") && <p className="petit message-erreur">{problemeDe("codePostal")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.ville}>Commune</label>
-            <input id={ids.ville} name="ville" required />
+            <input id={ids.ville} name="ville" defaultValue={initiale?.ville ?? ""} required />
             {problemeDe("ville") && <p className="petit message-erreur">{problemeDe("ville")}</p>}
           </div>
         </div>
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.debut}>Début</label>
-            <input id={ids.debut} name="dateDebut" type="date" required />
+            <input id={ids.debut} name="dateDebut" defaultValue={initiale?.dateDebut ?? ""} type="date" required />
             {problemeDe("dateDebut") && <p className="petit message-erreur">{problemeDe("dateDebut")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.fin}>Fin</label>
-            <input id={ids.fin} name="dateFin" type="date" required />
+            <input id={ids.fin} name="dateFin" defaultValue={initiale?.dateFin ?? ""} type="date" required />
             <p className="petit secondaire">
               C&apos;est contre cette date que la validité des habilitations est vérifiée.
             </p>
@@ -310,6 +346,7 @@ export default function FormulaireMission() {
           <input
             id={ids.horaires}
             name="horaires"
+            defaultValue={initiale?.horaires ?? ""}
             type="text"
             maxLength={300}
             placeholder="7h30-12h / 13h-16h30, 35 h par semaine"
@@ -324,12 +361,12 @@ export default function FormulaireMission() {
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.min}>Taux horaire minimum</label>
-            <input id={ids.min} name="tauxHoraireMin" type="number" step="0.01" min="0" inputMode="decimal" />
+            <input id={ids.min} name="tauxHoraireMin" defaultValue={initiale?.tauxHoraireMin ?? ""} type="number" step="0.01" min="0" inputMode="decimal" />
             {problemeDe("tauxHoraireMin") && <p className="petit message-erreur">{problemeDe("tauxHoraireMin")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.max}>Taux horaire maximum</label>
-            <input id={ids.max} name="tauxHoraireMax" type="number" step="0.01" min="0" inputMode="decimal" />
+            <input id={ids.max} name="tauxHoraireMax" defaultValue={initiale?.tauxHoraireMax ?? ""} type="number" step="0.01" min="0" inputMode="decimal" />
             {problemeDe("tauxHoraireMax") && <p className="petit message-erreur">{problemeDe("tauxHoraireMax")}</p>}
           </div>
         </div>

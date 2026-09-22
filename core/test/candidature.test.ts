@@ -51,8 +51,18 @@ describe("cycle de vie d'une candidature", () => {
     // Un intérimaire décline un chantier, une entreprise écarte un profil : le même
     // état, deux gestes différents. Les confondre effacerait qui a décidé.
     expect(libelleAction("declinee", "interimaire")).toBe("Décliner");
-    expect(libelleAction("declinee", "entreprise")).toBe("Écarter");
+    expect(libelleAction("declinee", "entreprise")).toBe("Écarter ce profil");
     expect(libelleAction("acceptee", "interimaire")).toBe("Accepter la mission");
     expect(libelleAction("acceptee", "entreprise")).toBe("Retenir ce profil");
+  });
+
+  it("distingue se retirer de décliner", () => {
+    // On décline ce qu'on vous propose ; on retire ce qu'on a soi-même envoyé. Le
+    // bouton disait « Décliner » sur sa propre candidature en cours, ce qui se lit
+    // comme un refus adressé à soi-même.
+    expect(libelleAction("declinee", "interimaire", "candidatee")).toBe("Retirer ma candidature");
+    expect(libelleAction("declinee", "interimaire", "sollicitee")).toBe("Décliner");
+    expect(libelleAction("declinee", "entreprise", "sollicitee")).toBe("Annuler ma sollicitation");
+    expect(libelleAction("declinee", "entreprise", "candidatee")).toBe("Écarter ce profil");
   });
 });

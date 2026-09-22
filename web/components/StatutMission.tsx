@@ -16,16 +16,24 @@ const LIBELLE: Record<Statut, string> = {
 const ACTIONS: Record<Statut, { vise: Statut; libelle: string; consequence: string }[]> = {
   brouillon: [
     { vise: "publiee", libelle: "Publier", consequence: "La fiche devient visible et reçoit des candidats." },
-    { vise: "close", libelle: "Clore", consequence: "La fiche est définitivement fermée." },
+    { vise: "close", libelle: "Fermer cette fiche", consequence: "Elle n'accepte plus de candidature et disparaît des recherches." },
   ],
   publiee: [
-    { vise: "pourvue", libelle: "Marquer pourvue", consequence: "Le poste est couvert, la fiche reste consultable." },
+    {
+      vise: "pourvue",
+      // « Marquer pourvue » se lisait comme une écriture comptable. Le cas réel est
+      // précis : le poste s'est pourvu ailleurs, on ferme aux candidatures sans
+      // clore la fiche. Quand l'affectation se fait ici, ce bouton ne sert pas —
+      // accepter une candidature suffit.
+      libelle: "Poste pourvu ailleurs",
+      consequence: "La fiche n'accepte plus de candidature, mais reste consultable.",
+    },
     { vise: "brouillon", libelle: "Dépublier", consequence: "La fiche n'est plus proposée aux intérimaires." },
-    { vise: "close", libelle: "Clore", consequence: "La fiche est définitivement fermée." },
+    { vise: "close", libelle: "Fermer cette fiche", consequence: "Elle n'accepte plus de candidature et disparaît des recherches." },
   ],
   pourvue: [
     { vise: "publiee", libelle: "Republier", consequence: "Si l'affectation tombe, la fiche redevient ouverte." },
-    { vise: "close", libelle: "Clore", consequence: "La fiche est définitivement fermée." },
+    { vise: "close", libelle: "Fermer cette fiche", consequence: "Elle n'accepte plus de candidature et disparaît des recherches." },
   ],
   close: [],
 };
