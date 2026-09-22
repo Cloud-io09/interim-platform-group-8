@@ -23,6 +23,25 @@ interface Certification {
   dateEcheance: string;
 }
 
+/**
+ * Fin de validité déduite de la date d'obtention et de la durée du type.
+ *
+ * Elle était saisie à la main alors que la durée de chaque titre est connue — dix ans
+ * pour un CACES R482, cinq pour un R490, trois pour une habilitation électrique. Or
+ * c'est **cette date qui décide de l'éligibilité** : une faute de frappe y écarte
+ * quelqu'un d'un chantier auquel il a droit, ou l'y envoie sans titre valable.
+ *
+ * Le champ reste modifiable : un titre réel peut porter une date différente, après un
+ * recyclage notamment. Mais le défaut est le calcul, et l'écart est signalé.
+ */
+function echeanceCalculee(obtention: string, validiteMois: number): string {
+  if (!obtention || !validiteMois) return "";
+  const d = new Date(`${obtention}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "";
+  d.setUTCMonth(d.getUTCMonth() + validiteMois);
+  return d.toISOString().slice(0, 10);
+}
+
 const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
 
 /** Jours restants avant échéance. Négatif si le titre est déjà périmé. */
@@ -38,6 +57,8 @@ export default function Certifications() {
   const [types, setTypes] = useState<TypeCertification[]>([]);
   const [liste, setListe] = useState<Certification[]>([]);
   const [typeChoisi, setTypeChoisi] = useState("");
+  const [obtention, setObtention] = useState("");
+  const [echeance, setEcheance] = useState("");
   const [problemes, setProblemes] = useState<Probleme[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
@@ -79,6 +100,8 @@ export default function Certifications() {
     }
     formulaire.reset();
     setTypeChoisi("");
+    setObtention("");
+    setEcheance("");
     setSucces("Certification ajoutée.");
     await recharger();
   }
@@ -174,7 +197,11 @@ export default function Certifications() {
             name="typeCode"
             required
             value={typeChoisi}
-            onChange={(e) => setTypeChoisi(e.target.value)}
+            onChange={(e) => {
+              setTypeChoisi(e.target.value);
+              const choisi = types.find((t) => t.code === e.target.value);
+              if (choisi && obtention) setEcheance(echeanceCalculee(obtention, choisi.validiteMois));
+            }}
             aria-describedby={problemeDe("typeCode") ? `${ids.type}-err` : undefined}
           >
             <option value="">Choisissez dans la liste…</option>
@@ -223,7 +250,20 @@ export default function Certifications() {
 
         <div className="champ">
           <label htmlFor={ids.org}>Organisme qui a délivré le titre</label>
-          <input id={ids.org} name="organismeEmetteur" required maxLength={160} />
+          <input
+            id={ids.org}
+            name="organismeEmetteur"
+            required
+            maxLength={160}
+            placeholder="APAVE, Bureau Veritas, AFTRAL…"
+            aria-describedby={`${ids.org}-aide`}
+          />
+          {/* Un champ libre sans exemple laisse deviner ce qu'on attend : le centre de
+              formation ? l'employeur ? Ce sont les organismes testeurs certifiés, et
+              trois noms réels le disent mieux qu'une définition. */}
+          <p id={`${ids.org}-aide`} className="petit secondaire">
+            Le centre qui vous a fait passer le test, indiqué sur votre attestation.
+          </p>
           {problemeDe("organismeEmetteur") && (
             <p className="petit message-erreur">{problemeDe("organismeEmetteur")}</p>
           )}
@@ -231,22 +271,70 @@ export default function Certifications() {
 
         <div className="champ">
           <label htmlFor={ids.num}>Numéro du titre</label>
-          <input id={ids.num} name="numero" required maxLength={80} />
-          <p className="petit secondaire">Il figure sur votre carte ou votre attestation.</p>
+          <input
+            id={ids.num}
+            name="numero"
+            required
+            maxLength={80}
+            aria-describedby={`${ids.num}-aide`}
+          />
+          <p id={`${ids.num}-aide`} className="petit secondaire">
+            Il figure sur votre carte ou votre attestation. Il sert à vérifier le titre
+            auprès de l&apos;organisme, et il est <strong>chiffré</strong> en base.
+          </p>
           {problemeDe("numero") && <p className="petit message-erreur">{problemeDe("numero")}</p>}
         </div>
 
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.obt}>Date d&apos;obtention</label>
-            <input id={ids.obt} name="dateObtention" type="date" required />
+            <input
+              id={ids.obt}
+              name="dateObtention"
+              type="date"
+              required
+              value={obtention}
+              onChange={(e) => {
+                setObtention(e.target.value);
+                // On ne recalcule que tant que la date n'a pas été touchée : écraser
+                // une saisie délibérée serait pire que ne rien proposer.
+                if (type) setEcheance(echeanceCalculee(e.target.value, type.validiteMois));
+              }}
+            />
+            <p className="petit secondaire">Celle qui figure sur votre titre.</p>
             {problemeDe("dateObtention") && (
               <p className="petit message-erreur">{problemeDe("dateObtention")}</p>
             )}
           </div>
           <div className="champ">
             <label htmlFor={ids.ech}>Date de fin de validité</label>
-            <input id={ids.ech} name="dateEcheance" type="date" required />
+            <input
+              id={ids.ech}
+              name="dateEcheance"
+              type="date"
+              required
+              value={echeance}
+              onChange={(e) => setEcheance(e.target.value)}
+            />
+            {type && obtention ? (
+              echeance === echeanceCalculee(obtention, type.validiteMois) ? (
+                <p className="petit secondaire">
+                  Calculée : {type.validiteMois % 12 === 0
+                    ? `${type.validiteMois / 12} an${type.validiteMois > 12 ? "s" : ""}`
+                    : `${type.validiteMois} mois`}{" "}
+                  après l&apos;obtention. Corrigez-la si votre titre porte une autre date.
+                </p>
+              ) : (
+                <p className="petit">
+                  Différente de la durée habituelle de ce titre. C&apos;est possible après un
+                  recyclage — vérifiez simplement qu&apos;elle correspond bien au document.
+                </p>
+              )
+            ) : (
+              <p className="petit secondaire">
+                Choisissez le type et la date d&apos;obtention : elle se calcule toute seule.
+              </p>
+            )}
             {problemeDe("dateEcheance") && (
               <p className="petit message-erreur">{problemeDe("dateEcheance")}</p>
             )}
