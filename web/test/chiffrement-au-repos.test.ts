@@ -61,6 +61,13 @@ const CLASSIFICATION: Record<string, Record<string, { etat: "chiffre" | "clair";
       raison: "Identifiant d'un salon, pas une donnée personnelle. Sert à y poster et à le supprimer.",
     },
     discord_relie_le: { etat: "clair", raison: "Horodatage technique." },
+    plan_code: { etat: "clair", raison: "Palier commercial, lu à chaque déblocage pour calculer le quota restant." },
+    plan_depuis: { etat: "clair", raison: "Horodatage technique." },
+    credits: {
+      etat: "clair",
+      raison:
+        "Compteur de déblocages restants, décrémenté en base par une clause conditionnelle. Le chiffrer empêcherait de le comparer à zéro, donc de le débiter sans risque de course.",
+    },
   },
   interimaire: {
     compte_id: { etat: "clair", raison: "Clé technique." },

@@ -2,6 +2,7 @@ import { connexion } from "@interimatch/core/db";
 import {
   hacherMotDePasse,
   normaliserEmail,
+  planParCode,
   redis,
   validerInscription,
   type RoleCompte,
@@ -44,9 +45,14 @@ export async function POST(requete: Request) {
 
   const sql = connexion();
   try {
+    // Les déblocages offerts du palier d'entrée sont posés à la création, et non par
+    // un défaut de colonne : c'est une règle commerciale, elle vit dans `core` avec
+    // les autres, où un test la garde. Un intérimaire ne débloque rien, donc zéro.
+    const creditsOfferts = role === "entreprise" ? (planParCode("decouverte")?.creditsOfferts ?? 0) : 0;
+
     const cree = await sql<{ id: number }[]>`
-      insert into compte (email, mot_de_passe_hash, mot_de_passe_sel, role)
-      values (${email}, ${hash}, ${sel}, ${role})
+      insert into compte (email, mot_de_passe_hash, mot_de_passe_sel, role, credits)
+      values (${email}, ${hash}, ${sel}, ${role}, ${creditsOfferts})
       on conflict (email) do nothing
       returning id`;
 

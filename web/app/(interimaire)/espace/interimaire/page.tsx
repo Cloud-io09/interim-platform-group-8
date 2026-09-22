@@ -333,6 +333,29 @@ export default async function EspaceInterimaire() {
                   )}
                 </section>
 
+                {/* Transparence, pas statistique de vanité : la personne dont on
+                    vend l'accès aux coordonnées doit savoir que cela s'est produit. */}
+                {b.consultations.entreprises > 0 && (
+                  <section className="carte" aria-labelledby="titre-consultations">
+                    <h2 id="titre-consultations" className="titre-carte">
+                      Qui vous a contacté
+                    </h2>
+                    <p className="petit">
+                      <strong>
+                        {b.consultations.entreprises} entreprise
+                        {b.consultations.entreprises > 1 ? "s" : ""}
+                      </strong>{" "}
+                      {b.consultations.entreprises > 1 ? "ont" : "a"} accédé à vos
+                      coordonnées, pour {b.consultations.total} mission
+                      {b.consultations.total > 1 ? "s" : ""}.
+                    </p>
+                    <p className="petit secondaire">
+                      Une entreprise n&apos;y accède que sur une mission précise, et
+                      seulement après que le moteur vous a rapproché.
+                    </p>
+                  </section>
+                )}
+
                 <section className="carte" aria-labelledby="titre-cv">
                   <div className="tete-carte">
                     <h2 id="titre-cv" className="titre-carte">Mon CV</h2>

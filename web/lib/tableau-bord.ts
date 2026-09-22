@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
 import { attendUneReponseDe, matcher, typeCertification, type EtatCandidature } from "@interimatch/core";
+import { consultationsDuProfil } from "./deblocage";
 import { chargerMissions, chargerProfilsParMetiers } from "./depot";
 import { lireProfilEntreprise, lireProfilInterimaire, type ProfilEntrepriseLu, type ProfilInterimaireLu } from "./profils";
 import { compterNonLues, lister, rattraperEcheances, type Notification } from "./notifications";
@@ -93,6 +94,8 @@ export interface TableauBordInterimaire {
   certificationsPerimees: number;
   disponibilites: { debut: string; fin: string }[];
   cvDepose: boolean;
+  /** Entreprises ayant accédé aux coordonnées, rendu à l'intéressé seul. */
+  consultations: { entreprises: number; total: number; derniere: string | null };
 }
 
 export async function tableauBordInterimaire(sql: Sql, compteId: number): Promise<TableauBordInterimaire> {
@@ -169,6 +172,10 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
     certificationsPerimees: certifs.filter((c) => joursAvant(c.date_echeance) < 0).length,
     disponibilites: dispos.map((d) => ({ debut: d.date_debut, fin: d.date_fin })),
     cvDepose: cv[0]?.depose ?? false,
+    // Qui a consulté ses coordonnées, et combien de fois. Rendu à l'intéressé, pas à
+    // l'entreprise : c'est ce qui distingue une place de marché d'un courtier en
+    // données. Vendre l'accès à quelqu'un sans le lui dire serait l'autre métier.
+    consultations: await consultationsDuProfil(sql, compteId),
   };
 }
 

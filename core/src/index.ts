@@ -16,6 +16,7 @@ export * from "./referentiel";
 export * from "./auth";
 export * from "./profil";
 export * from "./mission";
+export * from "./offre";
 export * from "./cv";
 export { connexion } from "./db";
 export * from "./redis";

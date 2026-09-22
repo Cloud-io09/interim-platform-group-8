@@ -5,6 +5,8 @@ import { distanceKm, estConforme, joursDeChevauchement, libelleEtat, nombreDeJou
 import ActionCandidature from "@/components/ActionCandidature";
 import { ListeConformite, PastilleConformite } from "@/components/Conformite";
 import { exigerSession } from "@/lib/garde";
+import { dejaDebloque, lireDroits } from "@/lib/deblocage";
+import Paywall from "@/components/Paywall";
 import { chargerMission, chargerProfils } from "@/lib/depot";
 import { chargerMissionPourConformite, conformiteDetaillee } from "@/lib/candidatures";
 import { chargerExperience } from "@/lib/experience";
@@ -68,6 +70,18 @@ export default async function ProfilPourMission({
       where mission_id = ${missionId} and interimaire_id = ${interimaireId}`;
     const etat: EtatCandidature = candidature?.statut ?? "proposee";
 
+    // **Ce que l'entreprise voit sans payer, et ce qu'elle paie.**
+    //
+    // Gratuit : que ce profil est rapproché, son score, sa conformité habilitation
+    // par habilitation, sa distance, ses disponibilités — tout ce qui sert à
+    // *décider*. Payant : l'identité et les coordonnées, soit ce qui sert à *agir*.
+    //
+    // Le verdict de conformité reste de l'autre côté de la barrière, délibérément :
+    // ce produit existe pour empêcher qu'on envoie quelqu'un sans titre valable, et
+    // faire payer ce verdict reviendrait à vendre le risque.
+    const debloque = await dejaDebloque(sql, session.compteId, interimaireId, missionId);
+    const droits = debloque ? null : await lireDroits(sql, session.compteId);
+
     const distance = Math.round(distanceKm(profil, mission) * 10) / 10;
     const joursMission = nombreDeJours(mission);
     const couverts = joursDeChevauchement(mission, profil.disponibilites);
@@ -80,7 +94,16 @@ export default async function ProfilPourMission({
           </p>
 
           <h1 className="titre-page">
-            {identite.prenom} {identite.nom}
+            {debloque ? (
+              `${identite.prenom} ${identite.nom}`
+            ) : (
+              <>
+                {identite.prenom} {identite.nom.charAt(0)}.
+                <span className="petit secondaire" style={{ marginLeft: "0.6rem", fontWeight: 400 }}>
+                  identité masquée
+                </span>
+              </>
+            )}
           </h1>
           <p className="secondaire ligne-meta">
             <span>
@@ -89,6 +112,18 @@ export default async function ProfilPourMission({
             </span>
             <span className="pastille pastille--info">{libelleEtat(etat)}</span>
           </p>
+
+          {droits && (
+            <Paywall
+              interimaireId={interimaireId}
+              missionId={missionId}
+              prenom={identite.prenom}
+              plan={droits.plan.libelle}
+              quotaRestant={droits.illimite ? null : droits.quotaRestant}
+              credits={droits.credits}
+              peutDebloquer={droits.peutDebloquer}
+            />
+          )}
 
           {/* Le verdict est rendu du point de vue de cette mission-ci, jamais dans
               l'absolu : c'est la date de fin de chantier qui décide. */}
@@ -110,6 +145,14 @@ export default async function ProfilPourMission({
             </p>
 
             <div className="separation-action">
+              {/* Solliciter, c'est agir : cela envoie une notification nominative à
+                  quelqu'un dont on n'a pas encore vu le nom. La barrière tombe donc
+                  ici aussi, sans quoi on contournerait le déblocage. */}
+              {!debloque ? (
+                <p className="petit secondaire" style={{ margin: 0 }}>
+                  Débloquez les coordonnées pour pouvoir solliciter ce profil.
+                </p>
+              ) : (
               <ActionCandidature
                 missionId={missionId}
                 interimaireId={interimaireId}
@@ -126,6 +169,7 @@ export default async function ProfilPourMission({
                         : `En attente de la réponse de ${identite.prenom}.`
                 }
               />
+              )}
             </div>
           </div>
 

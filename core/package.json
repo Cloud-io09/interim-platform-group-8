@@ -11,7 +11,8 @@
     "./cv": "./src/cv.ts",
     "./conformite": "./src/conformite.ts",
     "./db": "./src/db.ts",
-    "./experience": "./src/experience.ts"
+    "./experience": "./src/experience.ts",
+    "./offre": "./src/offre.ts"
   },
   "scripts": {
     "migrate": "tsx bin/migrate.ts",
