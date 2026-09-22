@@ -8,6 +8,7 @@ import {
   posterDansSalon,
   redis,
   rejoindreServeur,
+  salonExiste,
   supprimerSalon,
   TTL,
   type ConfigDiscord,
@@ -199,4 +200,61 @@ export async function detacher(sql: Sql, compteId: number): Promise<void> {
     update compte
        set discord_utilisateur_id = null, discord_salon_id = null, discord_relie_le = null
      where id = ${compteId}`;
+}
+
+/**
+ * Recrée le salon d'un compte dont le salon a disparu côté Discord.
+ *
+ * Un salon supprimé à la main — par son titulaire, ou par un administrateur qui fait
+ * le ménage — laissait un identifiant mort en base. Les scénarios n8n continuaient de
+ * poster dessus, Discord répondait 404 à chaque exécution, et personne ne l'apprenait :
+ * ni l'intéressé, qui ne recevait simplement plus rien, ni nous.
+ *
+ * La réparation ne demande aucun nouveau consentement : l'identifiant Discord du
+ * titulaire est déjà connu, et c'est lui qui permet de restreindre le nouveau salon.
+ * On ne le rejoint pas à nouveau — il est déjà membre.
+ *
+ * Rend le nouvel identifiant, ou `null` si rien n'était à réparer ou si la
+ * réparation a échoué. Ne lève jamais : ce n'est pas au titulaire de subir un écran
+ * d'erreur parce qu'un salon manquait.
+ */
+export async function reparerSalon(
+  sql: Sql,
+  compteId: number
+): Promise<{ recree: boolean; salonId: string | null }> {
+  const config = configDiscord();
+  const [compte] = await sql<
+    { discord_utilisateur_id: string | null; discord_salon_id: string | null }[]
+  >`select discord_utilisateur_id, discord_salon_id from compte where id = ${compteId}`;
+
+  if (!config || !compte?.discord_utilisateur_id || !compte.discord_salon_id) {
+    return { recree: false, salonId: compte?.discord_salon_id ?? null };
+  }
+
+  const existe = await salonExiste(config, compte.discord_salon_id);
+  // `null` = Discord injoignable : on ne touche à rien. Conclure à une disparition
+  // sur une panne recréerait un salon à chaque incident.
+  if (existe !== false) return { recree: false, salonId: compte.discord_salon_id };
+
+  const [profil] = await sql<{ libelle: string; prenom: string }[]>`
+    select coalesce(i.prenom || ' ' || i.nom, e.raison_sociale, 'compte-' || c.id) as libelle,
+           coalesce(i.prenom, e.raison_sociale, 'à vous') as prenom
+      from compte c
+      left join interimaire i on i.compte_id = c.id
+      left join entreprise e on e.compte_id = c.id
+     where c.id = ${compteId}`;
+
+  const salon = await creerSalonPrive(config, {
+    nom: nomDeSalon(profil?.libelle ?? `compte-${compteId}`, compteId),
+    utilisateurId: compte.discord_utilisateur_id,
+    sujet: "Notifications Intérimatch — visible de vous seul",
+  });
+  if (!salon.ok || !salon.valeur) {
+    process.stderr.write(`[discord] salon non recréé pour le compte ${compteId} : ${salon.motif}\n`);
+    return { recree: false, salonId: null };
+  }
+
+  await posterDansSalon(config, salon.valeur, messageDAccueil(profil?.prenom ?? "à vous"));
+  await sql`update compte set discord_salon_id = ${salon.valeur} where id = ${compteId}`;
+  return { recree: true, salonId: salon.valeur };
 }

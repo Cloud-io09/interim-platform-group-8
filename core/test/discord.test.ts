@@ -6,6 +6,7 @@ import {
   nomDeSalon,
   posterDansSalon,
   rejoindreServeur,
+  salonExiste,
   supprimerSalon,
   type ConfigDiscord,
 } from "../src/discord";
@@ -182,5 +183,34 @@ describe("message d'accueil", () => {
     expect(texte).toMatch(/échéance/i);
     expect(texte).toMatch(/missions/i);
     expect(texte).toMatch(/détachez/i);
+  });
+});
+
+describe("existence d'un salon", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("reconnaît un salon présent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response('{"id":"555"}', { status: 200 }));
+    expect(await salonExiste(config, "555")).toBe(true);
+  });
+
+  it("conclut à la disparition sur un 404, et sur lui seul", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 404 }));
+    expect(await salonExiste(config, "555")).toBe(false);
+  });
+
+  it("ne conclut rien quand Discord est en panne", async () => {
+    // La distinction est ce qui évite d'empiler un salon de plus à chaque incident :
+    // recréer sur une panne laisserait l'ancien en place, avec son historique.
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 500 }));
+    expect(await salonExiste(config, "555")).toBeNull();
+
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("délai dépassé"));
+    expect(await salonExiste(config, "555")).toBeNull();
+  });
+
+  it("ne conclut rien non plus sur une limitation de débit", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 429 }));
+    expect(await salonExiste(config, "555")).toBeNull();
   });
 });

@@ -26,6 +26,8 @@ type Etat = {
   relieLe: string | null;
   /** Adresse directe du salon, pour ne pas le faire chercher dans une liste. */
   lienSalon: string | null;
+  /** Le salon manquait et vient d'être refait. */
+  salonRecree: boolean;
 };
 
 /** Ce que le retour d'OAuth range dans l'URL, traduit en phrase compréhensible. */
@@ -75,6 +77,7 @@ export default function LiaisonDiscord() {
                 salonId: d.salonId,
                 relieLe: d.relieLe,
                 lienSalon: d.lienSalon,
+                salonRecree: d.salonRecree,
               }
             : null
         )
@@ -130,6 +133,11 @@ export default function LiaisonDiscord() {
         </p>
       ) : etat.relie ? (
         <>
+          {etat.salonRecree && (
+            <p className="petit" role="status">
+              Votre salon avait disparu de Discord : nous l&apos;avons recréé.
+            </p>
+          )}
           <p className="petit secondaire">
             Salon privé, lisible de vous seul.
             {etat.relieLe && <> Rattaché le {new Date(etat.relieLe).toLocaleDateString("fr-FR")}.</>}{" "}

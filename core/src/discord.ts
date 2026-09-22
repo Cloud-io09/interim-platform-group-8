@@ -173,6 +173,22 @@ export async function creerSalonPrive(
   return id ? { ok: true, valeur: id } : { ok: false, motif: "Discord n'a rendu aucun identifiant." };
 }
 
+/**
+ * Le salon existe-t-il encore ?
+ *
+ * `false` seulement sur un 404 : une panne de Discord ou une coupure réseau ne
+ * doivent pas faire conclure à une disparition, sans quoi on recréerait un salon à
+ * chaque incident et l'ancien resterait là, avec son historique.
+ */
+export async function salonExiste(
+  config: ConfigDiscord,
+  salonId: string
+): Promise<boolean | null> {
+  const resultat = await appelDiscord(config, `/channels/${salonId}`);
+  if (resultat.ok) return true;
+  return resultat.motif?.includes("(404)") ? false : null;
+}
+
 /** Poste un message dans un salon. */
 export async function posterDansSalon(
   config: ConfigDiscord,

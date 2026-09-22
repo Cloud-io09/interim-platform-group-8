@@ -158,7 +158,19 @@ règle métier ne vit dans les flux.
 
 ## Éprouver
 
-Bouton **Test workflow**. Chaque nœud s'allume vert l'un après l'autre.
+```bash
+npm run fumee:notifs                                    # contre le serveur local
+npm run fumee:notifs -- https://mon-deploiement.app      # contre un déploiement
+```
+
+Vingt-huit vérifications : les quatre types de notification dans l'application, les
+deux points d'entrée que n8n interroge, et **le trajet réel jusqu'à Discord** — un
+salon privé est créé pour de bon, le message y est posté, puis relu pour vérifier
+qu'il est arrivé. Un flux qui « s'allume vert » sans que rien n'atterrisse dans un
+salon est précisément ce que cet outil existe pour attraper. Les comptes et le salon
+d'essai sont supprimés en fin de parcours, même en cas d'échec.
+
+Puis, dans n8n, bouton **Test workflow**. Chaque nœud s'allume vert l'un après l'autre.
 
 Si rien n'arrive sur Discord, trois causes possibles, dans cet ordre de fréquence :
 
@@ -183,6 +195,19 @@ notifications**. Elles se répartissent désormais entre les salons privés au l
 tomber dans un seul, mais Discord limite le débit — voir ci-dessous.
 
 ---
+
+## Un salon supprimé se recrée tout seul
+
+Un salon effacé à la main — par son titulaire, ou par un administrateur qui fait le
+ménage — laissait un identifiant mort en base. Les scénarios continuaient de poster
+dessus, Discord répondait `404` à chaque exécution, et personne ne l'apprenait : ni
+l'intéressé, qui cessait simplement de recevoir quoi que ce soit, ni nous.
+
+L'application vérifie désormais l'existence du salon quand la personne ouvre
+**Profil → Notifications**, et le recrée s'il a disparu. Aucun nouveau consentement
+n'est demandé : l'identifiant Discord du titulaire est déjà connu. Une panne de
+Discord ne déclenche rien — seul un `404` vaut disparition, sans quoi chaque incident
+empilerait un salon de plus.
 
 ## Limites de débit
 
