@@ -95,7 +95,11 @@ avec les bonnes permissions. Une fois l'invitation acceptée, il rend le
 `DISCORD_SERVEUR_ID` à copier.
 
 `GET /api/sante` couvre le même terrain côté déploiement : il nomme chaque variable
-manquante et l'environnement courant.
+manquante et l'environnement courant, **et demande à Discord si le serveur existe**.
+Une variable présente n'est pas une variable juste : l'identifiant d'un salon copié
+à la place de celui du serveur passait pour une configuration correcte et n'échouait
+qu'au rattachement, chez l'utilisateur, avec un « Unknown Guild » visible des seuls
+journaux. Constaté le 21 septembre 2026, puis rendu détectable.
 
 ### 5. Relier un compte
 

@@ -68,6 +68,12 @@ if (sante.corps?.services) {
   console.log(
     `${s.courriel?.ok ? "  ok  " : " note "} acheminement du courriel — ${s.courriel?.detail ?? "inconnu"}`
   );
+  // Non bloquant également : le relais Discord est facultatif. Mais la sonde
+  // interroge désormais Discord, donc un identifiant de serveur erroné se voit ici
+  // au lieu d'échouer plus tard chez l'utilisateur.
+  console.log(
+    `${s.discord?.ok ? "  ok  " : " note "} relais Discord — ${s.discord?.detail ?? "inconnu"}`
+  );
 }
 
 // --- 2. Inscription ---------------------------------------------------------
