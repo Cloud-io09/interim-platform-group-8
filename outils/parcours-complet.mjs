@@ -231,6 +231,39 @@ verifier("un intérimaire ne peut pas s'affecter lui-même", seul.statut === 409
 const postule = await appel("/api/candidatures", "POST", { missionId, vers: "candidatee" }, conforme.cookie);
 verifier("Karim postule", postule.statut === 200, `état ${postule.corps?.etat}`);
 
+// --- La barrière de déblocage, côté serveur ---------------------------------
+//
+// Solliciter envoie une notification nominative à quelqu'un dont l'entreprise n'a
+// pas encore vu le nom : c'est l'acte qu'on facture. La barrière n'existait que dans
+// l'interface, et masquer un bouton ne protège rien — il suffisait d'appeler la
+// route. Ce parcours passait donc au vert en contournant le paywall sans le savoir.
+const avantDeblocage = await appel("/api/candidatures", "POST", {
+  missionId, interimaireId: expirePendant.id, vers: "sollicitee",
+}, ent.cookie);
+verifier(
+  "solliciter sans avoir débloqué est refusé",
+  avantDeblocage.statut === 402,
+  `statut ${avantDeblocage.statut}`
+);
+
+const droitsAvant = await appel("/api/deblocages", "GET", undefined, ent.cookie);
+verifier(
+  "l'entreprise part avec les déblocages offerts",
+  droitsAvant.corps?.credits === 3,
+  `${droitsAvant.corps?.credits} crédit(s)`
+);
+
+const deblocage = await appel("/api/deblocages", "POST", {
+  interimaireId: expirePendant.id, missionId,
+}, ent.cookie);
+verifier("elle débloque les coordonnées", deblocage.statut === 200, `statut ${deblocage.statut}`);
+verifier("et un crédit est débité", deblocage.corps?.credits === 2, `${deblocage.corps?.credits} restant(s)`);
+
+const rejeu = await appel("/api/deblocages", "POST", {
+  interimaireId: expirePendant.id, missionId,
+}, ent.cookie);
+verifier("un second déblocage du même profil ne refacture pas", rejeu.corps?.credits === 2, `${rejeu.corps?.credits}`);
+
 const sollicite = await appel("/api/candidatures", "POST", {
   missionId, interimaireId: expirePendant.id, vers: "sollicitee",
 }, ent.cookie);
