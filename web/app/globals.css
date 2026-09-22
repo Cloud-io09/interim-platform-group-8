@@ -5,15 +5,24 @@
    clair ne passe pas le critère 3.2. Tout ce qui informe est en texte foncé. */
 
 :root {
-  --fond: #f7f7f5;
+  /* Neutres **chauds** plutôt que gris purs : sur un écran de chantier en plein
+     jour, un gris neutre vire au bleu et fatigue. Contrastes recalculés, tous au
+     moins AA — le plus serré, le texte secondaire, est à 5,49. */
+  --fond: #fbfaf7;
   --surface: #ffffff;
-  --surface-sombre: #111111;
-  --texte: #1a1a1a;
-  --texte-secondaire: #5c5c57;
-  --texte-sur-sombre: #f4f4f1;
-  --texte-secondaire-sur-sombre: #a8a8a1;
-  --bordure: #e3e3df;
-  --bordure-forte: #1a1a1a;
+  --surface-sombre: #141a21;
+  --texte: #141a21;
+  --texte-secondaire: #5e6773;
+  --texte-sur-sombre: #f5f3ef;
+  --texte-secondaire-sur-sombre: #98a2ae;
+  --bordure: #e4e1da;
+  --bordure-forte: #1e3a5f;
+  /* Bleu marine : la couleur des actions et des repères actifs. Assez sombre pour
+     porter du texte blanc (11,5) comme pour s'écrire sur blanc. */
+  --marine: #1e3a5f;
+  /* Tuile bleutée, pour les surfaces qui doivent se distinguer d'une carte
+     ordinaire sans réclamer l'attention d'une alerte. */
+  --marine-tuile: #eef1f6;
   /* Jaune de marque, réservé au logo — cf. public/logo/LISEZ-MOI.md : il identifie,
      il ne signale rien, et n'apparaît qu'une fois par écran. */
   --marque-jaune: #f5d90a;
@@ -23,8 +32,14 @@
   --succes: #1f6b3a;
   --alerte: #a4331f;
 
-  --rayon: 10px;
-  --rayon-petit: 8px;
+  /* 5 px plutôt que 10 : un rayon large adoucit, et ce produit parle de
+     conformité et de dates d'échéance. L'angle serré se lit comme un document. */
+  --rayon: 5px;
+  --rayon-petit: 5px;
+  /* Une seule ombre dans tout le produit, très basse. Elle décolle les cartes du
+     fond sans créer de niveaux : deux profondeurs demanderaient une hiérarchie
+     qu'aucun écran ici ne justifie. */
+  --ombre-carte: 0 0 0 0.5px rgba(31, 30, 29, 0.14), 0 2px 10px rgba(0, 0, 0, 0.09);
   --colonne: 1100px;
   /* Cible tactile minimale : public d'ouvriers, souvent avec des gants. */
   --cible-tactile: 44px;
@@ -118,11 +133,13 @@ a:hover, a:focus-visible { text-decoration: underline; }
   min-height: var(--cible-tactile);
   padding: 0 1.25rem;
   border-radius: var(--rayon-petit);
-  border: 1px solid var(--surface-sombre);
-  background: var(--surface-sombre);
-  color: var(--texte-sur-sombre);
+  /* Marine et non noir : une action se distingue ainsi d'une carte sombre, qui
+     n'appelle aucun geste. Les deux étaient de la même encre auparavant. */
+  border: 1px solid var(--marine);
+  background: var(--marine);
+  color: #ffffff;
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
 }
@@ -149,6 +166,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
   background: var(--surface);
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
+  box-shadow: var(--ombre-carte);
   padding: 1.5rem;
 }
 
@@ -1146,3 +1164,13 @@ details > summary {
    ne porte jamais l'information seule : chaque carte a son titre (RGAA 3.1). */
 .carte--notification { border-left: 4px solid #5865f2; }            /* le bleu de Discord */
 .carte--securite     { border-left: 4px solid var(--texte-secondaire); }
+
+/* Le nombre d'une tuile de bandeau. Gros, mais pas géant : il se lit d'un coup
+   d'œil sans écraser l'intitulé, qui est ce qui lui donne un sens. */
+.chiffre {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--texte);
+}

@@ -124,6 +124,38 @@ export default async function EspaceInterimaire() {
               </a>
             </div>
           ) : (
+            <>
+              {/* Trois chiffres en tête, comme côté entreprise : combien de
+                  chantiers me sont ouverts, mes titres sont-ils à jour, où en
+                  sont mes démarches. Tout est déjà calculé plus haut. */}
+              <ul className="liste-nue bandeau-chiffres">
+                <li>
+                  <a className="chiffre-lien" href="/opportunites">
+                    <strong className="chiffre">{b.suggestions.length}</strong>
+                    <span className="petit secondaire">mission(s) accessible(s)</span>
+                  </a>
+                </li>
+                <li>
+                  <a className="chiffre-lien" href="/espace/interimaire/certifications">
+                    <strong className="chiffre">
+                      {b.certifications.length - b.certificationsPerimees}
+                    </strong>
+                    <span className="petit secondaire">
+                      habilitation(s) valide(s)
+                      {b.certificationsPerimees > 0 && ` · ${b.certificationsPerimees} périmée(s)`}
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a className="chiffre-lien" href="/mes-candidatures">
+                    <strong className="chiffre">
+                      {b.candidaturesEnvoyees.length + b.propositions.length}
+                    </strong>
+                    <span className="petit secondaire">candidature(s) en cours</span>
+                  </a>
+                </li>
+              </ul>
+
             <div className="grille-bord">
               <div className="colonne-principale">
                 {/* La carte sombre porte la seule chose qui appelle une décision.
@@ -318,6 +350,7 @@ export default async function EspaceInterimaire() {
                 </p>
               </aside>
             </div>
+            </>
           )}
         </div>
       </section>

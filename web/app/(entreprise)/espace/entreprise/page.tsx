@@ -114,6 +114,33 @@ export default async function EspaceEntreprise() {
               </a>
             </div>
           ) : (
+            <>
+              {/* Bandeau de chiffres, en tête : ce qu'on vient vérifier d'un coup
+                  d'œil avant de lire quoi que ce soit. Les trois valeurs sont déjà
+                  en mémoire — aucune requête n'est ajoutée pour les afficher. */}
+              <ul className="liste-nue bandeau-chiffres">
+                <li>
+                  <a className="chiffre-lien" href="/missions">
+                    <strong className="chiffre">{b.fiches.filter((f) => f.statut === "publiee").length}</strong>
+                    <span className="petit secondaire">fiche(s) de poste ouverte(s)</span>
+                  </a>
+                </li>
+                <li>
+                  <a className="chiffre-lien" href="/candidatures">
+                    <strong className="chiffre">
+                      {b.fiches.reduce((t, f) => t + f.propositionsEnAttente, 0)}
+                    </strong>
+                    <span className="petit secondaire">candidature(s) en attente de réponse</span>
+                  </a>
+                </li>
+                <li>
+                  <a className="chiffre-lien" href="/missions">
+                    <strong className="chiffre">{b.fiches.filter((f) => f.statut === "pourvue").length}</strong>
+                    <span className="petit secondaire">poste(s) pourvu(s)</span>
+                  </a>
+                </li>
+              </ul>
+
             <div className="grille-bord">
               <div className="colonne-principale">
                 {/* Une seule carte sombre, pour la seule chose qui appelle une décision. */}
@@ -234,6 +261,7 @@ export default async function EspaceEntreprise() {
                 </p>
               </aside>
             </div>
+            </>
           )}
         </div>
       </section>
