@@ -96,6 +96,16 @@ describe("packs à l'acte", () => {
     }
   });
 
+  it("ne promet aucune fonctionnalité que le code ne réserve pas", () => {
+    // L'argumentaire du palier Chantier annonçait la relance des fiches non
+    // pourvues. Aucun flux ne la réserve : tous les paliers la reçoivent. Une grille
+    // tarifaire qui promet ce qu'elle ne retient pas est un mensonge commercial, et
+    // ce test existe pour que le prochain argumentaire n'en réintroduise pas.
+    for (const plan of PLANS) {
+      expect(plan.argument.toLowerCase()).not.toMatch(/relance/);
+    }
+  });
+
   it("ignore un code de pack inventé", () => {
     expect(packParCode("gratuit-svp")).toBeUndefined();
   });

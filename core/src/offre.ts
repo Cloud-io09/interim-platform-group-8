@@ -47,7 +47,12 @@ export const PLANS: readonly Plan[] = [
     prixMensuelCents: 8900,
     quotaMensuel: 10,
     creditsOfferts: 0,
-    argument: "Dix profils par mois, et la relance automatique de vos fiches non pourvues.",
+    // La première version promettait ici « la relance automatique de vos fiches non
+    // pourvues ». Elle n'était réservée à personne — tous les paliers la reçoivent —
+    // et le rappel dit justement combien de profils restent à solliciter : le
+    // retirer au palier gratuit reviendrait à couper la conversion de ceux qu'on
+    // veut convertir. La promesse est corrigée, pas la fonctionnalité.
+    argument: "Dix déblocages par mois, pour une équipe qui se renouvelle au fil des chantiers.",
   },
   {
     code: "regie",

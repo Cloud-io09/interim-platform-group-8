@@ -53,6 +53,7 @@ const PAGES: Page[] = [
   { chemin: "/mentions-legales" },
   { chemin: "/confidentialite" },
   { chemin: "/accessibilite" },
+  { chemin: "/tarifs" },
   // Deux écrans atteints depuis une boîte aux lettres, souvent sur un téléphone :
   // ils méritent le même audit que les pages entrantes.
   { chemin: "/mot-de-passe-oublie" },

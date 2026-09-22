@@ -13,6 +13,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const maintenant = new Date();
   return [
     { url: `${SITE}/`, lastModified: maintenant, changeFrequency: "weekly", priority: 1 },
+    // Priorité haute : c'est la page qu'on cherche avant de s'inscrire, et la seule
+    // où la promesse « la conformité ne se paie pas » est dite publiquement.
+    { url: `${SITE}/tarifs`, lastModified: maintenant, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE}/mentions-legales`, lastModified: maintenant, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/confidentialite`, lastModified: maintenant, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/accessibilite`, lastModified: maintenant, changeFrequency: "yearly", priority: 0.3 },

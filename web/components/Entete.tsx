@@ -45,7 +45,9 @@ export default function Entete() {
   // mêmes destinations — l'utilisateur ne saurait plus laquelle fait autorité.
   const liens = compte
     ? [{ href: compte.role === "entreprise" ? "/espace/entreprise" : "/espace/interimaire", libelle: "Mon espace" }]
-    : [];
+    // Hors connexion, les tarifs : c'est ce qu'on cherche avant de s'inscrire, et
+    // les cacher derrière la création de compte fait fermer l'onglet.
+    : [{ href: "/tarifs", libelle: "Tarifs" }];
 
   return (
     <header className="entete">
