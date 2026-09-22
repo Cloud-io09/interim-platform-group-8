@@ -21,6 +21,13 @@ export default function OngletsProfil({ role }: { role: RoleCompte }) {
       libelle="Sections de mon profil"
       onglets={[
         { href: base, libelle: role === "entreprise" ? "Mon entreprise" : "Mes informations" },
+        // Le CV a sa propre page depuis toujours, mais rien n'y menait sinon un
+        // lien minuscule au fond du tableau de bord — alors que l'onglet de
+        // l'espace annonçait « Profil & CV ». Une étiquette qui promet une chose
+        // absente use la confiance plus sûrement qu'une fonctionnalité manquante.
+        ...(role === "interimaire"
+          ? [{ href: `${base}/cv`, libelle: "Mon CV" }]
+          : []),
         { href: `${base}/notifications`, libelle: "Notifications" },
         { href: `${base}/securite`, libelle: "Sécurité" },
       ]}

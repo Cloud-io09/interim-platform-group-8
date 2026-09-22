@@ -336,7 +336,7 @@ export default async function EspaceInterimaire() {
                 <section className="carte" aria-labelledby="titre-cv">
                   <div className="tete-carte">
                     <h2 id="titre-cv" className="titre-carte">Mon CV</h2>
-                    <a className="petit" href="/espace/interimaire/cv">{b.cvDepose ? "Remplacer" : "Déposer"}</a>
+                    <a className="petit" href="/espace/interimaire/profil/cv">{b.cvDepose ? "Remplacer" : "Déposer"}</a>
                   </div>
                   <p className="petit secondaire" style={{ margin: 0 }}>
                     {b.cvDepose
