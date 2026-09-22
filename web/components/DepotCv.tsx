@@ -394,9 +394,9 @@ export default function DepotCv() {
                     {titre} <span className="secondaire">({lot.length})</span>
                   </h4>
                   <p className="petit secondaire" style={{ marginTop: 0 }}>{intro}</p>
-                  <ul className="liste-nue">
+                  <ul className="liste-nue liste-cartes">
                     {lot.map((s) => (
-                      <li key={s.missionId} className="carte" style={{ marginBottom: "0.75rem" }}>
+                      <li key={s.missionId} className="carte">
                         <div className="ligne-certification">
                           <div>
                             <h5 style={{ fontSize: "1rem", margin: "0 0 0.2rem" }}>

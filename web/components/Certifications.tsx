@@ -147,13 +147,13 @@ export default function Certifications() {
       </p>
 
       {liste.length > 0 && (
-        <ul className="liste-nue" style={{ marginBottom: "2rem" }}>
+        <ul className="liste-nue liste-cartes" style={{ marginBottom: "2rem" }}>
           {liste.map((c) => {
             const jours = joursAvant(c.dateEcheance);
             const perime = jours < 0;
             const bientot = jours >= 0 && jours <= 90;
             return (
-              <li key={c.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={c.id} className="carte">
                 <div className="ligne-certification">
                   <div>
                     <h3 style={{ marginBottom: "0.25rem" }}>

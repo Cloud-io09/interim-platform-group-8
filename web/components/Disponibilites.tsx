@@ -74,11 +74,11 @@ export default function Disponibilites() {
       </p>
 
       {periodes.length > 0 && (
-        <ul className="liste-nue" style={{ marginBottom: "2rem" }}>
+        <ul className="liste-nue liste-cartes" style={{ marginBottom: "2rem" }}>
           {periodes.map((p) => {
             const libelle = `du ${enDateFr(p.dateDebut)} au ${enDateFr(p.dateFin)}`;
             return (
-              <li key={p.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={p.id} className="carte">
                 <div className="ligne-certification">
                   <div>
                     <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>

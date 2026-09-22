@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connexion } from "@interimatch/core/db";
 import { typeCertification } from "@interimatch/core";
+import AffectationConclue from "@/components/AffectationConclue";
 import CandidaturesRecues from "@/components/CandidaturesRecues";
 import ResultatsMatching from "@/components/ResultatsMatching";
 import StatutMission from "@/components/StatutMission";
@@ -77,6 +78,12 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
                 de fin de la mission — pas contre la date du jour.
               </p>
             </div>
+          )}
+
+          {/* Une fois pourvue, la question n'est plus « qui pourrait venir » mais
+              « qui vient » : le nom et le numéro passent devant tout le reste. */}
+          {mission.statut === "pourvue" && (
+            <AffectationConclue sql={sql} missionId={missionId} />
           )}
 
           {/* Les candidatures d'abord : quelqu'un qui a levé la main compte plus

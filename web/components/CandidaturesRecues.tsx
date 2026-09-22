@@ -92,12 +92,12 @@ export default async function CandidaturesRecues({
         sur la date de fin de chantier.
       </p>
 
-      <ul className="liste-nue">
+      <ul className="liste-nue liste-cartes">
         {verdicts.map(({ ligne, conforme, bloquantes }) => (
           <li
             key={ligne.interimaire_id}
             className={`carte ${conforme ? "carte--verdict-ok" : "carte--verdict-bloque"}`}
-            style={{ marginBottom: "0.75rem" }}
+           
           >
             <div className="ligne-certification">
               <div>

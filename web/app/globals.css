@@ -939,7 +939,7 @@ details > summary {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  padding: 0.7rem 0;
   border-top: 1px solid var(--bordure);
 }
 .lignes > .ligne:first-child { border-top: 0; padding-top: 0; }
@@ -1210,3 +1210,9 @@ details > summary {
   font-variant-numeric: tabular-nums;
   color: var(--texte);
 }
+
+/* Cartes en liste : une grille plutôt qu'une marge posée sur chaque élément.
+   Elles étaient séparées de 0,75 rem, à peine la moitié de leur propre rembourrage
+   — l'œil lisait un bloc continu là où il y avait plusieurs objets distincts. */
+.liste-cartes { display: grid; gap: 1.25rem; }
+.liste-cartes > .carte { margin-bottom: 0; }

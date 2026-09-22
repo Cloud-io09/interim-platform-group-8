@@ -11,6 +11,7 @@ import {
 } from "@interimatch/core";
 import ActionCandidature from "@/components/ActionCandidature";
 import { ListeConformite, PastilleConformite } from "@/components/Conformite";
+import FicheChantier from "@/components/FicheChantier";
 import { exigerSession } from "@/lib/garde";
 import { chargerMission, chargerProfils } from "@/lib/depot";
 import { chargerMissionPourConformite, conformiteDetaillee } from "@/lib/candidatures";
@@ -150,6 +151,10 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
               )}
             </div>
           </div>
+
+          {/* Une fois l'affectation conclue, l'écran doit servir à s'y rendre :
+              adresse, horaires, et qui appeler quand le portail est fermé. */}
+          {etat === "acceptee" && <FicheChantier sql={sql} missionId={missionId} />}
 
           <h2>Habilitations exigées</h2>
           <ListeConformite

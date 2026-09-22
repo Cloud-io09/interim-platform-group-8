@@ -62,9 +62,9 @@ export default async function MesMissions() {
               </p>
             </div>
           ) : (
-            <ul className="liste-nue">
+            <ul className="liste-nue liste-cartes">
               {missions.map((m) => (
-                <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+                <li key={m.id} className="carte">
                   <div className="ligne-certification">
                     <div>
                       <h2 style={{ fontSize: "1.125rem", marginBottom: "0.25rem" }}>

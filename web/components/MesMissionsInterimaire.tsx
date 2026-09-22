@@ -213,9 +213,9 @@ export default function MesMissionsInterimaire() {
               : "Aucune mission ouverte ne correspond pour l'instant à vos métiers et à vos habilitations. Complétez vos certifications et vos disponibilités pour élargir les propositions."}
           </p>
         ) : (
-          <ul className="liste-nue">
+          <ul className="liste-nue liste-cartes">
             {vusAccessibles.map((m) => (
-              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
                     <h3 style={{ marginBottom: "0.2rem" }}>
@@ -246,9 +246,9 @@ export default function MesMissionsInterimaire() {
             sont pas évaluées. Ajoutez le métier à votre profil pour savoir si vous y
             êtes conforme.
           </p>
-          <ul className="liste-nue">
+          <ul className="liste-nue liste-cartes">
             {vusHorsMetier.map((m) => (
-              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={m.id} className="carte">
                 <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
                   <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                 </h3>
@@ -271,9 +271,9 @@ export default function MesMissionsInterimaire() {
             Elles correspondent à vos métiers, mais un titre manque ou expire trop tôt. Le
             renouveler ou le déclarer vous y donnerait accès.
           </p>
-          <ul className="liste-nue">
+          <ul className="liste-nue liste-cartes">
             {vusBloquees.map((m) => (
-              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
                     <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
