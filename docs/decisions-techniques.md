@@ -201,6 +201,45 @@ restaurant les fichiers fautifs.
 
 ---
 
+## 13. Ce qu'un audit a trouvé, et ce qu'il a laissé passer
+
+*Passe du 22 septembre 2026 : code mort, sécurité, éco-conception.*
+
+**Corrigé.**
+
+- **`/api/compte/email` n'avait aucune limitation de débit**, alors qu'il envoie
+  **deux** courriels par appel — un à l'adresse visée, un avertissement à l'ancienne.
+  Un compte authentifié devenait un relais d'inondation gratuit vers n'importe quelle
+  boîte, en répétant la demande avec des adresses différentes. Le mot de passe exigé
+  n'y changeait rien : c'est le titulaire lui-même qui en abuserait. Cinq demandes par
+  heure, comptées sur le compte appelant.
+- **`commander` était déclaré dans `core`** et utilisé dans `ingest`. Cela
+  fonctionnait par remontée des dépendances du monorepo, mais `ingest` se serait
+  cassé installé seul.
+
+**Mesuré, et jugé correct.**
+
+| Point | Constat |
+|---|---|
+| Composants orphelins | aucun |
+| Classes CSS mortes | aucune |
+| Vulnérabilités (`npm audit`) | zéro |
+| Secrets dans le dépôt suivi | aucun ; `.env` n'est pas suivi |
+| En-têtes de sécurité | CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, et HSTS vérifié **en production** |
+| Poids public | 12 Mo d'OCR, mais **un seul cœur de 3,7 Mo** est téléchargé par navigateur, et seulement si la couche texte du PDF a échoué |
+
+**Laissé tel quel, sciemment.** Les insertions d'exigences et de compétences se font
+dans une boucle, à la création comme à la modification d'une fiche. C'est un N+1
+d'écriture, borné par le nombre d'habilitations d'une mission — quelques unités — et
+enfermé dans une transaction. Le regrouper compliquerait la requête pour un gain
+qu'aucune mesure ne justifie aujourd'hui.
+
+`/api/deblocages`, `/api/abonnement` et `/api/candidatures` n'ont pas de compteur :
+ils n'envoient rien vers l'extérieur, et le premier consomme le crédit de celui qui
+l'appelle.
+
+---
+
 ## Ce qu'on assume comme non fait
 
 - **L'authenticité des certifications n'est pas vérifiée.** Aucun registre national

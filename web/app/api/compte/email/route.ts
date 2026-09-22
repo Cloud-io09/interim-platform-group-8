@@ -1,5 +1,13 @@
 import { connexion } from "@interimatch/core/db";
-import { normaliserEmail, redis, validerEmail, verifierMotDePasse } from "@interimatch/core";
+import {
+  cle,
+  MAX_DEMANDES_REINITIALISATION,
+  normaliserEmail,
+  redis,
+  TTL,
+  validerEmail,
+  verifierMotDePasse,
+} from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
 import {
@@ -65,6 +73,24 @@ export async function POST(requete: Request) {
 
   const nouvelle = normaliserEmail(saisie.email);
 
+  // **Chaque appel envoie deux courriels** — un à l'adresse visée, un avertissement
+  // à l'ancienne. Sans compteur, un compte authentifié devenait un relais
+  // d'inondation gratuit vers n'importe quelle boîte : il suffisait de répéter la
+  // demande en changeant l'adresse. Le mot de passe exigé plus bas ne protège pas
+  // de cela, puisque c'est le titulaire lui-même qui en abuserait.
+  //
+  // Compté sur le compte appelant, pas sur l'adresse visée : c'est lui la source.
+  const cache = redis();
+  const clefDemandes = cle.demandesReinitialisation(`chgt:${garde.session.compteId}`);
+  const demandes = await cache.incr(clefDemandes);
+  if (demandes === 1) await cache.expire(clefDemandes, TTL.demandesReinitialisation);
+  if (demandes > MAX_DEMANDES_REINITIALISATION) {
+    return erreur(
+      "Trop de demandes de changement en peu de temps. Réessayez dans une heure.",
+      429
+    );
+  }
+
   const sql = connexion();
   try {
     const [compte] = await sql<
@@ -102,7 +128,7 @@ export async function POST(requete: Request) {
       ]);
     }
 
-    await envoyerChangementEmail(redis(), garde.session.compteId, nouvelle, origine(requete));
+    await envoyerChangementEmail(cache, garde.session.compteId, nouvelle, origine(requete));
     await prevenirAncienneAdresse(compte.email, nouvelle);
 
     return succes({
