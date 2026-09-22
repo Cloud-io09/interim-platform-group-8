@@ -40,9 +40,16 @@ const RETOURS: Record<string, { ton: "ok" | "echec"; texte: string }> = {
     ton: "echec",
     texte: "Ce compte Discord est déjà rattaché à un autre compte Intérimatch. Détachez-le d'abord de là-bas.",
   },
-  "salon-impossible": {
+  // Deux échecs distincts, deux phrases distinctes. Elles disent ce qui n'a pas eu
+  // lieu et quoi faire — pas ce qui se passe dans nos appels : « le serveur est
+  // peut-être mal configuré » n'aide pas quelqu'un qui voulait juste des alertes.
+  "serveur-refuse": {
     ton: "echec",
-    texte: "Discord a refusé la création du salon. Réessayez dans quelques instants ; si cela persiste, le serveur est peut-être mal configuré.",
+    texte: "Nous n'avons pas pu vous ajouter à notre serveur Discord. Réessayez ; si le message revient, votre compte Discord a peut-être refusé l'accès.",
+  },
+  "salon-refuse": {
+    ton: "echec",
+    texte: "Votre salon n'a pas pu être créé. C'est temporaire le plus souvent : réessayez dans une minute.",
   },
   "non-configure": {
     ton: "echec",

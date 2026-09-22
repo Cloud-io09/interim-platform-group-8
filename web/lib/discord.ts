@@ -42,6 +42,9 @@ const MOI = "https://discord.com/api/v10/users/@me";
  */
 const PORTEE = "identify guilds.join";
 
+/** Les deux appels que le rattachement enchaîne, pour pouvoir les distinguer. */
+export type EtapeSalon = "serveur" | "salon";
+
 export interface IdentiteDiscord {
   id: string;
   nom: string;
@@ -146,9 +149,17 @@ export async function ouvrirSalon(
   prenom: string,
   identite: IdentiteDiscord,
   jetonAcces: string
-): Promise<{ ok: true; salonId: string; nom: string } | { ok: false; motif: string }> {
+): Promise<
+  { ok: true; salonId: string; nom: string } | { ok: false; etape: EtapeSalon; motif: string }
+> {
+  // L'étape qui a cédé est rendue séparément du motif. Les deux échecs donnaient le
+  // même message — « Discord a refusé la création du salon » — y compris quand c'est
+  // l'ajout au serveur qui avait échoué, donc bien avant toute création. Chercher un
+  // défaut là où il n'y en a pas coûte plus cher que de ne rien afficher.
   const arrivee = await rejoindreServeur(config, identite.id, jetonAcces);
-  if (!arrivee.ok) return { ok: false, motif: arrivee.motif ?? "Ajout au serveur impossible." };
+  if (!arrivee.ok) {
+    return { ok: false, etape: "serveur", motif: arrivee.motif ?? "Ajout au serveur impossible." };
+  }
 
   const nom = nomDeSalon(libelle, compteId);
   const salon = await creerSalonPrive(config, {
@@ -157,7 +168,7 @@ export async function ouvrirSalon(
     sujet: "Notifications Intérimatch — visible de vous seul",
   });
   if (!salon.ok || !salon.valeur) {
-    return { ok: false, motif: salon.motif ?? "Création du salon impossible." };
+    return { ok: false, etape: "salon", motif: salon.motif ?? "Création du salon impossible." };
   }
 
   // L'échec du message d'accueil ne défait pas la liaison : le salon existe, il est

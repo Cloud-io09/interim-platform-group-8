@@ -70,8 +70,13 @@ export async function GET(requete: Request) {
       resultat.jetonAcces
     );
     if (!salon.ok) {
-      process.stderr.write(`[discord] salon non créé pour le compte ${compteId} : ${salon.motif}\n`);
-      return vers("salon-impossible");
+      // Le motif complet reste au journal du serveur : il porte la réponse brute de
+      // Discord, qui n'a rien à faire dans la barre d'adresse de l'utilisateur.
+      // L'étape, elle, part dans l'URL — c'est elle qui oriente le dépannage.
+      process.stderr.write(
+        `[discord] compte ${compteId} — échec à l'étape « ${salon.etape} » : ${salon.motif}\n`
+      );
+      return vers(salon.etape === "serveur" ? "serveur-refuse" : "salon-refuse");
     }
 
     await sql`
