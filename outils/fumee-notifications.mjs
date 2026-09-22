@@ -224,6 +224,16 @@ try {
   verifier("fenêtre de missions hors bornes refusée", (await appelN8n("/api/n8n/missions-a-notifier?heures=800")).statut === 400);
   verifier("fenêtre non numérique refusée", (await appelN8n("/api/n8n/certifications-expirantes?jours=abc")).statut === 400);
 
+  // Le troisième flux, le seul adressé à une entreprise.
+  const relances = await appelN8n("/api/n8n/missions-non-pourvues?jours=1");
+  verifier("le flux de relance répond", relances.statut === 200, `statut ${relances.statut}`);
+  verifier("relance hors bornes refusée", (await appelN8n("/api/n8n/missions-non-pourvues?jours=200")).statut === 400);
+  verifier("chaque relance porte un salon ou null",
+    (relances.corps?.relances ?? []).every((r) => "discordSalonId" in r));
+  verifier("et dit quoi faire, pas seulement que ça traîne",
+    (relances.corps?.relances ?? []).every((r) => /profil|candidature|élargissez/i.test(r.message)),
+    `${(relances.corps?.relances ?? []).length} relance(s)`);
+
   const missions = await appelN8n("/api/n8n/missions-a-notifier?heures=720");
   verifier("le flux de missions répond", missions.statut === 200, `statut ${missions.statut}`);
   verifier("chaque notification porte un salon ou null",

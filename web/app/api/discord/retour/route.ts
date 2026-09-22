@@ -66,6 +66,7 @@ export async function GET(requete: Request) {
       compteId,
       libelle,
       prenom,
+      session.role === "entreprise" ? "entreprise" : "interimaire",
       resultat.identite,
       resultat.jetonAcces
     );

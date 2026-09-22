@@ -223,19 +223,40 @@ export async function supprimerSalon(
  * qu'il est, ce qui y arrivera, qui peut le lire, et comment s'en défaire — cette
  * dernière phrase n'est pas une politesse : sans elle, se désinscrire supposerait
  * de deviner où chercher.
+ *
+ * **Le texte dépend du rôle, et ce n'est pas une nuance de politesse.** La première
+ * version annonçait à tout le monde « vos habilitations qui approchent de leur
+ * échéance » — une entreprise n'en a aucune, et lisait donc une promesse qui ne la
+ * concernait pas. Annoncer ce qu'on ne livrera jamais est pire que ne rien annoncer.
  */
-export function messageDAccueil(prenom: string): string {
+export function messageDAccueil(prenom: string, role: "interimaire" | "entreprise"): string {
+  const commun =
+    `\n\nCes mêmes informations restent disponibles dans votre espace Intérimatch : ` +
+    `ce salon est un relais, pas la source.\n\n` +
+    `Pour ne plus rien recevoir ici, détachez votre compte Discord depuis votre profil ` +
+    `Intérimatch — le salon sera supprimé.`;
+
+  if (role === "entreprise") {
+    return (
+      `Bonjour **${prenom}**, ce salon est le vôtre.\n\n` +
+      `Vous seul pouvez le lire — ni les autres membres du serveur, ni les intérimaires.\n\n` +
+      `Vous y recevrez les mouvements de vos fiches de poste :\n` +
+      `• **Les candidatures reçues**, dès qu'un profil postule à l'une de vos fiches.\n` +
+      `• **Les réponses des profils que vous avez sollicités**, acceptation comme refus.\n` +
+      `• **Les affectations confirmées**, quand un chantier trouve son intérimaire.` +
+      commun
+    );
+  }
+
   return (
     `Bonjour **${prenom}**, ce salon est le vôtre.\n\n` +
     `Vous seul pouvez le lire — ni les autres membres du serveur, ni les entreprises.\n\n` +
-    `Vous y recevrez deux choses, et rien d'autre :\n` +
+    `Vous y recevrez :\n` +
     `• **Vos habilitations qui approchent de leur échéance**, avec le nombre de missions ` +
     `ouvertes qu'un renouvellement vous rouvrirait.\n` +
     `• **Les missions publiées qui correspondent à votre profil**, avec la distance et ` +
-    `la compatibilité calculée.\n\n` +
-    `Ces mêmes informations restent disponibles dans votre espace Intérimatch : ce salon ` +
-    `est un relais, pas la source.\n\n` +
-    `Pour ne plus rien recevoir ici, détachez votre compte Discord depuis votre profil ` +
-    `Intérimatch — le salon sera supprimé.`
+    `la compatibilité calculée.\n` +
+    `• **Les réponses à vos candidatures**, et vos affectations confirmées.` +
+    commun
   );
 }

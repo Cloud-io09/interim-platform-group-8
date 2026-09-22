@@ -61,11 +61,13 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 
 | Exigence | État | Détail |
 |---|---|---|
-| Deux automatisations réalistes | **fait** | Montées et exécutées. Cinq nœuds : déclencheur, appel API, éclatement, filtre, envoi. Le second flux, lancé sur une fenêtre vide, montre que le nœud Discord n'est pas exécuté quand il n'y a rien à notifier |
+| Deux automatisations réalistes | **fait** | **Trois**, montées et exécutées. Cinq nœuds chacune : déclencheur, appel API, éclatement, filtre, envoi. Un flux lancé sur une fenêtre vide montre que le nœud Discord n'est pas exécuté quand il n'y a rien à notifier |
 | Canal webhook plutôt qu'e-mail ou SMS | **fait** | Discord, **un salon privé par personne** |
 | Export des scénarios livré | **fait** | [`n8n/`](n8n/) — réimportés tels quels pour vérifier qu'ils s'importent, et exempts de secret, d'URL de webhook et d'adresse locale |
 
 **Vérifié en production le 2026-09-21** : les deux endpoints répondent `200` avec le secret, `401` sans. `SECRET_N8N` est bien posée sur Vercel.
+
+**Le troisième flux existe parce que l'entreprise ne recevait rien.** Les deux premiers ne parcourent que des intérimaires : une entreprise qui rattachait son Discord obtenait un salon où rien n'arriverait jamais, et lisait un message d'accueil lui promettant « vos habilitations qui approchent de leur échéance » — elle n'en a aucune. La relance des missions non pourvues est l'un des exemples que le sujet cite lui-même, et elle dit **quoi faire** : combien de profils conformes restent à solliciter, ou qu'il n'y en a aucun et qu'il faut élargir le rayon. Les mouvements de candidature, eux, sont relayés directement par l'application — ce sont des événements, attendre le passage d'un automate pour les annoncer n'aurait aucun sens.
 
 **Chaque destinataire a son salon, et c'est une correction, pas un ornement.** La première version postait vers une URL de webhook unique : tout le monde lisait les alertes de tout le monde. Or une alerte d'échéance nomme la personne, son habilitation et sa date d'expiration — la diffuser à tous les membres d'un serveur est un défaut de confidentialité. Un webhook ne sait qu'écrire dans le salon auquel il est attaché ; créer un salon et le restreindre à quelqu'un relève de l'API du serveur, donc d'un bot. C'est la seule voie, pas un choix d'architecture.
 

@@ -352,6 +352,13 @@ legend {
   font-weight: 600;
   border: 1px solid currentColor;
 }
+/* Les trois suivantes portent un état. Celle-ci n'en porte aucun : elle nomme,
+   sans juger — un type de contrat, une catégorie, un intitulé normalisé. */
+.etiquette--neutre {
+  background: var(--marine-tuile);
+  border-color: var(--marine-tuile);
+  color: var(--marine);
+}
 .etiquette--ok { color: var(--succes); }
 .etiquette--attention { color: #8a5a00; }
 .etiquette--alerte { color: var(--alerte); }
@@ -606,6 +613,10 @@ main code {
   border: 1px solid var(--alerte);
   border-radius: var(--rayon);
   padding: 1.25rem 1.5rem;
+  /* Détachée du bloc qui la précède, et nettement : elle n'en est pas la suite.
+     1,5 rem la collait visuellement à la carte du dessus, qui porte désormais une
+     ombre — les deux se lisaient comme un seul ensemble. */
+  margin-top: 3rem;
   background: #fdf8f7;
 }
 .bouton--danger { background: var(--alerte); border-color: var(--alerte); }
@@ -698,8 +709,10 @@ details > summary {
   width: 48px;
   height: 48px;
   border-radius: var(--rayon-petit);
-  background: var(--surface-sombre);
-  color: var(--texte-sur-sombre);
+  /* Bleutée plutôt que noire : ce carré est présent sur chaque écran, et un bloc
+     d'encre pleine y pesait plus lourd que tout ce qu'il accompagne. */
+  background: var(--marine-tuile);
+  color: var(--marine);
   display: grid;
   place-items: center;
   font-weight: 600;
@@ -880,7 +893,17 @@ details > summary {
   color: var(--texte-secondaire);
   background: var(--surface);
 }
-.puce--acquise { background: var(--fond); border-color: var(--texte-secondaire); color: var(--texte); }
+/* Ce que la personne possède déjà — un métier déclaré, une compétence validée —
+   se lit comme une étiquette pleine et non comme un contour pâle. La couleur ne
+   signale aucun état : elle dit « ceci est une chose nommée ». Marine sur tuile
+   bleutée : 10,16 de contraste. */
+.puce--acquise {
+  background: var(--marine-tuile);
+  border-color: var(--marine-tuile);
+  color: var(--marine);
+  font-weight: 500;
+}
+.puces--retirables .puce--acquise:hover { border-color: var(--alerte); color: var(--alerte); }
 
 .pastille {
   flex: none;

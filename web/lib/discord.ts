@@ -148,6 +148,7 @@ export async function ouvrirSalon(
   compteId: number,
   libelle: string,
   prenom: string,
+  role: "interimaire" | "entreprise",
   identite: IdentiteDiscord,
   jetonAcces: string
 ): Promise<
@@ -175,7 +176,7 @@ export async function ouvrirSalon(
   // L'échec du message d'accueil ne défait pas la liaison : le salon existe, il est
   // privé, et la personne recevra ses notifications. Un salon muet vaut mieux qu'un
   // parcours annulé pour un message d'accueil.
-  await posterDansSalon(config, salon.valeur, messageDAccueil(prenom));
+  await posterDansSalon(config, salon.valeur, messageDAccueil(prenom, role));
 
   return { ok: true, salonId: salon.valeur, nom };
 }
@@ -236,9 +237,10 @@ export async function reparerSalon(
   // sur une panne recréerait un salon à chaque incident.
   if (existe !== false) return { recree: false, salonId: compte.discord_salon_id };
 
-  const [profil] = await sql<{ libelle: string; prenom: string }[]>`
+  const [profil] = await sql<{ libelle: string; prenom: string; role: string }[]>`
     select coalesce(i.prenom || ' ' || i.nom, e.raison_sociale, 'compte-' || c.id) as libelle,
-           coalesce(i.prenom, e.raison_sociale, 'à vous') as prenom
+           coalesce(i.prenom, e.raison_sociale, 'à vous') as prenom,
+           c.role
       from compte c
       left join interimaire i on i.compte_id = c.id
       left join entreprise e on e.compte_id = c.id
@@ -254,7 +256,11 @@ export async function reparerSalon(
     return { recree: false, salonId: null };
   }
 
-  await posterDansSalon(config, salon.valeur, messageDAccueil(profil?.prenom ?? "à vous"));
+  await posterDansSalon(
+    config,
+    salon.valeur,
+    messageDAccueil(profil?.prenom ?? "à vous", profil?.role === "entreprise" ? "entreprise" : "interimaire")
+  );
   await sql`update compte set discord_salon_id = ${salon.valeur} where id = ${compteId}`;
   return { recree: true, salonId: salon.valeur };
 }

@@ -2,10 +2,16 @@
 
 Les deux flux exigés par le sujet, prêts à importer.
 
-| Fichier | Scénario |
-|---|---|
-| `1-alerte-echeance.json` | Alerte avant expiration d'une habilitation |
-| `2-mission-correspondante.json` | Notification de mission correspondante |
+| Fichier | Scénario | Destinataire |
+|---|---|---|
+| `1-alerte-echeance.json` | Alerte avant expiration d'une habilitation | intérimaire |
+| `2-mission-correspondante.json` | Notification de mission correspondante | intérimaire |
+| `3-relance-missions.json` | Relance des missions non pourvues | **entreprise** |
+
+Le sujet en demande deux ; le troisième reprend son propre exemple — « relance
+automatique des missions non pourvues après un délai donné » — et répare une
+asymétrie : sans lui, une entreprise qui rattachait son Discord obtenait un salon où
+rien n'arrivait jamais.
 
 Chacun poste dans le **salon privé du destinataire**, jamais dans un salon commun.
 
