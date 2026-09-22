@@ -74,3 +74,19 @@ Toutes les mesures ont été prises sur le serveur de production local (`next st
 **Images de mission.** Un chantier n'a pas besoin de photo pour être compris ; en ajouter une par fiche ferait passer une liste de dix missions de quelques kilo-octets à plusieurs mégaoctets, pour rien.
 
 **Police web.** Aucune n'est chargée : la charte s'appuie sur la pile système. Zéro requête, zéro décalage de mise en page au chargement.
+
+---
+
+## Le PDF n'est pas généré côté serveur
+
+Le document de mission s'enregistre par l'impression du navigateur, pas par un moteur
+de rendu embarqué dans une fonction sans état.
+
+**Ce qu'on évite.** Une génération serveur aurait demandé de charger un navigateur
+sans interface à chaque appel — plusieurs mégaoctets et quelques secondes de calcul,
+pour produire ce que le navigateur de la personne fait déjà, et mieux : il respecte
+ses réglages d'impression, sa langue et son format de papier.
+
+**Même raisonnement que la lecture de CV**, passée côté navigateur pour les mêmes
+motifs. Une feuille de style d'impression coûte quelques lignes de CSS et zéro octet
+transféré en plus.

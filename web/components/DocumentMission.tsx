@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { connexion } from "@interimatch/core/db";
+import BoutonImprimer from "./BoutonImprimer";
 import {
   ARTICLE_DUREE_MAX,
   DUREE_MAX_MOIS,
@@ -131,10 +132,22 @@ export default async function DocumentMission({
     return (
       <section className="section">
         <div className="colonne colonne--formulaire">
-          <p className="petit secondaire">
+          <p className="petit secondaire ne-pas-imprimer">
             <a href={role === "entreprise" ? `/missions/${missionId}` : `/mes-missions/${missionId}`}>
               ← {m.titre}
             </a>
+          </p>
+
+          {/* Une feuille sortie de son contexte doit dire d'où elle vient et de
+              quand elle date : sur un chantier, un papier sans origine ne vaut
+              rien. Visible à l'impression seulement. */}
+          <p className="entete-impression petit">
+            Intérimatch BTP — document édité le{" "}
+            {new Date().toLocaleDateString("fr-FR", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
           </p>
 
           <h1 className="titre-page">Document de mission</h1>
@@ -143,6 +156,10 @@ export default async function DocumentMission({
             qu&apos;un contrat de mission puisse être établi. Ce document n&apos;est pas le
             contrat de travail temporaire : celui-ci lie l&apos;agence d&apos;emploi et le
             salarié.
+          </p>
+
+          <p className="ne-pas-imprimer">
+            <BoutonImprimer />
           </p>
 
           {manquantes.length > 0 ? (

@@ -344,10 +344,12 @@ verifier("et qui appeler", /Horaires/.test(vuInterimaire));
 
 const docInterimaire = await appel(`/mes-missions/${missionId}/document`, "GET", undefined, conforme.cookie);
 verifier("son document de mission s'ouvre", docInterimaire.statut === 200, `statut ${docInterimaire.statut}`);
+const htmlDoc = docInterimaire.corps?.html ?? "";
+verifier("sans entité mal échappée", !/&amp;apos;|d&apos;un mois/.test(htmlDoc), "texte cassé détecté");
+verifier("il peut l'enregistrer en PDF", /Enregistrer en PDF/.test(htmlDoc));
 verifier(
-  "sans entité mal échappée",
-  !/&amp;apos;|d&apos;un mois/.test(docInterimaire.corps?.html ?? ""),
-  "texte cassé détecté"
+  "et la feuille imprimée dit d'où elle vient",
+  /entete-impression/.test(htmlDoc) && /document édité le/.test(htmlDoc)
 );
 
 const pageEntreprise = await appel(`/missions/${missionId}`, "GET", undefined, ent.cookie);

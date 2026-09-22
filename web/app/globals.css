@@ -1145,9 +1145,40 @@ details > summary {
   text-align: center;
 }
 @media print {
-  /* Une impression ne doit sortir que les codes, pas la navigation du site. */
-  .entete, .pied, .bandeau-espace, .bouton, .case { display: none !important; }
+  /* Une impression ne doit sortir que le document, pas la navigation du site.
+     Le document de mission se présente sur un chantier : il finit sur papier, dans
+     une pochette, ou en PDF dans un téléphone. Générer ce PDF côté serveur aurait
+     demandé un moteur de rendu dans une fonction sans état — des mégaoctets et des
+     secondes pour ce que le navigateur fait déjà, et mieux. */
+  .entete, .pied, .bandeau-espace, .bouton, .case, .onglets,
+  .ne-pas-imprimer { display: none !important; }
+
+  /* Encre et lisibilité : les ombres et les aplats colorés ne servent qu'à l'écran,
+     et un liseré de 4 px sort en barre noire sur une imprimante monochrome. */
+  .carte {
+    box-shadow: none !important;
+    border: 1px solid #999 !important;
+    border-left-width: 1px !important;
+    break-inside: avoid;
+  }
+  body { background: #fff; font-size: 11pt; }
+  .colonne, .colonne--formulaire { max-width: none; padding: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Un titre seul en bas de page, coupé de ce qu'il annonce, oblige à tourner la
+     feuille pour comprendre de quoi on parle. */
+  h1, h2, h3 { break-after: avoid; }
+  h1 { font-size: 20pt; }
+  h2 { font-size: 14pt; margin-top: 1.5rem; }
+  .ligne { break-inside: avoid; }
+
+  /* L'en-tête d'impression ne s'affiche qu'ici : une feuille sortie du contexte
+     doit dire d'où elle vient et de quand elle date. */
+  .entete-impression { display: block !important; }
 }
+
+/* Visible à l'impression seulement. */
+.entete-impression { display: none; }
 
 /* Saisie de l'expérience : une ligne par métier, le nombre d'années à droite.
    Champ étroit — on saisit deux chiffres, pas une phrase — mais la cible tactile
