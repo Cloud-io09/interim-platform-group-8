@@ -211,20 +211,46 @@ export default async function EspaceInterimaire() {
                     </a>
                   </div>
                 ) : b.prochaine ? (
-                  <div className="carte carte--sombre">
-                    <p className="sur-titre sur-titre--marque">Votre prochaine mission</p>
-                    <p className="chiffre-geant">
-                      {delai(b.prochaine.joursAvantDebut)}
-                      <span className="chiffre-suffixe">{enDateFr(b.prochaine.dateDebut)}</span>
-                    </p>
-                    <hr className="filet-sombre" />
-                    <p className="sur-sombre-secondaire" style={{ margin: 0 }}>
-                      <strong>{b.prochaine.titre}</strong>
-                      <br />
-                      {b.prochaine.entreprise} · {b.prochaine.ville} · jusqu&apos;au{" "}
-                      {enDateFr(b.prochaine.dateFin)}
-                    </p>
-                  </div>
+                  (() => {
+                    // **Un chantier commencé n'est pas « prochain ».** L'écran
+                    // annonçait « Votre prochaine mission — il y a 21 jours » pour
+                    // une mission en cours depuis trois semaines : le titre parlait
+                    // d'avenir, le chiffre de passé, et les deux se contredisaient
+                    // sous les yeux de quelqu'un qui y travaille tous les matins.
+                    const commence = b.prochaine.joursAvantDebut <= 0;
+                    return (
+                      <div className="carte carte--sombre">
+                        <p className="sur-titre sur-titre--marque">
+                          {commence ? "Votre mission en cours" : "Votre prochaine mission"}
+                        </p>
+                        <p className="chiffre-geant">
+                          {commence ? "en cours" : delai(b.prochaine.joursAvantDebut)}
+                          <span className="chiffre-suffixe">
+                            {commence
+                              ? `jusqu'au ${enDateFr(b.prochaine.dateFin)}`
+                              : enDateFr(b.prochaine.dateDebut)}
+                          </span>
+                        </p>
+                        <hr className="filet-sombre" />
+                        <p className="sur-sombre-secondaire" style={{ margin: 0 }}>
+                          <strong>{b.prochaine.titre}</strong>
+                          <br />
+                          {b.prochaine.entreprise} · {b.prochaine.ville}
+                          {commence
+                            ? ` · commencée le ${enDateFr(b.prochaine.dateDebut)}`
+                            : ` · jusqu'au ${enDateFr(b.prochaine.dateFin)}`}
+                        </p>
+                        <p style={{ margin: "1rem 0 0" }}>
+                          <a
+                            className="bouton bouton--marque"
+                            href={`/mes-missions/${b.prochaine.id}`}
+                          >
+                            {commence ? "Revoir mon chantier" : "Préparer ma venue"}
+                          </a>
+                        </p>
+                      </div>
+                    );
+                  })()
                 ) : null}
 
                 <section aria-labelledby="titre-suggestions">

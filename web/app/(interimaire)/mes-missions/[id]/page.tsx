@@ -154,7 +154,7 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
 
           {/* Une fois l'affectation conclue, l'écran doit servir à s'y rendre :
               adresse, horaires, et qui appeler quand le portail est fermé. */}
-          {etat === "acceptee" && <FicheChantier sql={sql} missionId={missionId} />}
+          {etat === "acceptee" && <FicheChantier missionId={missionId} />}
 
           <h2>Habilitations exigées</h2>
           <ListeConformite

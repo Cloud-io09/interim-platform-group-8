@@ -1,5 +1,5 @@
 import { dechiffrerOptionnel } from "@interimatch/core";
-import type { connexion } from "@interimatch/core/db";
+import { connexion } from "@interimatch/core/db";
 
 /**
  * Ce qu'il faut savoir pour se présenter, une fois l'affectation conclue.
@@ -39,80 +39,89 @@ function joursAvant(iso: string): number {
   return Math.round((debut - aujourdhui) / 86400000);
 }
 
-export default async function FicheChantier({
-  sql,
-  missionId,
-}: {
-  sql: ReturnType<typeof connexion>;
-  missionId: number;
-}) {
-  const [c] = await sql<Chantier[]>`
-    select m.adresse, m.code_postal, m.ville, m.horaires, m.date_debut::text,
-           e.raison_sociale, e.telephone_chiffre
-      from mission m join entreprise e on e.compte_id = m.entreprise_id
-     where m.id = ${missionId}`;
-  if (!c) return null;
 
-  const adresseComplete = [c.adresse, `${c.code_postal} ${c.ville}`].filter(Boolean).join(", ");
-  const telephone = dechiffrerOptionnel(c.telephone_chiffre);
-  const jours = joursAvant(c.date_debut);
+/**
+ * **Ce composant ouvre sa propre connexion, et ne la reçoit pas.**
+ *
+ * Il la recevait de la page appelante, qui la refermait dans son `finally`. Or un
+ * composant serveur asynchrone s'exécute pendant le rendu, donc **après** que la
+ * fonction de page a rendu son JSX et fermé la connexion : la requête partait sur un
+ * lien mort et l'écran affichait « Page couldn't load ». Le défaut ne se voit pas en
+ * lisant le code — il faut connaître l'ordre d'exécution du rendu serveur.
+ */
+export default async function FicheChantier({ missionId }: { missionId: number }) {
+  const sql = connexion();
+  try {
+    const [c] = await sql<Chantier[]>`
+      select m.adresse, m.code_postal, m.ville, m.horaires, m.date_debut::text,
+             e.raison_sociale, e.telephone_chiffre
+        from mission m join entreprise e on e.compte_id = m.entreprise_id
+       where m.id = ${missionId}`;
+    if (!c) return null;
 
-  const quand =
-    jours > 1
-      ? `Dans ${jours} jours — ${enDateFr(c.date_debut)}`
-      : jours === 1
-        ? `Demain — ${enDateFr(c.date_debut)}`
-        : jours === 0
-          ? `Aujourd'hui`
-          : `Commencé le ${enDateFr(c.date_debut)}`;
+    const adresseComplete = [c.adresse, `${c.code_postal} ${c.ville}`].filter(Boolean).join(", ");
+    const telephone = dechiffrerOptionnel(c.telephone_chiffre);
+    const jours = joursAvant(c.date_debut);
 
-  return (
-    <section aria-labelledby="titre-chantier" className="carte carte--verdict-ok">
-      <div className="tete-carte">
-        <h2 id="titre-chantier" className="titre-carte">
-          Vous présenter sur le chantier
-        </h2>
-        <span className={jours >= 0 ? "pastille pastille--ok" : "pastille"}>{quand}</span>
-      </div>
+    const quand =
+      jours > 1
+        ? `Dans ${jours} jours — ${enDateFr(c.date_debut)}`
+        : jours === 1
+          ? `Demain — ${enDateFr(c.date_debut)}`
+          : jours === 0
+            ? `Aujourd'hui`
+            : `Commencé le ${enDateFr(c.date_debut)}`;
 
-      <ul className="liste-nue">
-        <li className="ligne">
-          <span>Adresse</span>
-          <strong style={{ textAlign: "right" }}>
-            {/* Une adresse sert à s'y rendre : le lien ouvre l'itinéraire dans
-                l'application de cartes du téléphone, plutôt que de laisser
-                recopier une rue à la main au volant. */}
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adresseComplete)}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {adresseComplete}
-            </a>
-          </strong>
-        </li>
-        <li className="ligne">
-          <span>Horaires</span>
-          <strong style={{ textAlign: "right" }}>
-            {c.horaires ?? <span className="petit secondaire">à confirmer avec l&apos;entreprise</span>}
-          </strong>
-        </li>
-        <li className="ligne">
-          <span>{c.raison_sociale}</span>
-          <strong>
-            {telephone ? (
-              <a href={`tel:${telephone}`}>{telephone}</a>
-            ) : (
-              <span className="petit secondaire">aucun numéro renseigné</span>
-            )}
-          </strong>
-        </li>
-      </ul>
+    return (
+      <section aria-labelledby="titre-chantier" className="carte carte--verdict-ok">
+        <div className="tete-carte">
+          <h2 id="titre-chantier" className="titre-carte">
+            Vous présenter sur le chantier
+          </h2>
+          <span className={jours >= 0 ? "pastille pastille--ok" : "pastille"}>{quand}</span>
+        </div>
 
-      <p className="petit secondaire">
-        Présentez-vous avec vos habilitations et votre carte BTP : elles peuvent être
-        contrôlées à l&apos;entrée du chantier.
-      </p>
-    </section>
-  );
+        <ul className="liste-nue">
+          <li className="ligne">
+            <span>Adresse</span>
+            <strong style={{ textAlign: "right" }}>
+              {/* Une adresse sert à s'y rendre : le lien ouvre l'itinéraire dans
+                  l'application de cartes du téléphone, plutôt que de laisser
+                  recopier une rue à la main au volant. */}
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adresseComplete)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {adresseComplete}
+              </a>
+            </strong>
+          </li>
+          <li className="ligne">
+            <span>Horaires</span>
+            <strong style={{ textAlign: "right" }}>
+              {c.horaires ?? <span className="petit secondaire">à confirmer avec l&apos;entreprise</span>}
+            </strong>
+          </li>
+          <li className="ligne">
+            <span>{c.raison_sociale}</span>
+            <strong>
+              {telephone ? (
+                <a href={`tel:${telephone}`}>{telephone}</a>
+              ) : (
+                <span className="petit secondaire">aucun numéro renseigné</span>
+              )}
+            </strong>
+          </li>
+        </ul>
+
+        <p className="petit secondaire">
+          Présentez-vous avec vos habilitations et votre carte BTP : elles peuvent être
+          contrôlées à l&apos;entrée du chantier.
+        </p>
+      </section>
+    );
+  } finally {
+    await sql.end();
+  }
 }

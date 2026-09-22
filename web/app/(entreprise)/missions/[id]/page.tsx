@@ -83,12 +83,12 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
           {/* Une fois pourvue, la question n'est plus « qui pourrait venir » mais
               « qui vient » : le nom et le numéro passent devant tout le reste. */}
           {mission.statut === "pourvue" && (
-            <AffectationConclue sql={sql} missionId={missionId} />
+            <AffectationConclue missionId={missionId} />
           )}
 
           {/* Les candidatures d'abord : quelqu'un qui a levé la main compte plus
               qu'un profil que le moteur a seulement suggéré. */}
-          <CandidaturesRecues sql={sql} missionId={missionId} entrepriseId={session.compteId} />
+          <CandidaturesRecues missionId={missionId} entrepriseId={session.compteId} />
 
           <ResultatsMatching missionId={missionId} />
         </div>

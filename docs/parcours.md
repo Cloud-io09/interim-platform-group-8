@@ -233,3 +233,11 @@ Dit ici plutôt que laissé supposer.
 - **La lecture de CV.** Elle s'exécute dans le navigateur ; un script en ligne de commande ne peut pas l'éprouver. Vérifiée à part, sous Chrome piloté : couche texte 0,5 s, PDF scanné 2,1 s, photo 1,5 s.
 - **Les flux n8n.** Éprouvés séparément, sur une instance n8n réelle. Voir [automatisations-n8n.md](automatisations-n8n.md).
 - **Le rendu visuel.** Vérifié en captures à 1280 px et 390 px, pas par ce script.
+
+**Ce que le parcours ne faisait pas, et fait désormais.** Il s'arrêtait à « affecté »
+sans ouvrir un seul écran d'après. Trois composants interrogeaient alors une connexion
+déjà refermée par leur page appelante — un composant serveur asynchrone s'exécute
+pendant le rendu, donc **après** le `finally` de la page — et l'utilisateur lisait
+« Page couldn't load ». Aucun test ne pouvait l'attraper : tous s'arrêtaient à l'API.
+Le parcours ouvre maintenant les quatre écrans d'après-affectation, et le défaut a été
+réintroduit volontairement pour vérifier qu'il tombe bien en `500`.

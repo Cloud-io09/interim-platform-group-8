@@ -327,6 +327,39 @@ verifier("elle distingue l'expérience constatée de l'expérience déclarée", 
 verifier("elle dit que l'expérience déclarée n'entre pas dans le calcul", /n&#x27;entre pas dans le calcul/.test(html));
 
 // ===========================================================================
+titre("11. Une fois affecté : les deux parties ont-elles de quoi démarrer ?");
+// ===========================================================================
+//
+// Le parcours s'arrêtait à « affecté » sans jamais ouvrir un seul écran d'après.
+// Trois composants interrogeaient alors une connexion déjà refermée par leur page
+// appelante — un composant serveur asynchrone s'exécute pendant le rendu, donc
+// après le `finally` de la page — et l'utilisateur lisait « Page couldn't load ».
+// Aucun test ne pouvait l'attraper : tous s'arrêtaient à l'API.
+const pageInterimaire = await appel(`/mes-missions/${missionId}`, "GET", undefined, conforme.cookie);
+verifier("l'intérimaire ouvre sa mission", pageInterimaire.statut === 200, `statut ${pageInterimaire.statut}`);
+const vuInterimaire = pageInterimaire.corps?.html ?? "";
+verifier("il sait où et quand se présenter", /Vous présenter sur le chantier/.test(vuInterimaire));
+verifier("l'adresse du chantier y figure", /Fontenay|rue|Adresse/.test(vuInterimaire));
+verifier("et qui appeler", /Horaires/.test(vuInterimaire));
+
+const docInterimaire = await appel(`/mes-missions/${missionId}/document`, "GET", undefined, conforme.cookie);
+verifier("son document de mission s'ouvre", docInterimaire.statut === 200, `statut ${docInterimaire.statut}`);
+verifier(
+  "sans entité mal échappée",
+  !/&amp;apos;|d&apos;un mois/.test(docInterimaire.corps?.html ?? ""),
+  "texte cassé détecté"
+);
+
+const pageEntreprise = await appel(`/missions/${missionId}`, "GET", undefined, ent.cookie);
+verifier("l'entreprise ouvre sa fiche pourvue", pageEntreprise.statut === 200, `statut ${pageEntreprise.statut}`);
+const vuEntreprise = pageEntreprise.corps?.html ?? "";
+verifier("elle sait qui vient", /Qui vient sur le chantier/.test(vuEntreprise));
+verifier("avec de quoi le joindre", /Téléphone|Adresse e-mail/.test(vuEntreprise));
+
+const contratApres = await appel(`/missions/${missionId}/contrat`, "GET", undefined, ent.cookie);
+verifier("le document de mission côté entreprise s'ouvre", contratApres.statut === 200, `statut ${contratApres.statut}`);
+
+// ===========================================================================
 titre("Ménage");
 // ===========================================================================
 for (const c of comptes) {
