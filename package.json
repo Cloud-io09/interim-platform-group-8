@@ -21,7 +21,8 @@
     "fumee": "node outils/fumee-auth.mjs",
     "parcours": "node outils/parcours-complet.mjs",
     "discord": "node --env-file-if-exists=.env outils/discord-verif.mjs",
-    "fumee:notifs": "node --env-file-if-exists=.env outils/fumee-notifications.mjs"
+    "fumee:notifs": "node --env-file-if-exists=.env outils/fumee-notifications.mjs",
+    "audit": "node outils/audit-parcours.mjs"
   },
   "engines": {
     "node": ">=22"

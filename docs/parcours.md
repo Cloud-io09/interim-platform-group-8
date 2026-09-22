@@ -5,7 +5,16 @@
 ```bash
 npm run parcours                                    # contre le serveur local
 npm run parcours -- https://mon-deploiement.app     # contre un déploiement
+npm run audit                                       # sans serveur, en une seconde
 ```
+
+**Pourquoi un second outil.** `npm run parcours` vérifie qu'un écran *répond* ; il ne
+vérifie pas qu'il *mène quelque part*. Trois défauts réels lui ont échappé : un onglet
+« Profil & CV » pointant vers une page sans CV, un lien vers une route supprimée
+rendant un `404` brut, et une entité HTML dans une chaîne JavaScript affichant
+« Durée de moins d&apos;un mois ». Aucun ne demande de navigateur pour être vu.
+`npm run audit` les cherche statiquement, et les trois règles ont été éprouvées en
+restaurant les fichiers fautifs — elles attrapent bien ce qu'elles prétendent.
 
 ---
 
