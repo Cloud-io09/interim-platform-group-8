@@ -230,6 +230,11 @@ Ce que `npm run parcours` vérifie à chaque exécution, avec le résultat obser
 Dit ici plutôt que laissé supposer.
 
 - **Ce qui exige d'ouvrir une boîte aux lettres** — réinitialisation par lien, confirmation d'adresse, changement d'adresse. Un script en ligne de commande ne relève pas les courriels d'une adresse factice : il éprouve donc ce qui précède le lien (l'état de l'adresse, le renvoi, le refus d'un jeton inventé, le mot de passe exigé pour changer d'adresse) et laisse le reste à la suite fonctionnelle, qui lit le journal du serveur. Rien ne part réellement : les adresses d'essai relèvent d'un domaine réservé par la RFC 2606, que la couche d'envoi journalise au lieu de transmettre.
+- **Les formulaires rendus côté client.** Le profil intérimaire affiche « Chargement
+  de votre profil… » côté serveur et ne construit ses champs qu'après un appel : un
+  script en HTTP ne peut pas les voir. Le parcours vérifie donc le **contrat dont ils
+  dépendent** — ce que la route relit après enregistrement — et dit ici ce qu'il ne
+  couvre pas plutôt que de le laisser supposer.
 - **La lecture de CV.** Elle s'exécute dans le navigateur ; un script en ligne de commande ne peut pas l'éprouver. Vérifiée à part, sous Chrome piloté : couche texte 0,5 s, PDF scanné 2,1 s, photo 1,5 s.
 - **Les flux n8n.** Éprouvés séparément, sur une instance n8n réelle. Voir [automatisations-n8n.md](automatisations-n8n.md).
 - **Le rendu visuel.** Vérifié en captures à 1280 px et 390 px, pas par ce script.

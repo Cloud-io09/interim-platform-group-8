@@ -152,9 +152,9 @@ const PROFIL = {
   metiers: [{ code: "F1302", anneesExperience: 6 }],
 };
 
-async function interimaire(suffixe, prenom, certification) {
+async function interimaire(suffixe, prenom, certification, agences) {
   const i = await inscrire(suffixe, "interimaire");
-  await appel("/api/profil/interimaire", "POST", { ...PROFIL, prenom }, i.cookie);
+  await appel("/api/profil/interimaire", "POST", { ...PROFIL, prenom, agences }, i.cookie);
   await appel("/api/disponibilites", "POST", { dateDebut: "2027-01-01", dateFin: "2027-12-31" }, i.cookie);
   if (certification) {
     await appel("/api/certifications", "POST", {
@@ -168,7 +168,11 @@ async function interimaire(suffixe, prenom, certification) {
 }
 
 // Échéance au-delà de la fin du chantier : conforme.
-const conforme = await interimaire("conforme", "Karim", "2034-01-15");
+// Karim déclare son agence : c'est elle qui établira le contrat de mission, et sans
+// cette donnée l'entreprise débloque un téléphone puis cherche par qui passer.
+const conforme = await interimaire("conforme", "Karim", "2034-01-15", [
+  { nom: "Adecco Reims Bâtiment", ville: "Reims" },
+]);
 // Valide aujourd'hui, périmée AVANT la fin du chantier : le cas qui fonde le produit.
 const expirePendant = await interimaire("expire-pendant", "Sofiane", "2027-04-20");
 // Aucune habilitation déclarée.
@@ -327,7 +331,50 @@ verifier("elle distingue l'expérience constatée de l'expérience déclarée", 
 verifier("elle dit que l'expérience déclarée n'entre pas dans le calcul", /n&#x27;entre pas dans le calcul/.test(html));
 
 // ===========================================================================
-titre("11. Une fois affecté : les deux parties ont-elles de quoi démarrer ?");
+titre("11. L'agence d'emploi : visible avant de payer, nommée après");
+// ===========================================================================
+//
+// L'intérim n'existe pas sans employeur : le contrat de mission lie l'agence et le
+// salarié, jamais l'entreprise utilisatrice. Savoir qu'un profil est déjà inscrit
+// quelque part change la décision — mise en place rapide, ou inscription à faire
+// dans sa propre agence — donc c'est gratuit. Savoir laquelle sert à agir : c'est
+// derrière le déblocage, avec le téléphone.
+const avantAgence = await appel(
+  `/missions/${missionId}/profils/${conforme.id}`, "GET", undefined, ent.cookie);
+const vuAvant = avantAgence.corps?.html ?? "";
+verifier("l'entreprise voit qu'il est inscrit dans une agence", /inscrit dans 1 agence/.test(vuAvant));
+verifier("sans avoir payé", !/Adecco Reims/.test(vuAvant), "le nom de l'agence a fuité");
+
+const sansAgence = await appel(
+  `/missions/${missionId}/profils/${sansTitre.id}`, "GET", undefined, ent.cookie);
+verifier(
+  "et le dit franchement quand aucune n'est déclarée",
+  /aucune agence déclarée/.test(sansAgence.corps?.html ?? "")
+);
+
+// Le formulaire de profil ne s'affiche qu'après un appel client — il rend
+// « Chargement de votre profil… » côté serveur — donc ce script ne peut pas voir ses
+// champs. Ce qu'il peut vérifier, c'est le contrat dont le formulaire dépend : ce
+// que la route relit après enregistrement. Un aller-retour cassé s'y verrait.
+const relu = await appel("/api/profil/interimaire", "GET", undefined, conforme.cookie);
+verifier("le profil relit les agences enregistrées",
+  (relu.corps?.profil?.agences ?? []).some((a) => a.nom === "Adecco Reims Bâtiment"),
+  JSON.stringify(relu.corps?.profil?.agences ?? []));
+
+const deblocageKarim = await appel("/api/deblocages", "POST", {
+  interimaireId: conforme.id, missionId,
+}, ent.cookie);
+verifier("elle débloque son profil", deblocageKarim.statut === 200, `statut ${deblocageKarim.statut}`);
+
+const apresAgence = await appel(
+  `/missions/${missionId}/profils/${conforme.id}`, "GET", undefined, ent.cookie);
+const vuApres = apresAgence.corps?.html ?? "";
+verifier("l'agence est alors nommée", /Adecco Reims/.test(vuApres));
+verifier("avec le téléphone du profil", /Téléphone/.test(vuApres));
+verifier("et l'écran dit qui contacter", /c&#x27;est elle qu&#x27;il faut contacter|qu'il faut contacter/.test(vuApres));
+
+// ===========================================================================
+titre("12. Une fois affecté : les deux parties ont-elles de quoi démarrer ?");
 // ===========================================================================
 //
 // Le parcours s'arrêtait à « affecté » sans jamais ouvrir un seul écran d'après.
