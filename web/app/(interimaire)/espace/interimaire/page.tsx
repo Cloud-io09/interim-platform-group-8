@@ -324,7 +324,7 @@ export default async function EspaceInterimaire() {
                             <span>
                               <strong className="petit">
                                 {c.libelle}
-                                {c.categorieCode ? ` — ${c.categorieCode}` : ""}
+                                {c.categorieCode ? ` - ${c.categorieCode}` : ""}
                               </strong>
                               <span className="petit secondaire"> {enDateFr(c.dateEcheance)}</span>
                             </span>
@@ -390,7 +390,7 @@ export default async function EspaceInterimaire() {
                   <p className="petit secondaire" style={{ margin: 0 }}>
                     {b.cvDepose
                       ? "Déposé. Il sert à préremplir votre profil, jamais à décider de votre éligibilité."
-                      : "Facultatif. Il préremplit vos métiers et vos compétences — vous validez chaque élément."}
+                      : "Facultatif. Il préremplit vos métiers et vos compétences, vous validez chaque élément."}
                   </p>
                 </section>
 

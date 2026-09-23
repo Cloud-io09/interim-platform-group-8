@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "L'intérim du BTP, sur habilitations vérifiées",
@@ -47,7 +48,7 @@ const POUR_INTERIMAIRES = [
     titre: "Vos titres, avec leurs dates",
     texte:
       "Vous déclarez vos CACES, AIPR et habilitations avec leur échéance. Rien " +
-      "d'autre ne détermine votre accès à un chantier — ni CV, ni notation.",
+      "d'autre ne détermine votre accès à un chantier - ni CV, ni notation.",
   },
   {
     titre: "Prévenu avant l'échéance",
@@ -66,37 +67,52 @@ const POUR_INTERIMAIRES = [
 export default function Accueil() {
   return (
     <>
-      <section className="section">
-        <div className="colonne">
-          <h1>L&apos;intérim du BTP, sur habilitations vérifiées.</h1>
-          <p style={{ maxWidth: "56ch" }} className="secondaire accroche">
-            Les entreprises publient un besoin avec les habilitations exigées. Les
-            intérimaires déclarent les leurs, avec leurs dates. Nous ne rapprochons que
-            ce qui est conforme à la date du chantier.
-          </p>
-          <p style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "2rem" }}>
-            <a className="bouton" href="/inscription/entreprise">
-              Je recrute pour un chantier
-            </a>
-            <a className="bouton bouton--secondaire" href="/inscription/interimaire">
-              Je cherche des missions
-            </a>
-          </p>
-          {/* La grille était atteignable depuis l'en-tête seulement, alors que
-              l'accueil est la page qu'on lit avant de décider. Et la phrase dit ce
-              qui est gratuit avant d'annoncer un prix : c'est l'engagement du
-              produit, pas une accroche. */}
-          <p className="petit secondaire" style={{ marginTop: "1rem" }}>
-            Pour les intérimaires, tout est gratuit. Pour les entreprises, le
-            rapprochement et la conformité le sont aussi —{" "}
-            <a href="/tarifs">voir ce qui se paie</a>.
-          </p>
+      <section className="section hero-section">
+        <div className="hero-banniere">
+          <Image
+            src="/images/accueil-hero.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            quality={70}
+            priority
+            className="hero-banniere-image"
+          />
+          <div className="colonne hero-banniere-alignement">
+            <div className="hero-banniere-contenu">
+              <h1>L&apos;intérim du BTP, sur habilitations vérifiées.</h1>
+              <p className="hero-texte">
+                Les entreprises publient un besoin avec les habilitations exigées. Les
+                intérimaires déclarent les leurs, avec leurs dates. Nous ne rapprochons que
+                ce qui est conforme à la date du chantier.
+              </p>
+              <p className="hero-actions">
+                <a className="bouton" href="/inscription/entreprise">
+                  Je recrute pour un chantier
+                </a>
+                <a className="bouton bouton--secondaire bouton--sur-image" href="/inscription/interimaire">
+                  Je cherche des missions
+                </a>
+              </p>
+              {/* La grille était atteignable depuis l'en-tête seulement, alors que
+                  l'accueil est la page qu'on lit avant de décider. Et la phrase dit ce
+                  qui est gratuit avant d'annoncer un prix : c'est l'engagement du
+                  produit, pas une accroche. Dans le bandeau plutôt qu'en dessous : la
+                  photo descend jusqu'à cette ligne, elle ne s'arrête plus juste après
+                  les boutons. */}
+              <p className="hero-note">
+                Pour les intérimaires, tout est gratuit. Pour les entreprises, le
+                rapprochement et la conformité le sont aussi -{" "}
+                <a href="/tarifs">voir ce qui se paie</a>.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="section section--sombre">
+      <section className="section" style={{ borderTop: "1px solid var(--bordure)" }}>
         <div className="colonne">
-          <p className="sur-titre">Pourquoi le BTP</p>
+          <p className="sur-titre sur-titre--accent-jaune">Pourquoi le BTP</p>
           <h2 style={{ maxWidth: "26ch" }}>
             Plus d&apos;une offre du BTP sur deux est une mission d&apos;intérim.
           </h2>
@@ -108,7 +124,7 @@ export default function Accueil() {
             <div>
               <p className="statistique">{RELEVE.partMissions} %</p>
               <p className="petit secondaire">
-                sont des missions d&apos;intérim — le ratio le plus élevé des quatre
+                sont des missions d&apos;intérim - le ratio le plus élevé des quatre
                 secteurs mesurés
               </p>
             </div>
@@ -129,7 +145,10 @@ export default function Accueil() {
 
       {/* Deux blocs distincts plutôt qu'une liste mixte : un intérimaire n'a pas à
           trier ce qui le concerne dans une page écrite pour les entreprises. */}
-      <section className="section">
+      <section className="section section--sombre section--illustree-fond">
+        <div className="fond-image" aria-hidden="true">
+          <Image src="/images/accueil-grue.jpg" alt="" fill sizes="100vw" quality={60} />
+        </div>
         <div className="colonne">
           <p className="sur-titre">Vous recrutez</p>
           <h2>Vous ne recevez que des profils affectables.</h2>
@@ -149,8 +168,20 @@ export default function Accueil() {
 
       <section className="section" style={{ borderTop: "1px solid var(--bordure)" }}>
         <div className="colonne">
-          <p className="sur-titre">Vous cherchez des missions</p>
-          <h2>Ce sont vos habilitations qui ouvrent les chantiers.</h2>
+          <div className="section-illustree section-illustree--inverse">
+            <div>
+              <p className="sur-titre">Vous cherchez des missions</p>
+              <h2>Ce sont vos habilitations qui ouvrent les chantiers.</h2>
+            </div>
+            <div className="section-illustree-media">
+              <Image
+                src="/images/accueil-terrain.jpg"
+                alt=""
+                fill
+                sizes="(min-width: 860px) 40vw, 90vw"
+              />
+            </div>
+          </div>
           <div className="grille grille--3" style={{ marginTop: "2rem" }}>
             {POUR_INTERIMAIRES.map((f) => (
               <article className="carte" key={f.titre}>

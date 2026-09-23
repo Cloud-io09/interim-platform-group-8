@@ -210,7 +210,7 @@ export default function DepotCv() {
       <h2 id="titre-cv">Dépôt du CV</h2>
       <p className="secondaire">
         Déposez votre CV pour préremplir votre profil. Nous en extrayons vos métiers, vos
-        compétences et les habilitations citées — vous validez chaque élément avant qu&apos;il
+        compétences et les habilitations citées, vous validez chaque élément avant qu&apos;il
         soit ajouté.
       </p>
       <p className="petit secondaire">
@@ -224,7 +224,7 @@ export default function DepotCv() {
         <div className="bandeau bandeau--neutre">
           <p style={{ margin: 0 }}>
             <strong>{cv.nomFichier}</strong>
-            <span className="petit secondaire"> — {cv.longueur.toLocaleString("fr-FR")} caractères lus</span>
+            <span className="petit secondaire"> - {cv.longueur.toLocaleString("fr-FR")} caractères lus</span>
           </p>
           <button className="bouton bouton--secondaire" onClick={retirer}>Retirer mon CV</button>
         </div>
@@ -258,7 +258,7 @@ export default function DepotCv() {
                   />
                 </div>
                 <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
-                  {Math.round(progression.progression * 100)} % — ce document est un scan,
+                  {Math.round(progression.progression * 100)} % - ce document est un scan,
                   sa lecture demande un peu plus de temps.
                 </p>
               </>
@@ -276,7 +276,7 @@ export default function DepotCv() {
         <details className="carte" style={{ marginBottom: "2rem" }}>
           <summary>
             Relire le texte lu dans votre document
-            <span className="petit secondaire"> — {cv.longueur.toLocaleString("fr-FR")} caractères</span>
+            <span className="petit secondaire"> - {cv.longueur.toLocaleString("fr-FR")} caractères</span>
           </summary>
           {/* Après une reconnaissance de caractères, l'utilisateur doit pouvoir
               constater ce qui a été compris — et repérer une lecture fautive. */}
@@ -352,7 +352,7 @@ export default function DepotCv() {
               <ul className="liste-nue petit">
                 {analyse.certifications.map((c, i) => (
                   <li key={`${c.typeCode}-${c.categorieCode ?? i}`} style={{ marginBottom: "0.5rem" }}>
-                    <strong>{c.typeCode.replace(/_/g, " ")}{c.categorieCode ? ` — ${c.categorieCode}` : ""}</strong>
+                    <strong>{c.typeCode.replace(/_/g, " ")}{c.categorieCode ? ` - ${c.categorieCode}` : ""}</strong>
                     <br />
                     <span className="secondaire">« {c.extrait} »</span>
                   </li>
@@ -408,7 +408,7 @@ export default function DepotCv() {
                             </p>
                             {s.certificationManquante && (
                               <p className="petit" style={{ margin: "0.5rem 0 0" }}>
-                                <strong>{s.certificationManquante}</strong> — {s.explication}
+                                <strong>{s.certificationManquante}</strong> - {s.explication}
                               </p>
                             )}
                             <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>

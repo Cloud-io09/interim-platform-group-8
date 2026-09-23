@@ -24,7 +24,7 @@ export default async function Opportunites() {
         <p className="secondaire">
           Les missions ouvertes qui correspondent à vos métiers, classées par
           compatibilité. Ne sont accessibles que celles dont les habilitations exigées
-          restent valides <strong>jusqu&apos;à la fin du chantier</strong> — pas
+          restent valides <strong>jusqu&apos;à la fin du chantier</strong> - pas
           seulement aujourd&apos;hui.
         </p>
         <MesMissionsInterimaire />

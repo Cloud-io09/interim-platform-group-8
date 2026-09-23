@@ -185,7 +185,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         {problemeDe("metiers") && <p className="petit message-erreur">{problemeDe("metiers")}</p>}
         <SelecteurReferentiel
           legende="Vos métiers"
-          aide="Ils décident des missions qui vous sont proposées. Cherchez par mot — « maçon », « engins », « couverture »."
+          aide="Ils décident des missions qui vous sont proposées. Cherchez par mot - « maçon », « engins », « couverture »."
           placeholder="Maçon, grutier, coffreur…"
           elements={domaines.flatMap((d) => d.metiers.map((m) => ({ ...m, groupe: d.libelle })))}
           selection={metiers}
@@ -199,7 +199,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           <p className="petit secondaire">
             Le nombre d&apos;années sur chaque métier déclaré. Facultatif, et c&apos;est
             volontaire : <strong>l&apos;expérience n&apos;entre pas dans le calcul de
-            correspondance</strong> — ce sont vos habilitations et leurs dates qui
+            correspondance</strong> - ce sont vos habilitations et leurs dates qui
             décident de votre accès aux chantiers. Elle est montrée à l&apos;entreprise
             qui consulte votre profil.
           </p>
@@ -218,7 +218,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
                       max={60}
                       step={1}
                       inputMode="numeric"
-                      placeholder="—"
+                      placeholder="-"
                       value={experience[code] ?? ""}
                       onChange={(e) => setExperience({ ...experience, [code]: e.target.value })}
                     />

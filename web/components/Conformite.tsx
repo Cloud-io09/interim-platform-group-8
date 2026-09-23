@@ -22,7 +22,7 @@ const ETATS: Record<EtatConformite, { libelle: string; symbole: string; classe: 
   // Le symbole diffère par la forme, pas seulement par la couleur.
   expire_pendant: { libelle: "Expire pendant la mission", symbole: "▲", classe: "conformite--alerte" },
   expiree: { libelle: "Expirée", symbole: "✕", classe: "conformite--bloque" },
-  absente: { libelle: "Non déclarée", symbole: "—", classe: "conformite--bloque" },
+  absente: { libelle: "Non déclarée", symbole: "-", classe: "conformite--bloque" },
 };
 
 export function PastilleConformite({ etat }: { etat: EtatConformite }) {
@@ -62,7 +62,7 @@ export function ListeConformite({
           <div>
             <strong>
               {e.libelleType}
-              {e.categorieCode ? ` — catégorie ${e.categorieCode}` : ""}
+              {e.categorieCode ? ` - catégorie ${e.categorieCode}` : ""}
             </strong>
             <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
               {e.precision}

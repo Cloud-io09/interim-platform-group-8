@@ -242,7 +242,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
             <ul className="liste-nue petit" style={{ margin: 0 }}>
               {enrichissement.certifications.map((c) => (
                 <li key={c.typeCode}>
-                  <strong>{c.libelle}</strong> — {c.part} % des offres ({c.occurrences} sur{" "}
+                  <strong>{c.libelle}</strong> - {c.part} % des offres ({c.occurrences} sur{" "}
                   {enrichissement.effectif})
                 </li>
               ))}
@@ -304,7 +304,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
                     setCompetences((a) => (a.includes(c.code) ? a.filter((x) => x !== c.code) : [...a, c.code]))
                   }
                 />
-                <span>{c.libelle} <span className="secondaire">— {c.part} %</span></span>
+                <span>{c.libelle} <span className="secondaire">- {c.part} %</span></span>
               </label>
             ))}
           </div>

@@ -32,8 +32,6 @@
   --succes: #1f6b3a;
   --alerte: #a4331f;
 
-  /* 5 px plutôt que 10 : un rayon large adoucit, et ce produit parle de
-     conformité et de dates d'échéance. L'angle serré se lit comme un document. */
   /* **Échelle d'espacement.** Seize valeurs distinctes circulaient dans les styles
      en ligne — 0,15 · 0,2 · 0,25 · 0,3 · 0,4 · 0,6 · 0,9 · 1,1 · 1,75 · 2,1 · 2,5 —
      sans aucun rapport entre elles. C'est ce qui produit des éléments tantôt collés
@@ -47,8 +45,12 @@
   --espace-6: 2rem;
   --espace-7: 3rem;
 
-  --rayon: 5px;
-  --rayon-petit: 5px;
+  /* Un rayon un peu plus généreux qu'à l'origine : le produit reste sérieux
+     (dates d'échéance, conformité) mais n'a plus besoin de se lire comme un
+     document administratif. Les boutons, eux, sont en pilule — cf. --rayon-bouton. */
+  --rayon: 10px;
+  --rayon-petit: 8px;
+  --rayon-bouton: 999px;
   /* Une seule ombre dans tout le produit, très basse. Elle décolle les cartes du
      fond sans créer de niveaux : deux profondeurs demanderaient une hiérarchie
      qu'aucun écran ici ne justifie. */
@@ -148,8 +150,8 @@ a:hover, a:focus-visible { text-decoration: underline; }
   align-items: center;
   justify-content: center;
   min-height: var(--cible-tactile);
-  padding: 0 1.25rem;
-  border-radius: var(--rayon-petit);
+  padding: 0 1.5rem;
+  border-radius: var(--rayon-bouton);
   /* Marine et non noir : une action se distingue ainsi d'une carte sombre, qui
      n'appelle aucun geste. Les deux étaient de la même encre auparavant. */
   border: 1px solid var(--marine);
@@ -159,13 +161,25 @@ a:hover, a:focus-visible { text-decoration: underline; }
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
-.bouton:hover { opacity: 0.88; }
+/* Le survol bascule franchement en jaune de marque plutôt que de simplement
+   assombrir ou cerner d'un liseré : le texte noir dessus reste à 12,6:1, comme
+   partout ailleurs où ce jaune porte du texte. */
+.bouton:hover {
+  background: var(--marque-jaune);
+  border-color: var(--marque-jaune);
+  color: #1a1a18;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(20, 26, 33, 0.18);
+}
+.bouton:active { transform: translateY(0); box-shadow: none; }
 .bouton--secondaire {
   background: var(--surface);
   color: var(--texte);
   border-color: var(--bordure);
 }
+.bouton--secondaire:hover { box-shadow: 0 10px 22px rgba(20, 26, 33, 0.1); border-color: var(--texte-secondaire); }
 
 /* Le sur-titre est du texte : il suit donc les règles du texte, pas celles d'un
    ornement. Mesuré : l'ambre de l'accent plafonne à 3,38:1 sur fond clair, sous le
@@ -185,6 +199,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
   border-radius: var(--rayon);
   box-shadow: var(--ombre-carte);
   padding: var(--espace-5);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 /* **Deux cartes qui se suivent ne se touchent jamais.** Aucun des conteneurs de
@@ -212,6 +227,11 @@ a:hover, a:focus-visible { text-decoration: underline; }
 }
 .section--sombre .sur-titre { color: var(--texte-secondaire-sur-sombre); }
 .section--sombre .secondaire { color: var(--texte-secondaire-sur-sombre); }
+/* Une carte blanche posée sur une section sombre reste une surface claire :
+   sans ceci, son titre héritait la couleur claire du fond et devenait
+   illisible sur son propre fond blanc — texte quasi blanc sur blanc. */
+.section--sombre .carte:not(.carte--sombre) { color: var(--texte); }
+.section--sombre .carte:not(.carte--sombre) .secondaire { color: var(--texte-secondaire); }
 
 .secondaire { color: var(--texte-secondaire); }
 .petit { font-size: 0.875rem; }
@@ -663,6 +683,9 @@ main code {
   background: #fdf8f7;
 }
 .bouton--danger { background: var(--alerte); border-color: var(--alerte); }
+/* Une action destructrice ne doit jamais devenir accueillante au survol : elle
+   garde sa famille de couleur, juste assombrie — pas le jaune de marque. */
+.bouton--danger:hover { background: #7a281a; border-color: #7a281a; color: #ffffff; }
 
 /* Zone de protection de la marque : un quart de la hauteur du pavé, comme l'exige
    la charte. Le `gap` la matérialise, rien ne vient s'y loger. */
@@ -862,7 +885,7 @@ details > summary {
   border-color: #4a4a45;
   width: 100%;
 }
-.bouton--sur-sombre:hover { border-color: var(--texte-sur-sombre); }
+.bouton--sur-sombre:hover { background: transparent; border-color: var(--texte-sur-sombre); }
 .bouton--discret {
   background: transparent;
   color: var(--texte-secondaire);
@@ -871,7 +894,7 @@ details > summary {
   min-height: var(--cible-tactile);
   text-decoration: underline;
 }
-.bouton--discret:hover { color: var(--texte); }
+.bouton--discret:hover { background: transparent; color: var(--texte); }
 .pleine-largeur { width: 100%; }
 .reponse-proposition { display: grid; gap: 0.5rem; margin-top: 1.5rem; }
 
@@ -1364,6 +1387,21 @@ details > summary {
 .carte--cliquable,
 .ligne-candidat { position: relative; transition: border-color 120ms, background-color 120ms; }
 .carte--cliquable:hover { border-color: var(--marine); }
+/* **Le décollement au survol, sur les seules cartes qui se cliquent.** Appliqué
+   à toutes les cartes, il faisait se soulever sous la souris un formulaire de
+   profil ou un encart d'explication : une promesse de clic que rien ne tient. Un
+   effet de survol est une affordance, pas une décoration. */
+.carte--cliquable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(20, 26, 33, 0.1), 0 0 0 0.5px rgba(31, 30, 29, 0.14);
+}
+
+/* RGAA 13.8 et confort vestibulaire : qui a demandé moins de mouvement à son
+   système n'en reçoit pas — ni cartes qui se soulèvent, ni boutons qui sautent. */
+@media (prefers-reduced-motion: reduce) {
+  .carte, .bouton { transition: none; }
+  .carte--cliquable:hover, .bouton:hover { transform: none; }
+}
 /* Le trait de focus se pose sur la surface entière, jamais sur le pseudo-élément
    qui la recouvre : sinon le clavier n'obtient qu'un rectangle invisible. */
 .carte--cliquable:has(.lien-etire:focus-visible),
@@ -1432,3 +1470,144 @@ details > summary {
   margin: 0;
 }
 .ligne-candidat-detail { margin: 0.25rem 0 0; }
+
+/* --- Grille tarifaire : plan mis en avant --------------------------------- */
+.carte--recommandee {
+  position: relative;
+  border-color: var(--marine);
+  border-width: 2px;
+}
+.etiquette-recommandee {
+  position: absolute;
+  top: -0.7rem;
+  left: 1.25rem;
+  background: var(--marque-jaune);
+  color: #1a1a18;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+}
+
+/* --- Habillage visuel : accueil --------------------------------------------
+   Quelques photos de chantier pour donner un visage au produit, toujours
+   secondaires au texte : chaque section garde son sens sans elles. */
+
+/* Bannière plein cadre : la photo occupe tout l'espace de la colonne, sans
+   voile dessus — seul le panneau qui porte le texte a un fond opaque, mesuré
+   pour rester lisible quel que soit ce qu'il y a derrière lui sur la photo. */
+/* Le bandeau referme déjà visuellement le haut de page : un espacement de
+   section classique en dessous, cumulé à celui de la section suivante,
+   ouvrait un vide de près de 10rem avant "Pourquoi le BTP" — et grignotait
+   d'autant la hauteur disponible pour la photo elle-même. */
+.hero-section { padding-top: 0; padding-bottom: 0; }
+/* Pleine largeur d'écran, pas seulement de colonne : la bannière sort du
+   conteneur centré pour toucher les deux bords, comme le reste des sections
+   sombres en dessous. */
+.hero-banniere {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  min-height: clamp(460px, 56vw, 640px);
+  display: flex;
+  align-items: flex-end;
+}
+.hero-banniere-image { object-fit: cover; }
+/* Cale le panneau de texte sur la même colonne que le reste du site : l'image
+   déborde plein écran, mais le contenu reste aligné avec l'en-tête au-dessus. */
+.hero-banniere-alignement { width: 100%; }
+.hero-banniere-contenu {
+  position: relative;
+  margin: 0 0 clamp(1.5rem, 4vw, 2.75rem);
+  padding: clamp(1.5rem, 3.5vw, 2.25rem);
+  max-width: 560px;
+  border-radius: var(--rayon-petit);
+  background: rgba(15, 20, 26, 0.88);
+  color: var(--texte-sur-sombre);
+}
+.hero-banniere-contenu h1 { color: #ffffff; margin-top: 0; }
+.hero-texte {
+  max-width: 52ch;
+  font-size: 1.0625rem;
+  color: var(--texte-secondaire-sur-sombre);
+}
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.75rem; margin-bottom: 0; }
+.hero-note { margin: 1.25rem 0 0; font-size: 0.875rem; color: var(--texte-secondaire-sur-sombre); }
+/* Bouton secondaire posé sur la photo : un contour clair plutôt qu'une bordure
+   grise, invisible sur un fond sombre et variable. */
+.bouton--sur-image {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+}
+.bouton--sur-image:hover {
+  background: var(--marque-jaune);
+  color: #1a1a18;
+  border-color: var(--marque-jaune);
+}
+/* Même raison que pour .carte--sombre .bouton plus haut : marine sur un fond
+   presque noir ne se distingue plus, le jaune reprend le rôle de repère. Ciblé
+   sur la colonne directe pour ne pas toucher les boutons du bandeau hero, qui
+   ont déjà leur propre traitement. */
+.section--sombre > .colonne .bouton:not(.bouton--secondaire) {
+  background: var(--marque-jaune);
+  color: #1a1a18;
+  border-color: var(--marque-jaune);
+}
+.section--sombre > .colonne .bouton:not(.bouton--secondaire):hover {
+  background: #e3c909;
+  border-color: #e3c909;
+}
+@media (max-width: 640px) {
+  .hero-banniere-contenu { max-width: none; }
+}
+
+.section-illustree {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+@media (min-width: 860px) {
+  .section-illustree { grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); }
+  .section-illustree--inverse { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr); }
+  .section-illustree--inverse > .section-illustree-media { order: -1; }
+}
+
+.section-illustree-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--rayon);
+  overflow: hidden;
+  box-shadow: var(--ombre-carte);
+}
+.section-illustree-media img { object-fit: cover; }
+
+/* Section sombre avec photo en toile de fond : un dégradé encre couvre
+   l'image pour que le texte blanc garde son contraste (RGAA 3.2 — mesuré au
+   point le plus clair de la photo, jamais sur la moyenne). */
+.section--illustree-fond {
+  position: relative;
+  isolation: isolate;
+}
+.section--illustree-fond .fond-image {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.section--illustree-fond .fond-image img { object-fit: cover; }
+.section--illustree-fond .fond-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Sombre partout, pas seulement en dégradé vers un bord : le texte peut se
+     retrouver au-dessus de n'importe quelle zone de la photo, y compris son
+     ciel, sa partie la plus claire — c'est elle qui doit passer le contraste. */
+  background: linear-gradient(100deg, rgba(20, 26, 33, 0.96) 0%, rgba(20, 26, 33, 0.9) 100%);
+}
+
+/* Amorce jaune devant un sur-titre, en section claire : décorative, jamais
+   support d'un texte — donc pas soumise au contraste 3:1 des éléments
+   fonctionnels. */
+.sur-titre--accent-jaune::before { background: var(--marque-jaune); }

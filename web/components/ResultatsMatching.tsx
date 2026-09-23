@@ -56,7 +56,7 @@ function Critere({ libelle, valeur, poids, detail }: { libelle: string; valeur: 
     <div className="critere">
       <div className="critere-entete">
         <span>
-          {libelle} <span className="secondaire petit">— pondéré {Math.round(poids * 100)} %</span>
+          {libelle} <span className="secondaire petit">- pondéré {Math.round(poids * 100)} %</span>
         </span>
         <strong>{pourcent(valeur)}</strong>
       </div>

@@ -36,7 +36,7 @@ const RETOURS: Record<string, { ton: "ok" | "echec"; texte: string }> = {
   refuse: { ton: "echec", texte: "Vous avez refusé l'autorisation sur Discord. Rien n'a été modifié." },
   "etat-invalide": {
     ton: "echec",
-    texte: "Cette demande n'est plus valable — elle a expiré, ou elle a déjà servi. Réessayez depuis ce bouton.",
+    texte: "Cette demande n'est plus valable - elle a expiré, ou elle a déjà servi. Réessayez depuis ce bouton.",
   },
   "deja-relie": {
     ton: "echec",

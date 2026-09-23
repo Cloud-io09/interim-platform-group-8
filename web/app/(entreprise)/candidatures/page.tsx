@@ -192,7 +192,7 @@ export default async function CandidaturesEntreprise() {
                           </p>
                           {!l.conforme && l.titre_bloquant && (
                             <p className="petit secondaire ligne-candidat-detail">
-                              {typeCertification(l.titre_bloquant)?.libelle ?? l.titre_bloquant} —
+                              {typeCertification(l.titre_bloquant)?.libelle ?? l.titre_bloquant} -
                               manquant ou expirant avant la fin du chantier.
                             </p>
                           )}

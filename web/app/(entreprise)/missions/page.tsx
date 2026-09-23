@@ -55,7 +55,7 @@ export default async function MesMissions() {
             <div className="carte">
               <h2>Comment ça marche</h2>
               <p className="secondaire">
-                Vous décrivez le besoin — métier, dates, habilitations exigées. Intérimatch
+                Vous décrivez le besoin - métier, dates, habilitations exigées. Intérimatch
                 écarte les profils non conformes, puis classe les autres par compatibilité.
                 Vous ne voyez que des candidats dont les titres sont valides à la date de fin
                 de votre chantier.

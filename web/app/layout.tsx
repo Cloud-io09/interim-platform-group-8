@@ -6,7 +6,7 @@ import Logo from "@/components/Logo";
 export const metadata: Metadata = {
   metadataBase: new URL("https://interimatch.vercel.app"),
   title: {
-    default: "Intérimatch — l'intérim du BTP, sur certifications vérifiées",
+    default: "Intérimatch - l'intérim du BTP, sur certifications vérifiées",
     template: "%s | Intérimatch",
   },
   description:
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <ul>
                 <li><a href="/mentions-legales">Mentions légales</a></li>
                 <li><a href="/confidentialite">Protection des données</a></li>
-                <li><a href="/accessibilite">Accessibilité — partiellement conforme</a></li>
+                <li><a href="/accessibilite">Accessibilité - partiellement conforme</a></li>
               </ul>
             </div>
             <div>

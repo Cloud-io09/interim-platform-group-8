@@ -45,7 +45,7 @@ export default function CodesRecuperation({
       <p className="petit secondaire">
         Ils vous permettront de reprendre la main si vous oubliez votre mot de passe.
         <strong> Ils ne seront plus jamais affichés.</strong> Notez-en au moins un
-        quelque part — un papier dans le portefeuille suffit.
+        quelque part - un papier dans le portefeuille suffit.
       </p>
 
       <ul className="liste-nue codes">
