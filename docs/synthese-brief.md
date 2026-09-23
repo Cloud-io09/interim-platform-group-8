@@ -2,7 +2,7 @@
 
 *Synthèse technique structurée sur le sujet D-WEB-901. Chaque chiffre a été mesuré le
 22 septembre 2026, pas reconstitué de mémoire : 374 tests `core` (couverture 96,8 %),
-199 tests `web`, 14 migrations, 21 tables, 42 routes d'API.*
+210 tests `web`, 14 migrations, 21 tables, 42 routes d'API.*
 
 ---
 
@@ -111,8 +111,8 @@ partirait vers `/channels/null/messages`.
 | Base relationnelle | **PostgreSQL / Supabase**, 21 tables, 14 migrations, 42 routes d'API |
 | Base non relationnelle | **Redis / Upstash**, huit usages : sessions, index de révocation, limitation de tentatives, jetons à usage unique, état OAuth, cache de matching, **traces de matching**, cache de géocodage |
 | Tests unitaires | **374** dans `core` |
-| Tests fonctionnels | **199** dans `web`, contre un vrai serveur démarré en HTTP |
-| Coverage | **96,8 %** sur `core`. Pas de rapport pour `web`, délibérément : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait plus trompeur que son absence. L'écart est chiffré autrement — 39 des 42 routes traversées |
+| Tests fonctionnels | **210** dans `web`, contre un vrai serveur démarré en HTTP |
+| Coverage | **96,8 %** sur `core`. Pas de rapport pour `web`, délibérément : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait plus trompeur que son absence. L'écart est chiffré autrement — les 42 routes traversées |
 | CLI | **`commander`** dans `ingest/` — six commandes : `seed-metiers`, `fetch`, `clean`, `load`, `stats`, `demo` |
 | Auth écrite soi-même | Aucune librairie d'authentification, aucune solution managée. Supabase n'est **qu'une base de données** |
 | OAuth par librairie | Sans objet pour la connexion : aucune identification tierce n'est proposée. OAuth2 n'est utilisé que pour **rattacher un compte Discord**, jamais pour s'authentifier |

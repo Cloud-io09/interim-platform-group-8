@@ -100,6 +100,12 @@ describe("scénario 1 — alerte avant expiration", () => {
       prenom: "Bientot", nom: "Perime", codePostal: "51100", ville: "Reims",
       rayonMobiliteKm: 50, metiers: ["F1302"],
     }, int.cookie);
+    // **On retient l'identifiant du compte qu'on vient de créer.** Le test cherchait
+    // son alerte par le nom « Bientot Perime », qui n'a rien d'unique : il tombait
+    // sur le compte d'une exécution précédente dont le nettoyage avait échoué, et
+    // vérifiait une échéance qui n'était pas la sienne. Quatre-vingt-neuf comptes
+    // d'essai s'étaient accumulés en base sans que personne ne s'en aperçoive.
+    const monId = (await appel("/api/moi", "GET", undefined, int.cookie)).corps.compte.id;
     // Expire dans 30 jours, donc bien avant la fin de mission : renouveler la débloque.
     await appel("/api/certifications", "POST", {
       typeCode: "CACES_R482", categorieCode: "B1", organismeEmetteur: "AFPA",
@@ -107,7 +113,7 @@ describe("scénario 1 — alerte avant expiration", () => {
     }, int.cookie);
 
     const { corps } = await appelN8n("/api/n8n/certifications-expirantes?jours=60");
-    const alerte = corps.alertes.find((a: any) => a.nomComplet === "Bientot Perime");
+    const alerte = corps.alertes.find((a: { interimaireId: number }) => a.interimaireId === monId);
     expect(alerte).toBeDefined();
     expect(alerte.joursRestants).toBeGreaterThan(25);
     expect(alerte.joursRestants).toBeLessThanOrEqual(31);

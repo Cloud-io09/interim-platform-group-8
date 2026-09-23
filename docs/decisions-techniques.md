@@ -171,7 +171,7 @@ papier. Même raisonnement qu'au point 7.
 ## 11. Pas de rapport de couverture pour `web`
 
 **Choisi.** Couverture publiée pour `core` seulement. L'écart est chiffré autrement :
-39 des 42 routes d'API traversées.
+les 42 routes d'API traversées.
 
 **Écarté.** Publier un rapport `web`.
 
@@ -237,6 +237,34 @@ qu'aucune mesure ne justifie aujourd'hui.
 `/api/deblocages`, `/api/abonnement` et `/api/candidatures` n'ont pas de compteur :
 ils n'envoient rien vers l'extérieur, et le premier consomme le crédit de celui qui
 l'appelle.
+
+---
+
+## 14. Une connexion partagée, et un `end()` rendu inoffensif
+
+**Choisi.** Un client PostgreSQL mémorisé pour la durée du processus, dont la méthode
+`end()` ne fait plus rien.
+
+**Écarté.** Un client par appel, refermé par chaque route.
+
+**Pourquoi.** Chaque requête HTTP ouvrait sa propre connexion vers Supabase, poignée de
+main TLS comprise : **115 ms par requête, contre 14 ms sur une connexion réutilisée** —
+mesuré, pas estimé. Huit fois plus lent pour un travail identique, payé deux fois : en
+latence pour l'utilisateur et en connexions ouvertes côté base. La suite fonctionnelle
+est passée de **430 à 180 secondes**.
+
+**Pourquoi neutraliser `end()` plutôt que retirer les appels.** Une cinquantaine de
+routes l'appellent dans leur `finally`, ce qui était juste quand chacune avait son
+client. Les retirer un à un aurait laissé la porte ouverte au prochain qui l'écrirait
+de bonne foi. Le rendre inoffensif à l'endroit unique qui connaît la nature partagée du
+client ferme la question. Ce qui doit rendre la main — migration, CLI d'ingestion,
+démontage des tests — appelle `fermerConnexion()`, explicitement nommée pour ça.
+
+**Ce que ça a révélé.** Les tests devenus rapides, une assertion a cédé : elle cherchait
+son alerte par le nom « Bientot Perime », qui n'a rien d'unique, et tombait sur le
+compte d'une exécution précédente. **Quatre-vingt-neuf comptes d'essai** s'étaient
+accumulés en base sans que personne ne s'en aperçoive. Le test cherche désormais par
+identifiant de compte.
 
 ---
 

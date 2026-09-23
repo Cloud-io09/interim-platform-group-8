@@ -86,7 +86,7 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 | RGPD : base légale, conservation, mentions légales | **fait** | `/confidentialite`, `/mentions-legales`, et la cartographie du traitement dans [donnees-personnelles.md](donnees-personnelles.md) |
 | Code du travail : durée maximale | **fait** | 18 mois renouvellements compris (L1251-12), opposée à la saisie avec la date limite calculée, testée aux bornes |
 | Code du travail : mentions obligatoires du contrat | **fait** | Document de mission portant poste, qualification, terme, lieu, horaires, rémunération — et nommant celles qui manquent |
-| Achat responsable / réemploi | **absent** | Conditionnel dans le sujet (« si pertinent »). Piste à écrire : la plateforme sait qui travaille où et quand, ce qui la placerait bien pour mutualiser des EPI entre intérimaires d'un même chantier. Un paragraphe suffit |
+| Achat responsable / réemploi | **fait** | Réemploi d'EPI entre intérimaires d'un même chantier, argumenté dans [ecoconception.md](ecoconception.md) : le gisement, ce que nos données permettent déjà, ce qu'il faudrait ajouter, et la limite qu'on ne franchirait pas — l'hygiène ne se mutualise pas |
 
 ---
 
@@ -110,8 +110,8 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 | Base relationnelle | **fait** | PostgreSQL / Supabase, 21 tables, 14 migrations |
 | Base non relationnelle, usage complémentaire | **fait** | Redis : sessions, limitation de tentatives, cache de matching, traces de calcul, cache de géocodage, jetons à usage unique |
 | Tests unitaires | **fait** | 374 dans `core` |
-| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 199 dans `web`, contre un vrai serveur en HTTP |
-| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,8 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — 39 des 42 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
+| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 210 dans `web`, contre un vrai serveur en HTTP |
+| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,8 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — les 42 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
 | Au moins une bibliothèque CLI | **fait** | `commander`, dans `ingest/` |
 | Authentification classique écrite soi-même | **fait** | Aucune librairie d'authentification, aucune solution managée. Supabase n'est qu'une base de données |
 | OAuth par librairie **si** connexion tierce proposée | **sans objet** | Aucune connexion tierce n'est proposée. Décision et justification dans le `CLAUDE.md` |
