@@ -249,7 +249,7 @@ export default function MesMissionsInterimaire() {
           <ul className="liste-nue liste-cartes">
             {vusHorsMetier.map((m) => (
               <li key={m.id} className="carte">
-                <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+                <h3 className="titre-carte" style={{ marginBottom: "0.25rem" }}>
                   <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                 </h3>
                 <p className="petit secondaire" style={{ margin: 0 }}>
@@ -276,7 +276,7 @@ export default function MesMissionsInterimaire() {
               <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
-                    <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+                    <h3 className="titre-carte" style={{ marginBottom: "0.25rem" }}>
                       <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>

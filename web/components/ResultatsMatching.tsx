@@ -231,7 +231,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
             <li key={e.interimaireId} className="carte">
               <div className="ligne-certification">
                 <div>
-                  <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>{e.prenom} {e.nom}</h3>
+                  <h3 className="titre-carte" style={{ marginBottom: "0.25rem" }}>{e.prenom} {e.nom}</h3>
                   <p className="petit secondaire" style={{ margin: 0 }}>{e.explication}</p>
                 </div>
                 <span

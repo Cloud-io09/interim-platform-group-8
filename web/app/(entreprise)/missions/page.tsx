@@ -67,7 +67,7 @@ export default async function MesMissions() {
                 <li key={m.id} className="carte">
                   <div className="ligne-certification">
                     <div>
-                      <h2 style={{ fontSize: "1.125rem", marginBottom: "0.25rem" }}>
+                      <h2 className="titre-carte-liste" style={{ margin: "0 0 0.25rem" }}>
                         <a href={`/missions/${m.id}`}>{m.titre}</a>
                       </h2>
                       <p className="petit secondaire" style={{ margin: 0 }}>

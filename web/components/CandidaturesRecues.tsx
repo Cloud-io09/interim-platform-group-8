@@ -111,7 +111,7 @@ export default async function CandidaturesRecues({
             >
               <div className="ligne-certification">
                 <div>
-                  <h3 style={{ fontSize: "1rem", margin: "0 0 0.25rem" }}>
+                  <h3 className="titre-carte" style={{ margin: "0 0 0.25rem" }}>
                     <a
                       className="lien-etire"
                       href={`/missions/${missionId}/profils/${ligne.interimaire_id}`}

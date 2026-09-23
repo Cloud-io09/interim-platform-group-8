@@ -190,7 +190,7 @@ export default async function ProfilPourMission({
               </ul>
               {agences.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: "1rem" }}>Son agence d&apos;emploi</h3>
+                  <h3 className="titre-carte">Son agence d&apos;emploi</h3>
                   <ul className="liste-nue">
                     {agences.map((a) => (
                       <li key={`${a.nom}-${a.ville}`} className="ligne">

@@ -30,12 +30,19 @@ const pluriel = (n: number, mot: string, terminaison = "s") => `${n} ${mot}${n >
  */
 function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
   const brouillon = fiche.statut === "brouillon";
+  // Ce qui attend une réponse humaine passe devant un chiffre du moteur.
+  const aRepondre = !brouillon && fiche.candidaturesRecues > 0;
   return (
     <li className="carte carte-mission carte--cliquable">
       <div className="carte-mission-corps">
         <h3>
           <a className="lien-etire" href={`/missions/${fiche.id}`}>{fiche.titre}</a>
         </h3>
+        {/* **Un compteur n'est pas un score.** Le nombre de candidatures tenait
+            dans une tuile chiffrée empruntée au score de compatibilité : un « 1 »
+            en gros caractères, à côté d'un libellé cassé sur deux lignes, dans un
+            cadre posé à l'intérieur d'un autre cadre. Il se dit en toutes lettres,
+            sur la ligne qui porte déjà le lieu, les dates et l'état. */}
         <p className="petit secondaire ligne-meta">
           <span>
             {fiche.ville} · {enJourMois(fiche.dateDebut)} → {enJourMois(fiche.dateFin)}
@@ -45,54 +52,28 @@ function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
           ) : (
             <span className="pastille pastille--info">Démarre {delai(fiche.joursAvantDebut)}</span>
           )}
+          {aRepondre && (
+            <span className="pastille pastille--attention">
+              {pluriel(fiche.candidaturesRecues, "candidature")} à traiter
+            </span>
+          )}
         </p>
-        {brouillon && (
-          <p className="petit secondaire" style={{ margin: "0.5rem 0 0" }}>
-            Tant qu&apos;elle n&apos;est pas publiée, cette fiche n&apos;est proposée à personne.
-          </p>
-        )}
+        <p className="petit secondaire" style={{ margin: 0 }}>
+          {brouillon
+            ? "Tant qu'elle n'est pas publiée, cette fiche n'est proposée à personne."
+            : aRepondre
+              ? `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} par ailleurs`
+              : fiche.propositionsEnAttente > 0
+                ? `${pluriel(fiche.propositionsEnAttente, "proposition")} sans réponse`
+                : `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} · personne n'a encore postulé`}
+          {!brouillon && fiche.acceptees > 0 && ` · ${pluriel(fiche.acceptees, "acceptée", "s")}`}
+        </p>
       </div>
 
-      <div className="encart-score">
-        {brouillon ? (
-          <>
-            <p className="petit secondaire" style={{ margin: "0 0 1rem" }}>
-              Aucun candidat tant que la fiche est en brouillon.
-            </p>
-            <a className="bouton" href={`/missions/${fiche.id}`}>Terminer et publier</a>
-          </>
-        ) : (
-          <>
-            {/* **Une candidature reçue passe devant tout le reste.** L'écran
-                montrait « profils conformes », un chiffre du moteur, et taisait les
-                gens qui avaient levé la main : on lisait « aucune proposition en
-                attente » pendant que la notification disait « X a postulé ». */}
-            {fiche.candidaturesRecues > 0 ? (
-              <p className="encart-score-tete">
-                <span className="petit secondaire">
-                  {pluriel(fiche.candidaturesRecues, "candidature")} à traiter
-                </span>
-                <strong>{fiche.candidaturesRecues}</strong>
-              </p>
-            ) : (
-              <p className="encart-score-tete">
-                <span className="petit secondaire">Profils conformes</span>
-                <strong>{fiche.candidatsConformes}</strong>
-              </p>
-            )}
-            <p className="petit secondaire" style={{ margin: "0 0 1rem" }}>
-              {fiche.candidaturesRecues > 0
-                ? `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} par ailleurs`
-                : fiche.propositionsEnAttente > 0
-                  ? `${pluriel(fiche.propositionsEnAttente, "proposition")} sans réponse`
-                  : "Personne n'a encore postulé"}
-              {fiche.acceptees > 0 && ` · ${pluriel(fiche.acceptees, "acceptée", "s")}`}
-            </p>
-            <a className="bouton" href={`/missions/${fiche.id}`}>
-              {fiche.candidaturesRecues > 0 ? "Répondre aux candidats" : "Voir les candidats"}
-            </a>
-          </>
-        )}
+      <div className="carte-mission-action">
+        <a className="bouton" href={`/missions/${fiche.id}`}>
+          {brouillon ? "Terminer et publier" : aRepondre ? "Répondre aux candidats" : "Voir les candidats"}
+        </a>
       </div>
     </li>
   );

@@ -38,7 +38,7 @@ export default function SupprimerCompte() {
 
   return (
     <section className="zone-dangereuse" aria-labelledby="titre-suppression">
-      <h2 id="titre-suppression" style={{ fontSize: "1.05rem" }}>Supprimer mon compte</h2>
+      <h2 id="titre-suppression" className="titre-carte">Supprimer mon compte</h2>
       {!ouvert ? (
         <>
           <p className="petit secondaire" style={{ margin: "0 0 0.75rem" }}>

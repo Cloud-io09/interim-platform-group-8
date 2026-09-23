@@ -69,7 +69,7 @@ export default function Accueil() {
       <section className="section">
         <div className="colonne">
           <h1>L&apos;intérim du BTP, sur habilitations vérifiées.</h1>
-          <p style={{ maxWidth: "56ch", fontSize: "1.125rem" }} className="secondaire">
+          <p style={{ maxWidth: "56ch" }} className="secondaire accroche">
             Les entreprises publient un besoin avec les habilitations exigées. Les
             intérimaires déclarent les leurs, avec leurs dates. Nous ne rapprochons que
             ce qui est conforme à la date du chantier.

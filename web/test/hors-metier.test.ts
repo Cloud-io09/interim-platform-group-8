@@ -154,3 +154,50 @@ describe("candidater hors de ses métiers déclarés", () => {
     expect(page.texte).toContain("Hors");
   });
 });
+
+/**
+ * Mise en page des deux écrans où les défauts ont été constatés.
+ *
+ * **Pourquoi ces contrôles vivent ici.** Le montage est déjà fait plus haut — une
+ * entreprise, une mission publiée, une candidature — et ce sont précisément les
+ * deux écrans photographiés : le tableau de bord et la liste des candidatures.
+ *
+ * Aucun de ces contrôles ne voit de pixels. Ils vérifient la *structure* qui
+ * produisait le désordre : des candidatures posées à nu sur le fond de page, une
+ * tuile chiffrée détournée en colonne de droite, des tailles de police décidées
+ * écran par écran. Ce qu'ils ne diront jamais, c'est si le résultat est élégant.
+ */
+describe("mise en page des listes", () => {
+  it("range chaque candidature dans la carte de son chantier", async () => {
+    // Elles flottaient sur le fond de page, séparées du titre de leur mission par
+    // deux marges cumulées : rien ne disait où un chantier finissait.
+    const page = await appel("/candidatures", "GET", undefined, ent.cookie);
+    expect(page.texte).toContain("groupe-candidatures");
+    const premierGroupe = page.texte.indexOf("groupe-candidatures");
+    const premiereLigne = page.texte.indexOf("ligne-candidat");
+    expect(premiereLigne, "une candidature rendue hors de toute carte").toBeGreaterThan(premierGroupe);
+  });
+
+  it("n'imbrique plus une tuile chiffrée dans la carte d'une mission", async () => {
+    // `encart-score` est la tuile du score de compatibilité. Réemployée en colonne
+    // de droite générique, elle encadrait un simple bouton : un cadre dans un
+    // cadre, dimensionné pour un pourcentage, qui cassait « Répondre aux
+    // candidats » sur deux lignes et gonflait toute la carte.
+    const page = await appel("/espace/entreprise", "GET", undefined, ent.cookie);
+    expect(page.texte).toContain("carte-mission");
+    expect(page.texte, "la tuile de score est revenue sur le tableau de bord").not.toContain(
+      "encart-score"
+    );
+  });
+
+  it("ne laisse aucune taille de police décidée écran par écran", async () => {
+    // Dix-huit éléments fixaient la leur en style en ligne, pour quatre valeurs
+    // dont trois tiennent dans deux pixels. Une taille appartient à la feuille de
+    // style, sous un nom qui dit à quoi elle sert.
+    for (const chemin of ["/candidatures", "/espace/entreprise", "/missions", "/tarifs"]) {
+      const page = await appel(chemin, "GET", undefined, ent.cookie);
+      expect(page.statut, chemin).toBe(200);
+      expect(page.texte, `${chemin} : taille de police en ligne`).not.toMatch(/style="[^"]*font-size/);
+    }
+  });
+});

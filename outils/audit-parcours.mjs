@@ -162,6 +162,23 @@ for (const f of sources) {
 }
 signaler("aucun espacement hors de l'échelle", horsEchelle);
 
+// --- 6. Taille de police posée en ligne --------------------------------------
+//
+// Dix-huit éléments fixaient chacun la taille de leur titre dans un style en
+// ligne, pour quatre valeurs dont trois tiennent dans deux pixels — 1 · 1,05 ·
+// 1,0625 · 1,125 rem. Aucune n'était un choix : chacune était un tâtonnement
+// local, et l'ensemble n'avait plus de hiérarchie lisible. Une taille appartient
+// à la feuille de style, sous un nom qui dit à quoi elle sert.
+const policesEnLigne = [];
+for (const f of sources) {
+  const texte = readFileSync(f, "utf8");
+  for (const m of texte.matchAll(/style=\{\{[^}]*fontSize:[^}]*\}\}/g)) {
+    policesEnLigne.push(`${f}:${texte.slice(0, m.index).split("\n").length}`);
+  }
+}
+signaler("aucune taille de police posée en ligne", policesEnLigne);
+
+
 console.log(
   problemes === 0
     ? "\n\x1b[32mParcours : aucun défaut statique.\x1b[0m"

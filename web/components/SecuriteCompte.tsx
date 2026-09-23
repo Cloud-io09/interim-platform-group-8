@@ -156,7 +156,7 @@ export default function SecuriteCompte() {
 
       <div className={`carte ${adresse && !adresse.verifie ? "carte--verdict-bloque" : "carte--securite"}`}>
         <div className="tete-carte">
-          <h3 style={{ fontSize: "1rem", margin: 0 }}>Adresse e-mail</h3>
+          <h3 className="titre-carte" style={{ margin: 0 }}>Adresse e-mail</h3>
           {adresse && (
             <span
               className={adresse.verifie ? "pastille pastille--ok" : "pastille pastille--attention"}
@@ -213,7 +213,7 @@ export default function SecuriteCompte() {
       </div>
 
       <form onSubmit={changerMotDePasse} className="carte carte--securite" noValidate style={{ marginTop: "1rem" }}>
-        <h3 style={{ fontSize: "1rem", marginTop: 0 }}>Changer mon mot de passe</h3>
+        <h3 className="titre-carte" style={{ marginTop: 0 }}>Changer mon mot de passe</h3>
 
         <div className="champ">
           <label htmlFor={ids.ancien}>Mot de passe actuel</label>
@@ -246,7 +246,7 @@ export default function SecuriteCompte() {
 
       <div className="carte carte--securite" style={{ marginTop: "1rem" }}>
         <div className="tete-carte">
-          <h3 style={{ fontSize: "1rem", margin: 0 }}>Codes de récupération</h3>
+          <h3 className="titre-carte" style={{ margin: 0 }}>Codes de récupération</h3>
           {restants !== null && (
             <span className={restants > 2 ? "pastille pastille--ok" : "pastille pastille--attention"}>
               {restants} restant{restants > 1 ? "s" : ""}

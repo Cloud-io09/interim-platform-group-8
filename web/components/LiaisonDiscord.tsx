@@ -113,7 +113,7 @@ export default function LiaisonDiscord() {
   return (
     <section aria-labelledby="titre-discord" className="carte carte--notification">
       <div className="tete-carte">
-        <h3 id="titre-discord" style={{ fontSize: "1rem", margin: 0 }}>
+        <h3 id="titre-discord" className="titre-carte" style={{ margin: 0 }}>
           Notifications sur Discord
         </h3>
         <span className={etat.relie ? "pastille pastille--ok" : "pastille"}>

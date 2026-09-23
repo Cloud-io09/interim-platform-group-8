@@ -390,7 +390,7 @@ export default function DepotCv() {
               if (lot.length === 0) return null;
               return (
                 <section key={cle} style={{ marginTop: "1.5rem" }}>
-                  <h4 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
+                  <h4 className="titre-carte" style={{ marginBottom: "0.25rem" }}>
                     {titre} <span className="secondaire">({lot.length})</span>
                   </h4>
                   <p className="petit secondaire" style={{ marginTop: 0 }}>{intro}</p>
@@ -399,7 +399,7 @@ export default function DepotCv() {
                       <li key={s.missionId} className="carte">
                         <div className="ligne-certification">
                           <div>
-                            <h5 style={{ fontSize: "1rem", margin: "0 0 0.25rem" }}>
+                            <h5 className="titre-carte" style={{ margin: "0 0 0.25rem" }}>
                               <a href={`/mes-missions/${s.missionId}`}>{s.titre}</a>
                             </h5>
                             <p className="petit secondaire" style={{ margin: 0 }}>

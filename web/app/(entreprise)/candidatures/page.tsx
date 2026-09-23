@@ -144,9 +144,16 @@ export default async function CandidaturesEntreprise() {
             </div>
           ) : (
             [...parMission.entries()].map(([missionId, lot]) => (
-              <section key={missionId} aria-labelledby={`mission-${missionId}`}>
-                <div className="tete-section">
-                  <h2 id={`mission-${missionId}`} style={{ fontSize: "1.125rem" }}>
+              // Le chantier et ses candidats tiennent dans la même carte : une
+              // candidature ne se juge pas dans l'absolu, mais contre les dates
+              // affichées juste au-dessus d'elle.
+              <section
+                key={missionId}
+                className="carte groupe-candidatures"
+                aria-labelledby={`mission-${missionId}`}
+              >
+                <div className="tete-groupe">
+                  <h2 id={`mission-${missionId}`}>
                     <a href={`/missions/${missionId}`}>{lot[0]!.titre}</a>
                   </h2>
                   <p className="petit secondaire">
@@ -154,7 +161,7 @@ export default async function CandidaturesEntreprise() {
                   </p>
                 </div>
 
-                <ul className="liste-nue lignes" style={{ marginBottom: "2rem" }}>
+                <ul className="liste-nue">
                   {lot.map((l) => {
                     const attend = attendUneReponseDe(l.statut, "entreprise");
                     return (
@@ -163,7 +170,7 @@ export default async function CandidaturesEntreprise() {
                       // que HTML interdit : le navigateur les sortait du conteneur,
                       // et la pastille d'état se centrait sur un bloc dont elle
                       // n'était plus la sœur. Une grille, et des blocs dans un bloc.
-                      <li key={l.interimaire_id} className="ligne-candidat carte--cliquable">
+                      <li key={l.interimaire_id} className="ligne-candidat">
                         <div>
                           <p className="ligne-candidat-tete">
                             <strong>

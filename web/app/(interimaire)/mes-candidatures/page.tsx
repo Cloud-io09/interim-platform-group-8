@@ -114,7 +114,7 @@ export default async function MesCandidatures() {
                 return (
                   <li key={l.mission_id} className="carte carte-mission carte--cliquable">
                     <div className="carte-mission-corps">
-                      <h2 style={{ fontSize: "1.0625rem", margin: "0 0 0.25rem" }}>
+                      <h2 className="titre-carte-liste">
                         <a className="lien-etire" href={`/mes-missions/${l.mission_id}`}>{l.titre}</a>
                       </h2>
                       <p className="petit secondaire ligne-meta">
@@ -155,7 +155,9 @@ export default async function MesCandidatures() {
                       )}
                     </div>
 
-                    <div className="encart-score">
+                    {/* Une action et un lien : rien qui justifie un cadre dans le
+                        cadre de la carte. */}
+                    <div className="carte-mission-action">
                       <ActionCandidature
                         missionId={l.mission_id}
                         acteur="interimaire"
@@ -169,7 +171,7 @@ export default async function MesCandidatures() {
                               : "Dossier clos."
                         }
                       />
-                      <p className="petit secondaire" style={{ margin: "0.75rem 0 0" }}>
+                      <p className="petit secondaire">
                         <a href={`/mes-missions/${l.mission_id}`}>Voir le détail de la mission</a>
                       </p>
                     </div>

@@ -64,7 +64,7 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
 
           {mission.certificationsRequises.length > 0 && (
             <div className="carte" style={{ marginBottom: "2rem" }}>
-              <h2 style={{ fontSize: "1rem" }}>Habilitations exigées</h2>
+              <h2 className="titre-carte">Habilitations exigées</h2>
               <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
                 {mission.certificationsRequises.map((c) => (
                   <li key={c.typeCode}>

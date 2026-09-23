@@ -184,8 +184,20 @@ a:hover, a:focus-visible { text-decoration: underline; }
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
   box-shadow: var(--ombre-carte);
-  padding: 1.5rem;
+  padding: var(--espace-5);
 }
+
+/* **Deux cartes qui se suivent ne se touchent jamais.** Aucun des conteneurs de
+   page — `.colonne`, `.liste-nue` — ne portait de gouttière : les cartes
+   s'empilaient bord à bord, soudées en un bloc où l'œil ne trouvait plus la
+   limite d'un chantier. La règle porte sur la succession elle-même, pas sur une
+   classe de conteneur qu'il faudrait penser à ajouter à chaque nouvel écran. */
+.carte + .carte { margin-top: var(--espace-3); }
+/* Sauf là où le conteneur gère déjà son espacement — sans quoi il doublerait. */
+.grille > .carte + .carte,
+.liste-nue > .carte + .carte { margin-top: 0; }
+/* Ce qui clôt une liste de cartes — « Voir toutes mes fiches » — en est séparé. */
+.liste-nue:has(> .carte) + .bouton { margin-top: var(--espace-3); }
 
 .grille { display: grid; gap: 1rem; }
 @media (min-width: 720px) {
@@ -381,6 +393,12 @@ legend {
 .etiquette--alerte { color: var(--alerte); }
 
 .liste-nue { list-style: none; margin: 0; padding: 0; }
+/* **Une liste de cartes doit séparer ses cartes.** `.liste-nue` ne retirait que
+   les puces : cinq écrans empilaient donc des cartes bord à bord, soudées en un
+   seul bloc où l'on ne distinguait plus où une mission finissait. La gouttière
+   est attachée à la PRÉSENCE d'une carte, pas à une classe qu'il faudrait penser
+   à écrire — une classe s'oublie, la condition non. */
+.liste-nue:has(> .carte) { display: grid; gap: var(--espace-3); }
 
 .ligne-certification {
   display: flex;
@@ -571,7 +589,15 @@ main code {
   text-decoration: none;
 }
 .chiffre-lien:hover { background: var(--fond); }
-.chiffre { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+/* Marine et non noir : ces trois nombres sont des liens vers ce qu'il y a à
+   faire, pas de la donnée inerte. 11,5 de contraste sur blanc. */
+.chiffre {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--marine);
+}
 
 .actions { display: grid; gap: 0.75rem; }
 
@@ -744,7 +770,18 @@ details > summary {
   color: var(--texte-secondaire);
   border-bottom: 2px solid transparent;
 }
-.onglet--actif { color: var(--texte); font-weight: 600; border-bottom-color: var(--bordure-forte); }
+/* **Le jaune revient, mais comme surface — jamais comme encre.** Le produit
+   était devenu entièrement marine et gris : rien n'y rappelait la marque une
+   fois passé le logo. Le repère de l'onglet courant est l'endroit juste — il est
+   déjà doublé par la couleur du texte, la graisse et `aria-current`, donc le
+   trait ne porte aucune information à lui seul et le critère 3.2 du RGAA, qui
+   vise le texte, ne s'y applique pas. Essayé puis retiré : un filet sous le
+   titre d'écran, qui séparait le titre du sous-titre qui lui appartient. */
+.onglet--actif {
+  color: var(--texte);
+  font-weight: 600;
+  border-bottom: 3px solid var(--marque-jaune);
+}
 /* Le soulignement du survol ferait doublon avec le filet de l'onglet actif. */
 .onglet:hover, .onglet:focus-visible { text-decoration: none; color: var(--texte); border-bottom-color: var(--bordure-forte); }
 
@@ -853,7 +890,23 @@ details > summary {
   gap: 1rem;
   margin-bottom: 1rem;
 }
-.titre-carte { font-size: 1rem; font-weight: 600; margin: 0; letter-spacing: 0; }
+/* **Une taille de sous-titre, pas dix-huit réglages.** Dix-huit éléments fixaient
+   chacun la taille de leur titre en style en ligne, pour quatre valeurs dont trois
+   tiennent dans deux pixels — 1 · 1,05 · 1,0625 · 1,125 rem. Aucune n'était un
+   choix : chacune était un tâtonnement local, et l'ensemble n'avait plus de
+   hiérarchie lisible. Deux tailles suffisent à tout le produit.
+
+   `margin: 0` retirait aussi la marge basse que tout titre porte par défaut : le
+   titre d'un panneau venait donc toucher la liste qu'il annonce. La marge haute,
+   elle, reste au cascade — un titre en milieu de carte ouvre une sous-section et
+   doit respirer, un titre en tête de carte n'en a pas besoin. */
+.titre-carte { font-size: 1rem; font-weight: 600; margin-bottom: var(--espace-2); letter-spacing: 0; }
+.tete-carte .titre-carte { margin-bottom: 0; }
+/* Le nom d'un élément de liste : il doit dominer sa ligne sans peser comme un
+   titre de section. */
+.titre-carte-liste { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+/* Chapeau d'une page publique : du texte courant, en plus grand. */
+.accroche { font-size: 1.125rem; }
 
 /* Carte de mission : le descriptif à gauche, le verdict du moteur dans un encart
    à droite. Le verdict est visuellement séparé parce qu'il ne décrit pas la
@@ -863,15 +916,25 @@ details > summary {
   /* La colonne de droite réclamait 220 px minimum : sur une carte qui n'affiche
      que deux chiffres et un bouton, elle imposait une hauteur de bloc démesurée
      pour trois lignes d'information. 180 px suffisent, et le rembourrage suit. */
-  grid-template-columns: minmax(0, 2fr) minmax(180px, 0.8fr);
-  gap: 1.25rem;
-  align-items: center;
+  /* La colonne d'action se dimensionne sur son contenu. Une largeur imposée
+     forçait « Répondre aux candidats » à se casser sur deux lignes et gonflait
+     la carte entière pour loger un bouton. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--espace-3) var(--espace-5);
+  /* **En haut, pas au centre.** Centré, le titre d'une mission flottait au
+     milieu d'une carte dont la hauteur était dictée par la colonne de droite :
+     un grand vide au-dessus, un grand vide en dessous, et rien qui s'aligne. */
+  align-items: start;
 }
 /* Une carte de liste n'a pas besoin du rembourrage d'une carte de contenu : le
    même 1,5 rem qui aère un formulaire gonfle une ligne de mission. */
-.carte.carte-mission { padding: 1rem 1.25rem; }
-.carte-mission h3 { margin: 0 0 0.25rem; }
-.carte-mission-corps > p { margin: 0 0 0.5rem; }
+.carte.carte-mission { padding: var(--espace-4) var(--espace-5); }
+.carte-mission-corps { min-width: 0; }
+/* Titre d'une carte de liste : il nomme une ligne, il n'ouvre pas une section.
+   Trois écrans le réglaient chacun par un style en ligne — donc trois tailles. */
+.carte-mission :is(h2, h3) { font-size: 1.125rem; margin: 0 0 var(--espace-1); }
+.carte-mission-corps > p { margin: 0 0 var(--espace-2); }
+.carte-mission-corps > p:last-child { margin-bottom: 0; }
 @media (max-width: 720px) {
   .carte-mission { grid-template-columns: 1fr; }
 }
@@ -885,12 +948,40 @@ details > summary {
 }
 .ligne-conditions strong { font-size: 1.0625rem; }
 
+/* **Une tuile chiffrée, et rien d'autre.** `.encart-score` avait été détournée
+   en colonne de droite générique : elle encadrait tantôt un score, tantôt un
+   simple bouton. Un cadre dans un cadre, dimensionné pour un pourcentage, qui
+   comprimait tout le reste. Elle ne sert plus qu'à ce pour quoi elle est faite :
+   un chiffre qui se lit d'un coup d'œil, avec sa jauge. */
 .encart-score {
   background: var(--fond);
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
-  padding: 0.75rem 0.75rem;
-  align-self: center;
+  padding: var(--espace-3);
+  align-self: start;
+  /* La tuile est bornée : sans largeur propre, la colonne « auto » se calait sur
+     la plus longue ligne du détail — « 3/5 compétences · 12 km · 20/20 jours » —
+     et le score mangeait la moitié de la carte. La jauge, elle, n'a pas de
+     largeur intrinsèque et ne peut donc pas tenir ce rôle. */
+  width: 14rem;
+  max-width: 100%;
+}
+@media (max-width: 720px) { .encart-score { width: 100%; } }
+
+/* Colonne d'action d'une carte de liste : ce qu'on vient y faire, aligné à
+   droite, sans cadre. Le bouton ne se casse jamais — c'est lui qui fixe la
+   largeur de la colonne, et une action coupée en deux lignes se lit mal. */
+.carte-mission-action {
+  display: grid;
+  gap: var(--espace-2);
+  align-content: start;
+  justify-items: stretch;
+}
+.carte-mission-action .bouton { white-space: nowrap; }
+.carte-mission-action > p { margin: 0; }
+@media (max-width: 720px) {
+  .carte-mission-action { justify-items: start; }
+  .carte-mission-action .bouton { white-space: normal; }
 }
 .encart-score-tete {
   display: flex;
@@ -938,10 +1029,13 @@ details > summary {
   border: 1px solid currentColor;
   white-space: nowrap;
 }
-.pastille--ok { color: var(--succes); }
-.pastille--attention { color: #8a5a00; }
-.pastille--alerte { color: var(--alerte); }
-.pastille--info { color: var(--texte); }
+/* Un fond teinté plutôt qu'un contour nu : une pastille cerclée sur fond blanc
+   se lit comme un champ vide. La teinte ne porte aucune information — le mot la
+   porte, et le contraste de chaque paire est vérifié au moins AA. */
+.pastille--ok { color: var(--succes); background: #eef6f0; border-color: #cfe4d7; }
+.pastille--attention { color: #8a5a00; background: #fdf4e3; border-color: #ecdcb8; }
+.pastille--alerte { color: var(--alerte); background: #fbeeec; border-color: #eed3cd; }
+.pastille--info { color: var(--texte); background: #f2f0ec; border-color: var(--bordure); }
 
 .lignes { display: grid; gap: 0.5rem; }
 .ligne {
@@ -990,7 +1084,7 @@ details > summary {
 
 /* Méta d'une carte : la pastille d'état doit rester sur la ligne plutôt que de la
    couper en deux au milieu d'un nombre. */
-.ligne-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.5rem; }
+.ligne-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espace-2); }
 
 /* --- Conformité ------------------------------------------------------------
    Le différenciateur du produit. Trois contraintes : « expire pendant » n'est pas
@@ -1067,7 +1161,8 @@ details > summary {
 
 /* Titre d'écran sous le bandeau d'espace : plus discret qu'un h1 de page publique,
    qui viserait 3 rem — ici le bandeau tient déjà le haut de la page. */
-.titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: 0.25rem; }
+.titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: var(--espace-1); }
+
 
 /* --- Sélecteur dans un référentiel long ------------------------------------ */
 .selecteur { margin-bottom: 1.5rem; }
@@ -1266,11 +1361,15 @@ details > summary {
    Le lien reste UNIQUE dans le balisage — un lecteur d'écran annonce un lien, pas
    une carte piégée — et son pseudo-élément recouvre la carte. Les autres éléments
    interactifs de la carte remontent au-dessus par `position: relative`. */
-.carte--cliquable { position: relative; transition: border-color 120ms, box-shadow 120ms; }
+.carte--cliquable,
+.ligne-candidat { position: relative; transition: border-color 120ms, background-color 120ms; }
 .carte--cliquable:hover { border-color: var(--marine); }
-.carte--cliquable:has(.lien-etire:focus-visible) {
+/* Le trait de focus se pose sur la surface entière, jamais sur le pseudo-élément
+   qui la recouvre : sinon le clavier n'obtient qu'un rectangle invisible. */
+.carte--cliquable:has(.lien-etire:focus-visible),
+.ligne-candidat:has(.lien-etire:focus-visible) {
   outline: 3px solid var(--marine);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 .lien-etire { text-decoration: none; color: inherit; }
 .lien-etire::after {
@@ -1284,7 +1383,10 @@ details > summary {
 /* Tout ce qui doit rester cliquable par-dessus la surface du lien. */
 .carte--cliquable .bouton,
 .carte--cliquable button,
-.carte--cliquable a:not(.lien-etire) {
+.carte--cliquable a:not(.lien-etire),
+.ligne-candidat .bouton,
+.ligne-candidat button,
+.ligne-candidat a:not(.lien-etire) {
   position: relative;
   z-index: 1;
 }
@@ -1293,16 +1395,35 @@ details > summary {
    HAUT et non au centre — une pastille centrée sur deux lignes de motif flotte au
    milieu de nulle part. La grille borne aussi la colonne de gauche, sans quoi un
    intitulé d'habilitation long pousse l'état hors de l'écran. */
+/* **Un chantier, une carte.** Les candidatures étaient posées à nu sur le fond
+   de page, séparées du titre de leur mission par deux marges cumulées : rien ne
+   disait où un chantier commençait ni où le précédent finissait, et le texte
+   semblait flotter. Elles vivent maintenant DANS la carte de leur mission —
+   c'est contre les dates de ce chantier-là qu'elles se jugent. */
+.groupe-candidatures { padding: 0; overflow: hidden; }
+.tete-groupe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-1) var(--espace-4);
+  padding: var(--espace-3) var(--espace-5);
+  background: var(--fond);
+  border-bottom: 1px solid var(--bordure);
+}
+.tete-groupe h2 { font-size: 1rem; margin: 0; }
+.tete-groupe p { margin: 0; }
+
 .ligne-candidat {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
-  gap: 0.75rem 1rem;
-  padding: 0.75rem 0.25rem;
+  gap: var(--espace-1) var(--espace-4);
+  padding: var(--espace-3) var(--espace-5);
   border-top: 1px solid var(--bordure);
-  border-radius: var(--rayon);
 }
 .ligne-candidat:first-child { border-top: 0; }
+.ligne-candidat:hover { background: var(--fond); }
 .ligne-candidat-tete {
   display: flex;
   flex-wrap: wrap;

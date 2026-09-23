@@ -73,7 +73,7 @@ export default function Tarifs() {
         <ul className="liste-nue grille grille--3">
           {PLANS.map((p) => (
             <li key={p.code} className="carte">
-              <h3 style={{ fontSize: "1rem", margin: 0 }}>{p.libelle}</h3>
+              <h3 className="titre-carte" style={{ margin: 0 }}>{p.libelle}</h3>
               <p className="chiffre">
                 {p.prixMensuelCents === 0 ? "Gratuit" : enEuros(p.prixMensuelCents)}
               </p>
