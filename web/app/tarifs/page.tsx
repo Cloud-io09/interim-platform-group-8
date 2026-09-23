@@ -69,7 +69,7 @@ export default function Tarifs() {
           </span>
         </p>
 
-        <h2 style={{ marginTop: "2.5rem" }}>Abonnements</h2>
+        <h2 style={{ marginTop: "2rem" }}>Abonnements</h2>
         <ul className="liste-nue grille grille--3">
           {PLANS.map((p) => (
             <li key={p.code} className="carte">
@@ -92,7 +92,7 @@ export default function Tarifs() {
           ))}
         </ul>
 
-        <h2 style={{ marginTop: "2.5rem" }}>Sans abonnement</h2>
+        <h2 style={{ marginTop: "2rem" }}>Sans abonnement</h2>
         <p className="secondaire">
           Le bâtiment recrute par à-coups. Ces crédits <strong>n&apos;expirent pas</strong>{" "}
           et se consomment après le quota de votre abonnement, s&apos;il y en a un.
@@ -111,7 +111,7 @@ export default function Tarifs() {
           ))}
         </ul>
 
-        <h2 style={{ marginTop: "2.5rem" }}>Et pour les intérimaires ?</h2>
+        <h2 style={{ marginTop: "2rem" }}>Et pour les intérimaires ?</h2>
         <p className="secondaire">
           Tout est gratuit, sans exception et sans condition. Déclarer ses habilitations,
           consulter les missions, postuler, être prévenu d&apos;une échéance qui approche :

@@ -67,8 +67,8 @@ export default async function MesMissions() {
         <li className="carte">
           <div className="ligne-meta" style={{ justifyContent: "space-between" }}>
             <div>
-              <h3 style={{ margin: "0 0 0.2rem" }}>
-                <a className="lien-bloc" href={`/mes-missions/${l.id}`}>{l.titre}</a>
+              <h3 style={{ margin: "0 0 0.25rem" }}>
+                <a className="lien-etire" href={`/mes-missions/${l.id}`}>{l.titre}</a>
               </h3>
               <p className="petit secondaire" style={{ margin: 0 }}>
                 {l.raison_sociale} · {l.ville} · du {enDateFr(l.date_debut)} au{" "}

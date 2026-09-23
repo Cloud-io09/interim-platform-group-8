@@ -164,7 +164,7 @@ export default function Certifications() {
                       {c.organismeEmetteur} · n° {c.numero} · obtenu le {enDateFr(c.dateObtention)}
                     </p>
                     {types.find((t) => t.code === c.typeCode)?.verification && (
-                      <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                      <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
                         <a
                           href={types.find((t) => t.code === c.typeCode)!.verification!.url}
                           target="_blank"
@@ -177,7 +177,7 @@ export default function Certifications() {
                         <span className="hors-ecran"> (nouvelle fenêtre)</span>
                       </p>
                     )}
-                    <p className="petit" style={{ margin: "0.4rem 0 0", fontWeight: 500 }}>
+                    <p className="petit" style={{ margin: "0.5rem 0 0", fontWeight: 500 }}>
                       {perime ? (
                         <span className="etiquette etiquette--alerte">
                           Périmé depuis le {enDateFr(c.dateEcheance)}

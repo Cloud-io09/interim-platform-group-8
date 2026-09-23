@@ -31,10 +31,10 @@ const pluriel = (n: number, mot: string, terminaison = "s") => `${n} ${mot}${n >
 function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
   const brouillon = fiche.statut === "brouillon";
   return (
-    <li className="carte carte-mission">
+    <li className="carte carte-mission carte--cliquable">
       <div className="carte-mission-corps">
         <h3>
-          <a className="lien-bloc" href={`/missions/${fiche.id}`}>{fiche.titre}</a>
+          <a className="lien-etire" href={`/missions/${fiche.id}`}>{fiche.titre}</a>
         </h3>
         <p className="petit secondaire ligne-meta">
           <span>
@@ -56,7 +56,7 @@ function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
       <div className="encart-score">
         {brouillon ? (
           <>
-            <p className="petit secondaire" style={{ margin: "0 0 0.9rem" }}>
+            <p className="petit secondaire" style={{ margin: "0 0 1rem" }}>
               Aucun candidat tant que la fiche est en brouillon.
             </p>
             <a className="bouton" href={`/missions/${fiche.id}`}>Terminer et publier</a>
@@ -80,7 +80,7 @@ function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
                 <strong>{fiche.candidatsConformes}</strong>
               </p>
             )}
-            <p className="petit secondaire" style={{ margin: "0 0 0.9rem" }}>
+            <p className="petit secondaire" style={{ margin: "0 0 1rem" }}>
               {fiche.candidaturesRecues > 0
                 ? `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} par ailleurs`
                 : fiche.propositionsEnAttente > 0
@@ -275,7 +275,7 @@ export default async function EspaceEntreprise() {
                     </li>
                   </ul>
                   {b.brouillons > 0 && (
-                    <p className="petit secondaire" style={{ margin: "0.9rem 0 0" }}>
+                    <p className="petit secondaire" style={{ margin: "1rem 0 0" }}>
                       Un brouillon ne reçoit aucun candidat tant qu&apos;il n&apos;est pas publié.
                     </p>
                   )}

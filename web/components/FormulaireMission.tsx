@@ -264,7 +264,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
                   <span>{t.libelle}</span>
                 </label>
                 {choisie && t.categories.length > 0 && (
-                  <div className="champ" style={{ marginLeft: "2.1rem", marginBottom: "0.75rem" }}>
+                  <div className="champ" style={{ marginLeft: "2rem", marginBottom: "0.75rem" }}>
                     <label htmlFor={`cat-${t.code}`} className="petit">Catégorie exigée</label>
                     <select
                       id={`cat-${t.code}`}

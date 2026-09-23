@@ -37,10 +37,10 @@ function etatEcheance(c: EcheanceCertification): { libelle: string; classe: stri
 function CarteMission({ mission }: { mission: MissionSuggeree }) {
   const manquantes = mission.competencesRequises.filter((c) => !mission.competencesCommunes.includes(c));
   return (
-    <li className="carte carte-mission">
+    <li className="carte carte-mission carte--cliquable">
       <div className="carte-mission-corps">
         <h3>
-          <a className="lien-bloc" href={`/mes-missions/${mission.id}`}>{mission.titre}</a>
+          <a className="lien-etire" href={`/mes-missions/${mission.id}`}>{mission.titre}</a>
         </h3>
         <p className="petit secondaire ligne-meta">
           <span>

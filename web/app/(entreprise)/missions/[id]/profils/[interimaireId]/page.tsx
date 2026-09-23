@@ -29,11 +29,14 @@ const enKm = (km: number) => `${km.toLocaleString("fr-FR", { maximumFractionDigi
  */
 export default async function ProfilPourMission({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; interimaireId: string }>;
+  searchParams: Promise<{ debloque?: string }>;
 }) {
   const session = await exigerSession("entreprise");
   const { id, interimaireId: brut } = await params;
+  const { debloque: vientDeDebloquer } = await searchParams;
   const missionId = Number(id);
   const interimaireId = Number(brut);
   if (!Number.isInteger(missionId) || !Number.isInteger(interimaireId)) notFound();
@@ -118,7 +121,7 @@ export default async function ProfilPourMission({
             ) : (
               <>
                 {identite.prenom} {identite.nom.charAt(0)}.
-                <span className="petit secondaire" style={{ marginLeft: "0.6rem", fontWeight: 400 }}>
+                <span className="petit secondaire" style={{ marginLeft: "0.5rem", fontWeight: 400 }}>
                   identité masquée
                 </span>
               </>
@@ -141,6 +144,20 @@ export default async function ProfilPourMission({
               Le contrat de mission passe par une agence d&apos;emploi. Ce profil n&apos;en
               déclare aucune : il faudra l&apos;inscrire dans la vôtre, ce qui rallonge la
               mise en place de quelques jours.
+            </p>
+          )}
+
+          {/* Le rechargement effaçait tout message : l'écran changeait sans rien
+              dire, et on se demandait si le crédit était parti. */}
+          {vientDeDebloquer === "1" && debloque && (
+            <p className="bandeau bandeau--ok" role="status">
+              <span>
+                <strong>Coordonnées débloquées.</strong> Ce déblocage vaut pour{" "}
+                {identite.prenom} sur cette mission ; il ne sera pas redemandé.
+              </span>
+              <a className="bouton bouton--secondaire" href="/espace/entreprise/abonnement">
+                Voir mon solde
+              </a>
             </p>
           )}
 

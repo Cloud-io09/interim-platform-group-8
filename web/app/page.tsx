@@ -100,7 +100,7 @@ export default function Accueil() {
           <h2 style={{ maxWidth: "26ch" }}>
             Plus d&apos;une offre du BTP sur deux est une mission d&apos;intérim.
           </h2>
-          <div className="grille grille--3" style={{ marginTop: "2.5rem" }}>
+          <div className="grille grille--3" style={{ marginTop: "2rem" }}>
             <div>
               <p className="statistique">{nombre(RELEVE.offresBtp)}</p>
               <p className="petit secondaire">offres BTP recensées via l&apos;API France Travail</p>

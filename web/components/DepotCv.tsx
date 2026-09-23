@@ -257,7 +257,7 @@ export default function DepotCv() {
                     style={{ width: `${Math.round(progression.progression * 100)}%` }}
                   />
                 </div>
-                <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
                   {Math.round(progression.progression * 100)} % — ce document est un scan,
                   sa lecture demande un peu plus de temps.
                 </p>
@@ -351,7 +351,7 @@ export default function DepotCv() {
               </p>
               <ul className="liste-nue petit">
                 {analyse.certifications.map((c, i) => (
-                  <li key={`${c.typeCode}-${c.categorieCode ?? i}`} style={{ marginBottom: "0.4rem" }}>
+                  <li key={`${c.typeCode}-${c.categorieCode ?? i}`} style={{ marginBottom: "0.5rem" }}>
                     <strong>{c.typeCode.replace(/_/g, " ")}{c.categorieCode ? ` — ${c.categorieCode}` : ""}</strong>
                     <br />
                     <span className="secondaire">« {c.extrait} »</span>
@@ -389,8 +389,8 @@ export default function DepotCv() {
               const lot = suggestions.filter((s) => s.conformite === cle);
               if (lot.length === 0) return null;
               return (
-                <section key={cle} style={{ marginTop: "1.75rem" }}>
-                  <h4 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                <section key={cle} style={{ marginTop: "1.5rem" }}>
+                  <h4 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
                     {titre} <span className="secondaire">({lot.length})</span>
                   </h4>
                   <p className="petit secondaire" style={{ marginTop: 0 }}>{intro}</p>
@@ -399,7 +399,7 @@ export default function DepotCv() {
                       <li key={s.missionId} className="carte">
                         <div className="ligne-certification">
                           <div>
-                            <h5 style={{ fontSize: "1rem", margin: "0 0 0.2rem" }}>
+                            <h5 style={{ fontSize: "1rem", margin: "0 0 0.25rem" }}>
                               <a href={`/mes-missions/${s.missionId}`}>{s.titre}</a>
                             </h5>
                             <p className="petit secondaire" style={{ margin: 0 }}>
@@ -407,11 +407,11 @@ export default function DepotCv() {
                               {enDateFr(s.dateFin)}
                             </p>
                             {s.certificationManquante && (
-                              <p className="petit" style={{ margin: "0.4rem 0 0" }}>
+                              <p className="petit" style={{ margin: "0.5rem 0 0" }}>
                                 <strong>{s.certificationManquante}</strong> — {s.explication}
                               </p>
                             )}
-                            <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                            <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
                               Termes communs : {s.motsCommuns.join(", ")}
                             </p>
                           </div>

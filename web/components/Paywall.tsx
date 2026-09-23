@@ -52,7 +52,13 @@ export default function Paywall({
     }
     // Rechargement plutôt que mise à jour locale : l'identité et le bouton de
     // sollicitation sont rendus côté serveur, et c'est lui qui fait autorité.
-    window.location.reload();
+    //
+    // Mais un rechargement efface tout message local : l'écran changeait sans rien
+    // dire, et on se demandait si le crédit était parti. La confirmation voyage donc
+    // par l'URL, que la page lit puis efface.
+    const url = new URL(window.location.href);
+    url.searchParams.set("debloque", "1");
+    window.location.replace(url.toString());
   }
 
   const reste =
@@ -93,7 +99,7 @@ export default function Paywall({
           </button>
           {/* Ce qu'il restera après, pas seulement ce qu'il reste avant : c'est la
               question qu'on se pose la main sur le bouton. */}
-          <p className="petit secondaire" style={{ margin: "0.6rem 0 0" }}>
+          <p className="petit secondaire" style={{ margin: "0.5rem 0 0" }}>
             {quotaRestant === null
               ? "Votre palier ne limite pas les déblocages."
               : quotaRestant > 0

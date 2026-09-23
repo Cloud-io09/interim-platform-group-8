@@ -161,7 +161,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
                   {/* Le lien porte le nom de la personne : une fiche s'ouvre, pas
                       une URL. Elle rend la validité des titres au regard de cette
                       mission-ci, la seule qui ait un sens ici. */}
-                  <h3 style={{ marginBottom: "0.15rem" }}>
+                  <h3 style={{ marginBottom: "0.25rem" }}>
                     <a className="lien-bloc" href={`/missions/${missionId}/profils/${s.interimaireId}`}>
                       {s.prenom} {s.nom}
                     </a>
@@ -217,7 +217,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
         </ul>
       )}
 
-      <h2 style={{ marginTop: "2.5rem" }}>Profils écartés</h2>
+      <h2 style={{ marginTop: "2rem" }}>Profils écartés</h2>
       <p className="secondaire">
         Ils ne sont pas classés : une habilitation manquante ou périmée ne se rattrape pas
         par un bon score ailleurs. Le motif est indiqué pour que vous puissiez répondre à
@@ -231,7 +231,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
             <li key={e.interimaireId} className="carte">
               <div className="ligne-certification">
                 <div>
-                  <h3 style={{ fontSize: "1rem", marginBottom: "0.15rem" }}>{e.prenom} {e.nom}</h3>
+                  <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>{e.prenom} {e.nom}</h3>
                   <p className="petit secondaire" style={{ margin: 0 }}>{e.explication}</p>
                 </div>
                 <span

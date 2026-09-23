@@ -112,10 +112,10 @@ export default async function MesCandidatures() {
               {triees.map((l) => {
                 const attend = attendUneReponseDe(l.statut, "interimaire");
                 return (
-                  <li key={l.mission_id} className="carte carte-mission">
+                  <li key={l.mission_id} className="carte carte-mission carte--cliquable">
                     <div className="carte-mission-corps">
-                      <h2 style={{ fontSize: "1.0625rem", margin: "0 0 0.2rem" }}>
-                        <a className="lien-bloc" href={`/mes-missions/${l.mission_id}`}>{l.titre}</a>
+                      <h2 style={{ fontSize: "1.0625rem", margin: "0 0 0.25rem" }}>
+                        <a className="lien-etire" href={`/mes-missions/${l.mission_id}`}>{l.titre}</a>
                       </h2>
                       <p className="petit secondaire ligne-meta">
                         <span>
@@ -132,7 +132,7 @@ export default async function MesCandidatures() {
                         </span>
                       </p>
                       {l.titre_bloquant && (
-                        <p className="petit" style={{ margin: "0.15rem 0 0" }}>
+                        <p className="petit" style={{ margin: "0.25rem 0 0" }}>
                           <strong>
                             {typeCertification(l.titre_bloquant)?.libelle ?? l.titre_bloquant}
                           </strong>{" "}

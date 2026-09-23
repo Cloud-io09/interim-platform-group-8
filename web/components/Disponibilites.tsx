@@ -81,7 +81,7 @@ export default function Disponibilites() {
               <li key={p.id} className="carte">
                 <div className="ligne-certification">
                   <div>
-                    <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                    <h3 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>
                       {libelle.charAt(0).toUpperCase() + libelle.slice(1)}
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>

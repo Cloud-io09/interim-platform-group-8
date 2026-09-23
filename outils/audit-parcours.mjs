@@ -56,6 +56,18 @@ const routes = fichiers(RACINE, (f) => f === "page.tsx" || f === "route.ts").map
 });
 const motifs = routes.map((r) => new RegExp(`^${r.replace(/\[[^\]]+\]/g, "[^/]+")}/?$`));
 
+/**
+ * Le code sans ses commentaires.
+ *
+ * Sans ça, l'outil se méfiait de sa propre documentation : un commentaire qui
+ * explique « un `<p>` dans un `<span>` est interdit » contient littéralement les
+ * deux balises, et l'analyse le signalait comme un défaut. Un contrôle qui accuse
+ * la prose qui l'explique ne sera pas cru longtemps.
+ */
+function sansCommentaires(texte) {
+  return texte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
 const sources = [
   ...fichiers("web/app", (f) => f.endsWith(".tsx")),
   ...fichiers("web/components", (f) => f.endsWith(".tsx")),
@@ -109,6 +121,46 @@ for (const f of sources) {
   }
 }
 signaler("aucun intitulé de menu ne promet une destination absente", promesses);
+
+// --- 4. Balisage impossible : un bloc dans un élément en ligne ----------------
+//
+// Un `<p>` placé dans un `<span>` est interdit par HTML : le navigateur sort le
+// paragraphe du conteneur, et ce qui devait s'aligner à côté se retrouve ailleurs.
+// C'est la cause du « texte qui se balade » signalé sur trois écrans — et elle ne
+// se voit ni à la relecture du code, ni dans un test qui ne lit que des chaînes.
+const imbrications = [];
+for (const f of sources) {
+  const texte = sansCommentaires(readFileSync(f, "utf8"));
+  for (const m of texte.matchAll(/<span\b[^>]*>([\s\S]*?)<\/span>/g)) {
+    // Le contenu d'une balise en ligne ne peut porter que des balises en ligne.
+    const bloc = /<(p|div|ul|ol|section|h[1-6])\b/.exec(m[1]);
+    if (bloc) {
+      imbrications.push(`${f}:${texte.slice(0, m.index).split("\n").length} — <${bloc[1]}> dans <span>`);
+    }
+  }
+}
+signaler("aucun bloc placé dans un élément en ligne", imbrications);
+
+// --- 5. Espacements hors échelle ---------------------------------------------
+//
+// Seize valeurs distinctes circulaient sans rapport entre elles : c'est ce qui
+// produit des éléments tantôt collés, tantôt trop écartés — chaque écran inventait
+// sa mesure. L'échelle vit dans `globals.css`, et rien ne doit s'en écarter.
+const ECHELLE = ["0.25rem", "0.5rem", "0.75rem", "1rem", "1.25rem", "1.5rem", "2rem", "3rem"];
+const horsEchelle = [];
+for (const f of sources) {
+  const texte = readFileSync(f, "utf8");
+  for (const m of texte.matchAll(/style=\{\{[^}]*\}\}/g)) {
+    for (const v of m[0].matchAll(/(margin|padding|gap)[A-Za-z]*: "([^"]*)"/g)) {
+      for (const mesure of v[2].match(/[0-9.]+rem/g) ?? []) {
+        if (!ECHELLE.includes(mesure)) {
+          horsEchelle.push(`${f}:${texte.slice(0, m.index).split("\n").length} — ${mesure}`);
+        }
+      }
+    }
+  }
+}
+signaler("aucun espacement hors de l'échelle", horsEchelle);
 
 console.log(
   problemes === 0

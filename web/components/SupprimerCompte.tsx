@@ -56,7 +56,7 @@ export default function SupprimerCompte() {
             <input id={idMotDePasse} name="motDePasse" type="password" required autoComplete="current-password" />
           </div>
           <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
-          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <button className="bouton bouton--danger" type="submit" disabled={enCours}>
               {enCours ? "Suppression…" : "Supprimer définitivement"}
             </button>

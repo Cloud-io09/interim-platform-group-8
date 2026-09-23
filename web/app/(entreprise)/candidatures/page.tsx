@@ -147,7 +147,7 @@ export default async function CandidaturesEntreprise() {
               <section key={missionId} aria-labelledby={`mission-${missionId}`}>
                 <div className="tete-section">
                   <h2 id={`mission-${missionId}`} style={{ fontSize: "1.125rem" }}>
-                    <a className="lien-bloc" href={`/missions/${missionId}`}>{lot[0]!.titre}</a>
+                    <a href={`/missions/${missionId}`}>{lot[0]!.titre}</a>
                   </h2>
                   <p className="petit secondaire">
                     du {enDateFr(lot[0]!.date_debut)} au {enDateFr(lot[0]!.date_fin)}
@@ -158,41 +158,46 @@ export default async function CandidaturesEntreprise() {
                   {lot.map((l) => {
                     const attend = attendUneReponseDe(l.statut, "entreprise");
                     return (
-                      <li key={l.interimaire_id} className="ligne">
-                        <span>
-                          <strong>
-                            <a
-                              className="lien-bloc"
-                              href={`/missions/${missionId}/profils/${l.interimaire_id}`}
+                      // **Le texte se baladait à cause du balisage.** Les
+                      // explications étaient des `<p>` placés dans un `<span>`, ce
+                      // que HTML interdit : le navigateur les sortait du conteneur,
+                      // et la pastille d'état se centrait sur un bloc dont elle
+                      // n'était plus la sœur. Une grille, et des blocs dans un bloc.
+                      <li key={l.interimaire_id} className="ligne-candidat carte--cliquable">
+                        <div>
+                          <p className="ligne-candidat-tete">
+                            <strong>
+                              <a
+                                className="lien-etire"
+                                href={`/missions/${missionId}/profils/${l.interimaire_id}`}
+                              >
+                                {l.debloque ? `${l.prenom} ${l.nom}` : `${l.prenom} ${l.nom.charAt(0)}.`}
+                              </a>
+                            </strong>
+                            <span className="petit secondaire">{l.ville}</span>
+                            {/* Le verdict avant le clic : c'est ce qui décide si on
+                                ouvre la fiche. Jamais la couleur seule. */}
+                            <span
+                              className={`etiquette ${l.conforme ? "etiquette--ok" : "etiquette--alerte"}`}
                             >
-                              {l.debloque ? `${l.prenom} ${l.nom}` : `${l.prenom} ${l.nom.charAt(0)}.`}
-                            </a>
-                          </strong>
-                          <span className="petit secondaire"> — {l.ville}</span>
-                          {/* Le verdict avant le clic : c'est ce qui décide si on
-                              ouvre la fiche, et le taire obligeait à toutes les
-                              ouvrir. Jamais la couleur seule — le mot est écrit. */}
-                          <span
-                            className={`etiquette ${l.conforme ? "etiquette--ok" : "etiquette--alerte"}`}
-                            style={{ marginLeft: "0.5rem" }}
-                          >
-                            {l.conforme ? "✓ Conforme" : "△ Non conforme"}
-                          </span>
+                              {l.conforme ? "✓ Conforme" : "△ Non conforme"}
+                            </span>
+                          </p>
                           {!l.conforme && l.titre_bloquant && (
-                            <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
+                            <p className="petit secondaire ligne-candidat-detail">
                               {typeCertification(l.titre_bloquant)?.libelle ?? l.titre_bloquant} —
                               manquant ou expirant avant la fin du chantier.
                             </p>
                           )}
                           {l.statut === "declinee" && (
-                            <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
+                            <p className="petit secondaire ligne-candidat-detail">
                               {l.decide_par === "interimaire"
                                 ? "A décliné le chantier."
                                 : "Vous avez écarté ce profil."}
                               {l.motif ? ` Motif : ${l.motif}` : ""}
                             </p>
                           )}
-                        </span>
+                        </div>
                         <span className={attend ? "pastille pastille--attention" : "pastille pastille--info"}>
                           {libelleEtat(l.statut)}
                         </span>

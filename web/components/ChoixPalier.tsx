@@ -77,7 +77,7 @@ export default function ChoixPalier({
         ))}
       </ul>
 
-      <h2 style={{ marginTop: "2.5rem" }}>Crédits à l&apos;acte</h2>
+      <h2 style={{ marginTop: "2rem" }}>Crédits à l&apos;acte</h2>
       <p className="secondaire">
         Ils <strong>n&apos;expirent pas</strong> et se consomment après le quota de votre
         palier. Vous en avez {credits} en réserve.
