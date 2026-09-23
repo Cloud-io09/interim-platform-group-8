@@ -65,9 +65,9 @@ export default async function FicheChantier({ missionId }: { missionId: number }
 
     const quand =
       jours > 1
-        ? `Dans ${jours} jours — ${enDateFr(c.date_debut)}`
+        ? `Dans ${jours} jours - ${enDateFr(c.date_debut)}`
         : jours === 1
-          ? `Demain — ${enDateFr(c.date_debut)}`
+          ? `Demain - ${enDateFr(c.date_debut)}`
           : jours === 0
             ? `Aujourd'hui`
             : `Commencé le ${enDateFr(c.date_debut)}`;

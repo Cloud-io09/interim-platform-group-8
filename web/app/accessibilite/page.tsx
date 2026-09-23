@@ -36,7 +36,7 @@ export default function Accessibilite() {
           <li>Lien d&apos;évitement présent, et sa cible existante.</li>
           <li>Aucun <code>tabindex</code> positif, aucun lien ou bouton retiré de la tabulation.</li>
           <li>Aucune action confiée à un élément non interactif.</li>
-          <li>Chaque champ associé à une étiquette — par <code>for</code>, par ARIA, ou par enveloppement.</li>
+          <li>Chaque champ associé à une étiquette - par <code>for</code>, par ARIA, ou par enveloppement.</li>
           <li>Chaque <code>fieldset</code> nommé par une <code>legend</code>.</li>
           <li>Aucune image sans alternative, logo masqué aux technologies d&apos;assistance.</li>
           <li>Aucun état de certification signalé par la seule couleur.</li>
@@ -51,7 +51,7 @@ export default function Accessibilite() {
           <li>Cibles tactiles d&apos;au moins 44 pixels, y compris les liens de navigation.</li>
           <li>Aucune information portée par la couleur seule : les états de certification sont toujours écrits en toutes lettres.</li>
           <li>Champs de saisie à 16 pixels minimum, pour éviter le zoom automatique sur iOS.</li>
-          <li>Contrastes mesurés : 16,2:1 pour le texte principal, 6,3:1 pour le texte secondaire, 5,9:1 pour les états d&apos;alerte — tous au-dessus du seuil de 4,5:1.</li>
+          <li>Contrastes mesurés : 16,2:1 pour le texte principal, 6,3:1 pour le texte secondaire, 5,9:1 pour les états d&apos;alerte, tous au-dessus du seuil de 4,5:1.</li>
           <li>Prise de focus visible en permanence, et respect du réglage système de réduction des animations.</li>
         </ul>
 
@@ -79,7 +79,7 @@ export default function Accessibilite() {
           relationnelle. Un calcul parcourt tous les profils du métier concerné : le
           rejouer à chaque affichage du tableau de bord consommerait sans rien apporter.
           Le chargement des offres publiques procède par lots de 200 lignes plutôt
-          qu&apos;une requête par offre — sur 1 762 offres, la durée passe de plus de deux
+          qu&apos;une requête par offre - sur 1 762 offres, la durée passe de plus de deux
           minutes à moins de trois secondes.
         </p>
         <h3>Sobriété de la page</h3>

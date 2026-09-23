@@ -137,7 +137,7 @@ export default function Certifications() {
       <h2 id="titre-certifications">Mes certifications</h2>
       <p className="secondaire">
         Ce sont elles qui décident si vous pouvez aller sur un chantier. Une certification
-        expirée avant la fin d&apos;une mission vous en écarte automatiquement — c&apos;est
+        expirée avant la fin d&apos;une mission vous en écarte automatiquement, c&apos;est
         pour ça que la date compte autant que le titre.
       </p>
       <p className="petit secondaire">
@@ -158,7 +158,7 @@ export default function Certifications() {
                   <div>
                     <h3 style={{ marginBottom: "0.25rem" }}>
                       {c.typeLibelle}
-                      {c.categorieCode && <> — catégorie {c.categorieCode}</>}
+                      {c.categorieCode && <> - catégorie {c.categorieCode}</>}
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
                       {c.organismeEmetteur} · n° {c.numero} · obtenu le {enDateFr(c.dateObtention)}
@@ -184,7 +184,7 @@ export default function Certifications() {
                         </span>
                       ) : bientot ? (
                         <span className="etiquette etiquette--attention">
-                          Expire le {enDateFr(c.dateEcheance)} — dans {jours} jours
+                          Expire le {enDateFr(c.dateEcheance)}, dans {jours} jours
                         </span>
                       ) : (
                         <span className="etiquette etiquette--ok">
@@ -227,7 +227,7 @@ export default function Certifications() {
             <option value="">Choisissez dans la liste…</option>
             {types.map((t) => (
               <option key={t.code} value={t.code}>
-                {t.libelle} — valable {t.validiteMois / 12} ans
+                {t.libelle} - valable {t.validiteMois / 12} ans
               </option>
             ))}
           </select>
@@ -357,7 +357,7 @@ export default function Certifications() {
               ) : (
                 <p className="petit">
                   Différente de la durée habituelle de ce titre. C&apos;est possible après un
-                  recyclage — vérifiez simplement qu&apos;elle correspond bien au document.
+                  recyclage - vérifiez simplement qu&apos;elle correspond bien au document.
                 </p>
               )
             ) : (

@@ -182,7 +182,7 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
                     </span>
                   </span>
                   <span className={distance !== null && distance <= moi.rayonMobiliteKm ? "pastille pastille--ok" : "pastille pastille--attention"}>
-                    {distance !== null ? enKm(distance) : "—"}
+                    {distance !== null ? enKm(distance) : "-"}
                   </span>
                 </li>
                 <li className="ligne">

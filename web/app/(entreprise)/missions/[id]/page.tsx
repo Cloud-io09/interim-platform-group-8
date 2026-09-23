@@ -69,13 +69,13 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
                 {mission.certificationsRequises.map((c) => (
                   <li key={c.typeCode}>
                     {typeCertification(c.typeCode)?.libelle ?? c.typeCode}
-                    {c.categorieCode && ` — catégorie ${c.categorieCode}`}
+                    {c.categorieCode && ` - catégorie ${c.categorieCode}`}
                   </li>
                 ))}
               </ul>
               <p className="petit secondaire" style={{ margin: "0.75rem 0 0" }}>
                 Validité vérifiée contre le <strong>{enDateFr(mission.dateFin)}</strong>, date
-                de fin de la mission — pas contre la date du jour.
+                de fin de la mission - pas contre la date du jour.
               </p>
             </div>
           )}

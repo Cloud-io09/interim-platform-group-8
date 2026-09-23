@@ -45,7 +45,7 @@ export default function Experience({ constatee, declaree, vue }: Props) {
         <p className="petit secondaire">
           {titulaire
             ? "Aucune mission terminée pour l'instant. Elle se remplira d'elle-même : chaque chantier achevé via la plateforme y apparaîtra."
-            : "Aucune mission terminée via la plateforme. Ce profil peut être expérimenté par ailleurs — voir ce qu'il déclare."}
+            : "Aucune mission terminée via la plateforme. Ce profil peut être expérimenté par ailleurs - voir ce qu'il déclare."}
         </p>
       ) : (
         <>
