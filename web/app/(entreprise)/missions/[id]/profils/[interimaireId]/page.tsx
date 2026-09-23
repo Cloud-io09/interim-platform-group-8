@@ -43,7 +43,10 @@ export default async function ProfilPourMission({
     const mission = await chargerMission(sql, missionId);
     if (!mission || mission.entrepriseId !== session.compteId) notFound();
 
-    const profils = await chargerProfils(sql, mission.metierCode);
+    // Le profil demandé est chargé même s'il n'a pas déclaré ce métier : il a pu
+    // postuler, et l'écran rendait alors un 404 pour quelqu'un dont la candidature
+    // s'affichait juste à côté.
+    const profils = await chargerProfils(sql, mission.metierCode, [interimaireId]);
     const profil = profils.find((p) => p.interimaireId === interimaireId);
     if (!profil) notFound();
 

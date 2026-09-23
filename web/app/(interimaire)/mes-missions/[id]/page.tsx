@@ -23,9 +23,16 @@ const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateStrin
 const enKm = (km: number) => `${km.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`;
 const enEuros = (v: number) => `${v.toFixed(2).replace(".", ",")} €`;
 
-export default async function DetailMissionInterimaire({ params }: { params: Promise<{ id: string }> }) {
+export default async function DetailMissionInterimaire({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ avertissement?: string }>;
+}) {
   const session = await exigerSession("interimaire");
   const { id } = await params;
+  const { avertissement } = await searchParams;
   const missionId = Number(id);
   if (!Number.isInteger(missionId)) notFound();
 
@@ -151,6 +158,18 @@ export default async function DetailMissionInterimaire({ params }: { params: Pro
               )}
             </div>
           </div>
+
+          {/* N'empêche rien : la candidature est partie. Mais postuler hors de ses
+              métiers déclarés, c'est ne pas être rapproché automatiquement des
+              suivantes — autant le savoir tout de suite. */}
+          {avertissement && (
+            <p className="bandeau bandeau--attention" role="status">
+              <span>{avertissement}</span>
+              <a className="bouton bouton--secondaire" href="/espace/interimaire/profil">
+                Ajouter ce métier
+              </a>
+            </p>
+          )}
 
           {/* Une fois l'affectation conclue, l'écran doit servir à s'y rendre :
               adresse, horaires, et qui appeler quand le portail est fermé. */}

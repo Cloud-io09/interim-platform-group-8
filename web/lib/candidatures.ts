@@ -120,7 +120,13 @@ export async function conformiteDetaillee(
 }
 
 export type ResultatAction =
-  | { ok: true; etat: EtatCandidature; missionPourvue: boolean }
+  | {
+      ok: true;
+      etat: EtatCandidature;
+      missionPourvue: boolean;
+      /** Message qui n'empêche rien, mais que l'intéressé a intérêt à lire. */
+      avertissement?: string;
+    }
   | { ok: false; statut: number; message: string; conformite?: ConformiteLisible[] };
 
 /**
@@ -239,7 +245,28 @@ export async function agir(
           motif = excluded.motif,
           decide_le = excluded.decide_le`;
 
-  if (vers !== "acceptee") return { ok: true, etat: vers, missionPourvue: false };
+  if (vers !== "acceptee") {
+    // **Postuler hors de ses métiers déclarés reste permis, mais se dit.** L'écran
+    // des opportunités montre délibérément tout le marché : cacher une offre
+    // reviendrait à décider à la place de quelqu'un. Mais le moteur ne rapproche que
+    // sur les métiers déclarés — sans cet avertissement, on candidate en croyant
+    // être classé, et on ne l'est pas. Un mot suffit, et il est actionnable.
+    let avertissement: string | undefined;
+    if (acteur === "interimaire" && vers === "candidatee") {
+      const [declare] = await sql<{ un: number }[]>`
+        select 1 as un
+          from mission m
+          join interimaire_metier im
+            on im.metier_code = m.metier_code and im.interimaire_id = ${compteId}
+         where m.id = ${missionId}`;
+      if (!declare) {
+        avertissement =
+          "Votre candidature est envoyée. Ce métier n'est pas déclaré à votre profil : " +
+          "ajoutez-le pour que le moteur vous rapproche automatiquement des prochaines missions.";
+      }
+    }
+    return { ok: true, etat: vers, missionPourvue: false, avertissement };
+  }
 
   // Une acceptation pourvoit la mission et nomme l'affecté : « pourvue » sans
   // référence serait un statut sans contenu.

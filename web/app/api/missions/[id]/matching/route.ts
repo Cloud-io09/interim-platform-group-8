@@ -77,7 +77,16 @@ export async function GET(requete: Request, contexte: { params: Promise<{ id: st
       }
     }
 
-    const profils = await chargerProfils(sql, mission.metierCode);
+    // Ceux qui ont postulé sont évalués même sans avoir déclaré le métier : sinon
+    // le compteur annonce « 0 profil conforme » à une entreprise qui vient de
+    // recevoir une candidature.
+    const candidats = await sql<{ interimaire_id: number }[]>`
+      select interimaire_id from candidature where mission_id = ${missionId}`;
+    const profils = await chargerProfils(
+      sql,
+      mission.metierCode,
+      candidats.map((c) => c.interimaire_id)
+    );
     const resultat = matcher(mission, profils);
     const habille = habiller(resultat, profils);
 

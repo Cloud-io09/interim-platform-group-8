@@ -93,7 +93,21 @@ export interface ProfilAvecIdentite extends ProfilInterimaire {
  */
 export async function chargerProfils(
   sql: ReturnType<typeof connexion>,
-  metierCode: string
+  metierCode: string,
+  /**
+   * Profils à inclure même s'ils n'ont pas déclaré ce métier.
+   *
+   * **Sert à ceux qui ont postulé.** Un intérimaire peut candidater à une mission
+   * dont le métier ne figure pas à son profil — l'écran des opportunités montre
+   * délibérément tout le marché, et lui cacher une offre reviendrait à décider à sa
+   * place. Mais tout l'aval chargeait les profils **par métier** : le candidat
+   * n'existait alors nulle part. La fiche profil rendait un 404, le compteur de
+   * candidats affichait zéro, et personne ne comprenait pourquoi.
+   *
+   * Les inclure ici les fait exister partout, avec leur vrai verdict — écartés pour
+   * métier non déclaré, s'il le faut, mais visibles.
+   */
+  idsSupplementaires: readonly number[] = []
 ): Promise<ProfilAvecIdentite[]> {
   const interimaires = await sql<
     {
@@ -103,8 +117,11 @@ export async function chargerProfils(
   >`
     select i.compte_id, i.prenom, i.nom, i.ville, i.lat, i.lon, i.rayon_mobilite_km
     from interimaire i
-    join interimaire_metier im on im.interimaire_id = i.compte_id
-    where im.metier_code = ${metierCode}`;
+    where exists (
+            select 1 from interimaire_metier im
+             where im.interimaire_id = i.compte_id and im.metier_code = ${metierCode}
+          )
+       or i.compte_id = any(${[...idsSupplementaires]})`;
 
   if (interimaires.length === 0) return [];
   const ids = interimaires.map((i) => i.compte_id);

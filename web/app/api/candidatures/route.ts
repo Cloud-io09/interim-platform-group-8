@@ -73,7 +73,13 @@ export async function POST(requete: Request) {
       "notification de candidature"
     );
 
-    return succes({ missionId, etat: resultat.etat, missionPourvue: resultat.missionPourvue });
+    return succes({
+      missionId,
+      etat: resultat.etat,
+      missionPourvue: resultat.missionPourvue,
+      // N'empêche rien : l'écran l'affiche à côté de la confirmation.
+      avertissement: resultat.avertissement ?? null,
+    });
   } finally {
     await sql.end();
   }

@@ -63,17 +63,34 @@ function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
           </>
         ) : (
           <>
-            <p className="encart-score-tete">
-              <span className="petit secondaire">Profils conformes</span>
-              <strong>{fiche.candidatsConformes}</strong>
-            </p>
+            {/* **Une candidature reçue passe devant tout le reste.** L'écran
+                montrait « profils conformes », un chiffre du moteur, et taisait les
+                gens qui avaient levé la main : on lisait « aucune proposition en
+                attente » pendant que la notification disait « X a postulé ». */}
+            {fiche.candidaturesRecues > 0 ? (
+              <p className="encart-score-tete">
+                <span className="petit secondaire">
+                  {pluriel(fiche.candidaturesRecues, "candidature")} à traiter
+                </span>
+                <strong>{fiche.candidaturesRecues}</strong>
+              </p>
+            ) : (
+              <p className="encart-score-tete">
+                <span className="petit secondaire">Profils conformes</span>
+                <strong>{fiche.candidatsConformes}</strong>
+              </p>
+            )}
             <p className="petit secondaire" style={{ margin: "0 0 0.9rem" }}>
-              {fiche.propositionsEnAttente > 0
-                ? `${pluriel(fiche.propositionsEnAttente, "proposition")} sans réponse`
-                : "Aucune proposition en attente"}
+              {fiche.candidaturesRecues > 0
+                ? `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} par ailleurs`
+                : fiche.propositionsEnAttente > 0
+                  ? `${pluriel(fiche.propositionsEnAttente, "proposition")} sans réponse`
+                  : "Personne n'a encore postulé"}
               {fiche.acceptees > 0 && ` · ${pluriel(fiche.acceptees, "acceptée", "s")}`}
             </p>
-            <a className="bouton" href={`/missions/${fiche.id}`}>Voir les candidats</a>
+            <a className="bouton" href={`/missions/${fiche.id}`}>
+              {fiche.candidaturesRecues > 0 ? "Répondre aux candidats" : "Voir les candidats"}
+            </a>
           </>
         )}
       </div>
