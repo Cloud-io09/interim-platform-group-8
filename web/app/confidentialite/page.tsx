@@ -107,7 +107,7 @@ export default function Confidentialite() {
           </li>
           <li>
             <strong>Ce que nous demandons à Discord</strong> : votre identifiant, et le
-            droit de vous ajouter à notre serveur — sans quoi vous ne verriez pas votre
+            droit de vous ajouter à notre serveur - sans quoi vous ne verriez pas votre
             salon. Ni votre adresse e-mail, ni vos messages. Votre adresse Discord
             n&apos;a pas besoin d&apos;être celle de votre compte ici.
           </li>

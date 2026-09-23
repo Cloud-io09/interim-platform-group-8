@@ -25,6 +25,11 @@ const racineMonorepo = join(dirname(fileURLToPath(import.meta.url)), "..");
 const enPrevisualisation = process.env.VERCEL_ENV === "preview";
 const sourcesVercel = enPrevisualisation ? " https://vercel.live" : "";
 
+// React a besoin d'eval() en développement pour ses outils de debug (reconstruction
+// de la pile d'appels, rechargement à chaud) — jamais en production.
+const enDeveloppement = process.env.NODE_ENV !== "production";
+const evalDev = enDeveloppement ? " 'unsafe-eval'" : "";
+
 const enTetesSecurite = [
   // Empêche l'inclusion du site dans une iframe tierce — parade au clickjacking,
   // qui ferait cliquer un utilisateur connecté sur un bouton qu'il ne voit pas.
@@ -49,7 +54,7 @@ const enTetesSecurite = [
       // nécessaire tant qu'on n'a pas de nonce par requête via middleware.
       // `wasm-unsafe-eval` : la reconnaissance de caractères s'exécute en WebAssembly
       // dans le navigateur. C'est le prix de ne pas envoyer le document à un serveur.
-      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${sourcesVercel}`,
+      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${evalDev}${sourcesVercel}`,
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${sourcesVercel}`,
       "font-src 'self'",
@@ -71,9 +76,10 @@ const nextConfig: NextConfig = {
   // Next doit le transpiler comme le reste de l'application.
   transpilePackages: ["@interimatch/core"],
 
-  // RGESN — réduction du poids transféré.
+  // RGESN — réduction du poids transféré. Les qualités réduites (60, 70) sont
+  // réservées aux photos décoratives plein cadre, où l'œil ne cherche pas le détail.
   compress: true,
-  images: { formats: ["image/avif", "image/webp"] },
+  images: { formats: ["image/avif", "image/webp"], qualities: [60, 70, 75] },
 
   // Le pilote PostgreSQL ne doit pas être embarqué dans le bundle client.
   serverExternalPackages: ["postgres"],

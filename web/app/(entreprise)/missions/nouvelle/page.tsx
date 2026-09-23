@@ -16,7 +16,7 @@ export default async function NouvelleMission() {
         <h1 className="titre-page">Publier une fiche de poste</h1>
         <p className="secondaire">
           Décrivez le besoin réel du chantier. Les champs se préremplissent à partir des
-          offres publiques France Travail pour le métier choisi — intitulés courants,
+          offres publiques France Travail pour le métier choisi - intitulés courants,
           habilitations habituellement exigées, rémunération observée localement.
         </p>
         <FormulaireMission />

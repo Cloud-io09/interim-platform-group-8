@@ -286,7 +286,7 @@ export default function MesMissionsInterimaire() {
                       {remuneration(m)}
                     </p>
                     <p className="petit" style={{ margin: "0.4rem 0 0" }}>
-                      <strong>{m.certificationManquante}</strong> — {m.explication}
+                      <strong>{m.certificationManquante}</strong> - {m.explication}
                     </p>
                   </div>
                   <span

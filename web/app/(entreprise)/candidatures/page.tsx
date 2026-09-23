@@ -127,7 +127,7 @@ export default async function CandidaturesEntreprise() {
                               {l.debloque ? `${l.prenom} ${l.nom}` : `${l.prenom} ${l.nom.charAt(0)}.`}
                             </a>
                           </strong>
-                          <span className="petit secondaire"> — {l.ville}</span>
+                          <span className="petit secondaire"> - {l.ville}</span>
                           {l.statut === "declinee" && (
                             <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
                               {l.decide_par === "interimaire"

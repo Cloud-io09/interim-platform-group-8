@@ -86,7 +86,7 @@ export default function SelecteurReferentiel({
                 {parCode.get(code)?.libelle ?? code}
                 {/* Le libellé du bouton dit déjà quoi retirer ; la croix est décorative. */}
                 <span aria-hidden="true"> ✕</span>
-                <span className="hors-ecran"> — retirer</span>
+                <span className="hors-ecran"> - retirer</span>
               </button>
             </li>
           ))}
@@ -110,7 +110,7 @@ export default function SelecteurReferentiel({
         {trouves.length === 0
           ? "Aucun résultat. Essayez un autre mot."
           : trouves.length > affiches.length
-            ? `${trouves.length} résultats — les ${affiches.length} premiers sont affichés, affinez votre recherche.`
+            ? `${trouves.length} résultats - les ${affiches.length} premiers sont affichés, affinez votre recherche.`
             : `${trouves.length} résultat${trouves.length > 1 ? "s" : ""}`}
         {selection.length > 0 && ` · ${selection.length} sélectionné${selection.length > 1 ? "s" : ""}`}
       </p>
