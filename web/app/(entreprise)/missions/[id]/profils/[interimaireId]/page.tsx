@@ -84,6 +84,17 @@ export default async function ProfilPourMission({
     // Le verdict de conformité reste de l'autre côté de la barrière, délibérément :
     // ce produit existe pour empêcher qu'on envoie quelqu'un sans titre valable, et
     // faire payer ce verdict reviendrait à vendre le risque.
+    // **Le nombre d'agences est gratuit, leur identité ne l'est pas.**
+    //
+    // Savoir qu'un profil est déjà inscrit quelque part change la décision : la mise
+    // en place sera rapide, ou il faudra l'inscrire dans sa propre agence. C'est donc
+    // une information de décision, et le produit ne fait jamais payer celles-là.
+    // Savoir *laquelle* et pouvoir l'appeler sert à agir : c'est derrière le
+    // déblocage, avec le téléphone.
+    const agences = await sql<{ nom: string; ville: string | null }[]>`
+      select nom, ville from interimaire_agence
+       where interimaire_id = ${interimaireId} order by nom`;
+
     const debloque = await dejaDebloque(sql, session.compteId, interimaireId, missionId);
     const droits = debloque ? null : await lireDroits(sql, session.compteId);
 
@@ -116,7 +127,19 @@ export default async function ProfilPourMission({
               {profil.rayonMobiliteKm} km
             </span>
             <span className="pastille pastille--info">{libelleEtat(etat)}</span>
+            <span className={agences.length > 0 ? "pastille pastille--ok" : "pastille pastille--attention"}>
+              {agences.length > 0
+                ? `✓ inscrit dans ${agences.length} agence${agences.length > 1 ? "s" : ""}`
+                : "△ aucune agence déclarée"}
+            </span>
           </p>
+          {agences.length === 0 && (
+            <p className="petit secondaire">
+              Le contrat de mission passe par une agence d&apos;emploi. Ce profil n&apos;en
+              déclare aucune : il faudra l&apos;inscrire dans la vôtre, ce qui rallonge la
+              mise en place de quelques jours.
+            </p>
+          )}
 
           {/* **Ce que le déblocage rend.** Il ne donnait qu'un nom de famille, ce qui
               ne valait pas son prix : on paie pour pouvoir joindre quelqu'un, pas
@@ -145,6 +168,23 @@ export default async function ProfilPourMission({
                   </strong>
                 </li>
               </ul>
+              {agences.length > 0 && (
+                <>
+                  <h3 style={{ fontSize: "1rem" }}>Son agence d&apos;emploi</h3>
+                  <ul className="liste-nue">
+                    {agences.map((a) => (
+                      <li key={`${a.nom}-${a.ville}`} className="ligne">
+                        <span>{a.ville ?? "—"}</span>
+                        <strong>{a.nom}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="petit secondaire">
+                    C&apos;est elle qui établit le contrat de mission : c&apos;est elle
+                    qu&apos;il faut contacter, pas nous.
+                  </p>
+                </>
+              )}
               <p className="petit secondaire">
                 {identite.prenom} sait qu&apos;une entreprise a accédé à ses coordonnées
                 pour cette mission. Elles ne servent qu&apos;à ce chantier.

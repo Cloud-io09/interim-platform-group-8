@@ -16,6 +16,8 @@ export interface ProfilInterimaireLu {
   /** Années déclarées par métier. Informative : elle n'entre pas dans le score. */
   experienceParMetier: Record<string, number | null>;
   competences: string[];
+  /** Agences déclarées. Leur nombre se montre avant déblocage, leur identité après. */
+  agences: { nom: string; ville: string | null }[];
 }
 
 /**
@@ -42,12 +44,15 @@ export const lireProfilInterimaire = cache(async function lireProfilInterimaire(
     from interimaire where compte_id = ${compteId}`;
   if (!ligne) return null;
 
-  const [metiers, competences] = await Promise.all([
+  const [metiers, competences, agences] = await Promise.all([
     sql<{ metier_code: string; annees_experience: number | null }[]>`
       select metier_code, annees_experience from interimaire_metier
       where interimaire_id = ${compteId}`,
     sql<{ competence_code: string }[]>`
       select competence_code from interimaire_competence where interimaire_id = ${compteId}`,
+    sql<{ nom: string; ville: string | null }[]>`
+      select nom, ville from interimaire_agence
+      where interimaire_id = ${compteId} order by nom`,
   ]);
 
   return {
@@ -65,6 +70,7 @@ export const lireProfilInterimaire = cache(async function lireProfilInterimaire(
       metiers.map((m) => [m.metier_code, m.annees_experience])
     ),
     competences: competences.map((c) => c.competence_code),
+    agences: agences.map((a) => ({ nom: a.nom, ville: a.ville })),
   };
 });
 

@@ -128,6 +128,59 @@ describe("ce que la barrière cache, et ce qu'elle laisse voir", () => {
   });
 });
 
+describe("l'agence, avant et après le déblocage", () => {
+  it("annonce le nombre d'agences sans rien faire payer", async () => {
+    // Savoir qu'un profil est déjà inscrit quelque part change la décision : la mise
+    // en place sera rapide, ou il faudra l'inscrire dans sa propre agence. Le produit
+    // ne fait jamais payer ce qui sert à décider.
+    const autre = await inscrire("agence-visible", "interimaire");
+    await appel("/api/profil/interimaire", "POST", {
+      prenom: "Avec", nom: "Agence", telephone: "0600000009",
+      adresse: "8 rue Berlier", codePostal: "21000", ville: "Dijon",
+      rayonMobiliteKm: 50, metiers: ["F1702"], competences: [],
+      agences: [{ nom: "Adecco", ville: "Dijon" }],
+    }, autre.cookie);
+
+    const page = await appel(
+      `/missions/${missionId}/profils/${autre.id}`, "GET", undefined, ent.cookie);
+    expect(page.statut).toBe(200);
+    expect(page.texte).toContain("inscrit dans 1 agence");
+    // Mais pas laquelle : ça, c'est de l'information d'action.
+    expect(page.texte).not.toContain("Adecco");
+  });
+
+  it("révèle l'agence une fois le profil débloqué", async () => {
+    const autre = await inscrire("agence-payante", "interimaire");
+    await appel("/api/profil/interimaire", "POST", {
+      prenom: "Agence", nom: "Revelee", telephone: "0600000010",
+      adresse: "9 rue Berlier", codePostal: "21000", ville: "Dijon",
+      rayonMobiliteKm: 50, metiers: ["F1702"], competences: [],
+      agences: [{ nom: "Randstad", ville: "Dijon" }],
+    }, autre.cookie);
+
+    await appel("/api/deblocages", "POST", { interimaireId: autre.id, missionId }, ent.cookie);
+    const page = await appel(
+      `/missions/${missionId}/profils/${autre.id}`, "GET", undefined, ent.cookie);
+    expect(page.texte).toContain("Randstad");
+    expect(page.texte).toContain("Son agence");
+  });
+
+  it("dit franchement quand aucune agence n'est déclarée", async () => {
+    // Ne pas le dire laisserait croire à une mise en place aussi rapide, alors
+    // qu'il faudra inscrire la personne dans sa propre agence.
+    const sans = await inscrire("sans-agence", "interimaire");
+    await appel("/api/profil/interimaire", "POST", {
+      prenom: "Sans", nom: "Agence", telephone: "0600000011",
+      adresse: "10 rue Berlier", codePostal: "21000", ville: "Dijon",
+      rayonMobiliteKm: 50, metiers: ["F1702"], competences: [],
+    }, sans.cookie);
+
+    const page = await appel(
+      `/missions/${missionId}/profils/${sans.id}`, "GET", undefined, ent.cookie);
+    expect(page.texte).toContain("aucune agence déclarée");
+  });
+});
+
 describe("déblocage", () => {
   it("débloque, débite un crédit, et révèle l'identité", async () => {
     const avant = await appel("/api/deblocages", "GET", undefined, ent.cookie);

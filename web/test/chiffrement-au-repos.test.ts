@@ -97,6 +97,17 @@ const CLASSIFICATION: Record<string, Record<string, { etat: "chiffre" | "clair";
     lon: { etat: "clair", raison: "Idem." },
     telephone_chiffre: { etat: "chiffre", raison: "Coordonnée directe d'un interlocuteur." },
   },
+  interimaire_agence: {
+    id: { etat: "clair", raison: "Clé technique." },
+    interimaire_id: { etat: "clair", raison: "Clé technique." },
+    nom: {
+      etat: "clair",
+      raison:
+        "Raison sociale d'une agence d'emploi — une entreprise, pas une personne. Rendue à l'entreprise utilisatrice après déblocage pour qu'elle sache qui contacter.",
+    },
+    ville: { etat: "clair", raison: "Ville d'une agence, donnée publique." },
+    cree_le: { etat: "clair", raison: "Horodatage technique." },
+  },
   certification: {
     id: { etat: "clair", raison: "Clé technique." },
     interimaire_id: { etat: "clair", raison: "Clé étrangère." },

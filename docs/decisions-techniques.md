@@ -268,6 +268,45 @@ identifiant de compte.
 
 ---
 
+## 15. Qui emploie l'intérimaire, et pourquoi ce n'est pas nous
+
+**La question qui manquait de réponse.** L'intérim n'existe pas sans employeur : le
+code du travail impose deux contrats, l'un entre l'agence et l'entreprise utilisatrice,
+l'autre — un **contrat de travail** — entre l'agence et l'intérimaire. L'activité est
+réglementée : déclaration, garantie financière. Sans agence dans le montage, le prêt de
+main-d'œuvre devient illicite.
+
+**Nous ne sommes pas l'agence, et nous ne le devenons jamais.** La plateforme se place
+**en amont de la contractualisation** : elle identifie le profil, prouve qu'il est
+affectable jusqu'à la fin du chantier, et produit le récapitulatif que l'agence
+transformera en contrat. Comme Indeed n'emploie personne et Doctolib ne soigne personne,
+on sert un marché réglementé sans exercer l'acte réglementé.
+
+**Ce qui rend ce montage solide, c'est la tarification.** Un juge regarde la substance :
+une commission par mission pourvue ferait de nous un intermédiaire rémunéré par le
+placement, donc un acteur de la mise à disposition. Un crédit de déblocage se consomme
+que l'entreprise recrute ou non. Le modèle économique et le positionnement juridique se
+tiennent l'un l'autre — ce n'est pas un hasard si la commission a été écartée.
+
+**Le maillon qui manquait, et qui a été ajouté.** Le produit ne disait nulle part par
+quelle agence passer : une entreprise débloquait un téléphone, appelait l'ouvrier, et
+découvrait qu'il fallait un second appel. L'intérimaire déclare désormais ses agences
+à son profil — déclaratif, sans référentiel, il y en a des milliers en France.
+
+**Et la répartition suit la règle du produit.** Le **nombre** d'agences est visible
+**avant** tout paiement : savoir qu'un profil est déjà inscrit quelque part change la
+décision — mise en place rapide, ou inscription à faire dans sa propre agence. Leur
+**identité** est derrière le déblocage, avec le téléphone : c'est de l'information
+d'action. Quand aucune n'est déclarée, l'écran le dit franchement plutôt que de laisser
+croire à une mise en place aussi rapide.
+
+**La limite assumée.** Ce modèle suppose que l'entreprise a une agence, ou que
+l'intérimaire en a une. C'est le cas dans l'immense majorité des situations, mais cela
+signifie qu'on ne remplace pas l'agence : **on la rend meilleure**. Si personne n'en a,
+ce n'est pas notre marché.
+
+---
+
 ## Ce qu'on assume comme non fait
 
 - **L'authenticité des certifications n'est pas vérifiée.** Aucun registre national
