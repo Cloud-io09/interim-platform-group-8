@@ -12,6 +12,8 @@ interface Resume {
   dateFin: string;
   tauxHoraireMin: number | null;
   tauxHoraireMax: number | null;
+  /** `null` tant que le profil n'a pas d'adresse géocodée. */
+  distanceKm: number | null;
 }
 
 interface Accessible extends Resume {
@@ -39,15 +41,17 @@ interface Criteres {
 const CRITERES_VIDES: Criteres = { motCle: "", distanceMax: null, tauxMin: null, aPartirDu: "" };
 
 /** Une mission passe-t-elle les critères ? Les champs vides ne filtrent rien. */
-function retenue(m: Resume & { distanceKm?: number }, c: Criteres): boolean {
+function retenue(m: Resume, c: Criteres): boolean {
   if (c.motCle) {
     const aiguille = normaliser(c.motCle);
     const cible = normaliser(`${m.titre} ${m.entreprise} ${m.ville}`);
     if (!cible.includes(aiguille)) return false;
   }
-  // La distance n'est connue que des missions évaluées : une mission hors métier
-  // n'a pas de score, la borner reviendrait à la faire disparaître sans raison.
-  if (c.distanceMax !== null && m.distanceKm !== undefined && m.distanceKm > c.distanceMax) return false;
+  // La distance vaut pour les trois listes, y compris les missions que le moteur
+  // n'a pas évaluées : elle ne dépend que de deux couples de coordonnées. Elle ne
+  // reste inconnue que si le profil n'a pas d'adresse — on ne masque alors rien,
+  // faire disparaître une mission faute de savoir serait pire que de la montrer.
+  if (c.distanceMax !== null && m.distanceKm !== null && m.distanceKm > c.distanceMax) return false;
   if (c.tauxMin !== null && (m.tauxHoraireMax ?? m.tauxHoraireMin ?? 0) < c.tauxMin) return false;
   if (c.aPartirDu && m.dateDebut < c.aPartirDu) return false;
   return true;
@@ -58,6 +62,9 @@ const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateStrin
 /** Virgule décimale : le produit est français, « 14.00 € » se lit comme une faute. */
 const enEuros = (v: number) => v.toFixed(2).replace(".", ",");
 const enKm = (km: number) => `${km.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`;
+
+/** Fragment « · 12,4 km », omis quand la distance est inconnue. */
+const distanceLisible = (km: number | null) => (km === null ? "" : ` · à ${enKm(km)}`);
 
 function remuneration(m: Resume): string {
   if (m.tauxHoraireMin === null) return "";
@@ -206,9 +213,9 @@ export default function MesMissionsInterimaire() {
               : "Aucune mission ouverte ne correspond pour l'instant à vos métiers et à vos habilitations. Complétez vos certifications et vos disponibilités pour élargir les propositions."}
           </p>
         ) : (
-          <ul className="liste-nue">
+          <ul className="liste-nue liste-cartes">
             {vusAccessibles.map((m) => (
-              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
                     <h3 style={{ marginBottom: "0.2rem" }}>
@@ -239,14 +246,16 @@ export default function MesMissionsInterimaire() {
             sont pas évaluées. Ajoutez le métier à votre profil pour savoir si vous y
             êtes conforme.
           </p>
-          <ul className="liste-nue">
+          <ul className="liste-nue liste-cartes">
             {vusHorsMetier.map((m) => (
-              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={m.id} className="carte">
                 <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
                   <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                 </h3>
                 <p className="petit secondaire" style={{ margin: 0 }}>
-                  {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
+                  {m.entreprise} · {m.ville}
+                  {distanceLisible(m.distanceKm)} · du {enDateFr(m.dateDebut)} au{" "}
+                  {enDateFr(m.dateFin)}
                   {remuneration(m)}
                 </p>
               </li>
@@ -262,16 +271,18 @@ export default function MesMissionsInterimaire() {
             Elles correspondent à vos métiers, mais un titre manque ou expire trop tôt. Le
             renouveler ou le déclarer vous y donnerait accès.
           </p>
-          <ul className="liste-nue">
+          <ul className="liste-nue liste-cartes">
             {vusBloquees.map((m) => (
-              <li key={m.id} className="carte" style={{ marginBottom: "0.75rem" }}>
+              <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
                     <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
                       <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
-                      {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
+                      {m.entreprise} · {m.ville}
+                      {distanceLisible(m.distanceKm)} · du {enDateFr(m.dateDebut)} au{" "}
+                      {enDateFr(m.dateFin)}
                       {remuneration(m)}
                     </p>
                     <p className="petit" style={{ margin: "0.4rem 0 0" }}>

@@ -1,0 +1,180 @@
+{
+  "name": "Intérimatch — relance des missions non pourvues",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "relance-declencheur",
+      "name": "Chaque jour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://VOTRE-DOMAINE/api/n8n/missions-non-pourvues?jours=7",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "relance-api",
+      "name": "Missions non pourvues",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REMPLACER",
+          "name": "Secret Intérimatch"
+        }
+      },
+      "notes": "Rend une relance par fiche ouverte depuis plus de sept jours dont le chantier n'a pas commencé, avec le nombre de profils conformes encore mobilisables."
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "relances",
+        "options": {}
+      },
+      "id": "relance-eclatement",
+      "name": "Un message par fiche",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Sans relance, ce nœud ne produit rien et la suite ne s'exécute pas : le flux ne poste jamais dans le vide."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "relance-condition",
+              "leftValue": "={{ $json.discordSalonId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "relance-filtre",
+      "name": "A un salon privé",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "Écarte les entreprises qui n'ont pas relié leur Discord : « discordSalonId » vaut alors null, et l'appel partirait vers /channels/null/messages."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://discord.com/api/v10/channels/{{ $json.discordSalonId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "relance-discord",
+      "name": "Poster dans le salon privé",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REMPLACER",
+          "name": "Bot Discord Intérimatch"
+        }
+      },
+      "notes": "Le seul des trois flux adressé à une entreprise. Le message dit combien de profils conformes restent à solliciter — une relance qui ne dit pas quoi faire est un reproche, pas une aide."
+    }
+  ],
+  "connections": {
+    "Chaque jour": {
+      "main": [
+        [
+          {
+            "node": "Missions non pourvues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missions non pourvues": {
+      "main": [
+        [
+          {
+            "node": "Un message par fiche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Un message par fiche": {
+      "main": [
+        [
+          {
+            "node": "A un salon privé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A un salon privé": {
+      "main": [
+        [
+          {
+            "node": "Poster dans le salon privé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

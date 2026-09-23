@@ -1,4 +1,5 @@
 import type { Sql } from "postgres";
+import { dejaDebloque } from "./deblocage";
 import {
   attendUneReponseDe,
   conformitePourMission,
@@ -152,6 +153,26 @@ export async function agir(
   }
   if (acteur === "interimaire" && interimaireId !== compteId) {
     return { ok: false, statut: 403, message: "Vous ne pouvez agir que pour votre compte." };
+  }
+
+  // **La barrière de déblocage est ici, pas seulement dans la page.**
+  //
+  // Elle n'existait que dans l'interface : masquer un bouton ne protège rien, il
+  // suffit d'appeler la route. Or solliciter envoie une notification nominative à
+  // quelqu'un dont l'entreprise n'a pas encore vu le nom — c'est précisément l'acte
+  // qu'on facture. Tout le reste du produit vérifie ses droits côté serveur ; il n'y
+  // avait aucune raison que celui-ci fasse exception.
+  //
+  // Seule la sollicitation est concernée : accepter une candidature *reçue*, ou
+  // décliner, ne demande aucun déblocage — l'intérimaire s'est manifesté de lui-même.
+  if (acteur === "entreprise" && vers === "sollicitee") {
+    if (!(await dejaDebloque(sql, compteId, interimaireId, missionId))) {
+      return {
+        ok: false,
+        statut: 402,
+        message: "Débloquez les coordonnées de ce profil avant de le solliciter.",
+      };
+    }
   }
 
   if (mission.statut !== "publiee") {

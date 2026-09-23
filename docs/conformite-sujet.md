@@ -61,11 +61,13 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 
 | Exigence | État | Détail |
 |---|---|---|
-| Deux automatisations réalistes | **fait** | Montées et exécutées. Cinq nœuds : déclencheur, appel API, éclatement, filtre, envoi. Le second flux, lancé sur une fenêtre vide, montre que le nœud Discord n'est pas exécuté quand il n'y a rien à notifier |
+| Deux automatisations réalistes | **fait** | **Trois**, montées et exécutées. Cinq nœuds chacune : déclencheur, appel API, éclatement, filtre, envoi. Un flux lancé sur une fenêtre vide montre que le nœud Discord n'est pas exécuté quand il n'y a rien à notifier |
 | Canal webhook plutôt qu'e-mail ou SMS | **fait** | Discord, **un salon privé par personne** |
 | Export des scénarios livré | **fait** | [`n8n/`](n8n/) — réimportés tels quels pour vérifier qu'ils s'importent, et exempts de secret, d'URL de webhook et d'adresse locale |
 
 **Vérifié en production le 2026-09-21** : les deux endpoints répondent `200` avec le secret, `401` sans. `SECRET_N8N` est bien posée sur Vercel.
+
+**Le troisième flux existe parce que l'entreprise ne recevait rien.** Les deux premiers ne parcourent que des intérimaires : une entreprise qui rattachait son Discord obtenait un salon où rien n'arriverait jamais, et lisait un message d'accueil lui promettant « vos habilitations qui approchent de leur échéance » — elle n'en a aucune. La relance des missions non pourvues est l'un des exemples que le sujet cite lui-même, et elle dit **quoi faire** : combien de profils conformes restent à solliciter, ou qu'il n'y en a aucun et qu'il faut élargir le rayon. Les mouvements de candidature, eux, sont relayés directement par l'application — ce sont des événements, attendre le passage d'un automate pour les annoncer n'aurait aucun sens.
 
 **Chaque destinataire a son salon, et c'est une correction, pas un ornement.** La première version postait vers une URL de webhook unique : tout le monde lisait les alertes de tout le monde. Or une alerte d'échéance nomme la personne, son habilitation et sa date d'expiration — la diffuser à tous les membres d'un serveur est un défaut de confidentialité. Un webhook ne sait qu'écrire dans le salon auquel il est attaché ; créer un salon et le restreindre à quelqu'un relève de l'API du serveur, donc d'un bot. C'est la seule voie, pas un choix d'architecture.
 
@@ -84,7 +86,7 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 | RGPD : base légale, conservation, mentions légales | **fait** | `/confidentialite`, `/mentions-legales`, et la cartographie du traitement dans [donnees-personnelles.md](donnees-personnelles.md) |
 | Code du travail : durée maximale | **fait** | 18 mois renouvellements compris (L1251-12), opposée à la saisie avec la date limite calculée, testée aux bornes |
 | Code du travail : mentions obligatoires du contrat | **fait** | Document de mission portant poste, qualification, terme, lieu, horaires, rémunération — et nommant celles qui manquent |
-| Achat responsable / réemploi | **absent** | Conditionnel dans le sujet (« si pertinent »). Piste à écrire : la plateforme sait qui travaille où et quand, ce qui la placerait bien pour mutualiser des EPI entre intérimaires d'un même chantier. Un paragraphe suffit |
+| Achat responsable / réemploi | **fait** | Réemploi d'EPI entre intérimaires d'un même chantier, argumenté dans [ecoconception.md](ecoconception.md) : le gisement, ce que nos données permettent déjà, ce qu'il faudrait ajouter, et la limite qu'on ne franchirait pas — l'hygiène ne se mutualise pas |
 
 ---
 
@@ -105,11 +107,11 @@ Légende : **fait** · **partiel** — le nécessaire est là, il manque une pi�
 |---|---|---|
 | Frontend : framework JS en TypeScript, responsive | **fait** | Next.js 16, TypeScript strict. Vérifié en capture réelle à 1280 px et 390 px |
 | Backend : framework Node en TypeScript | **fait** | Routes Next.js en TypeScript |
-| Base relationnelle | **fait** | PostgreSQL / Supabase, 20 tables, 13 migrations |
+| Base relationnelle | **fait** | PostgreSQL / Supabase, 21 tables, 14 migrations |
 | Base non relationnelle, usage complémentaire | **fait** | Redis : sessions, limitation de tentatives, cache de matching, traces de calcul, cache de géocodage, jetons à usage unique |
-| Tests unitaires | **fait** | 351 dans `core` |
-| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 182 dans `web`, contre un vrai serveur en HTTP |
-| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,71 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — 36 des 39 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
+| Tests unitaires | **fait** | 374 dans `core` |
+| Tests fonctionnels sur inscription, création de mission, matching | **fait** | 210 dans `web`, contre un vrai serveur en HTTP |
+| Coverage généré et transmis | **partiel** | `npm run coverage` produit le rapport de `core` (96,8 %). `web` n'en a **délibérément pas** : ses tests s'exécutent dans un autre processus, le rapport afficherait 0 % sur chaque fichier et serait trompeur. L'écart est chiffré autrement — les 42 routes d'API traversées — dans [tests-et-couverture.md](tests-et-couverture.md) |
 | Au moins une bibliothèque CLI | **fait** | `commander`, dans `ingest/` |
 | Authentification classique écrite soi-même | **fait** | Aucune librairie d'authentification, aucune solution managée. Supabase n'est qu'une base de données |
 | OAuth par librairie **si** connexion tierce proposée | **sans objet** | Aucune connexion tierce n'est proposée. Décision et justification dans le `CLAUDE.md` |

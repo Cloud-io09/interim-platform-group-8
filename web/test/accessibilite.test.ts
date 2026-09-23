@@ -53,6 +53,7 @@ const PAGES: Page[] = [
   { chemin: "/mentions-legales" },
   { chemin: "/confidentialite" },
   { chemin: "/accessibilite" },
+  { chemin: "/tarifs" },
   // Deux écrans atteints depuis une boîte aux lettres, souvent sur un téléphone :
   // ils méritent le même audit que les pages entrantes.
   { chemin: "/mot-de-passe-oublie" },
@@ -63,7 +64,7 @@ const PAGES: Page[] = [
   { chemin: "/espace/interimaire/profil/securite", cookie: () => cookieInterimaire },
   { chemin: "/espace/interimaire/certifications", cookie: () => cookieInterimaire },
   { chemin: "/espace/interimaire/disponibilites", cookie: () => cookieInterimaire },
-  { chemin: "/espace/interimaire/cv", cookie: () => cookieInterimaire },
+  { chemin: "/espace/interimaire/profil/cv", cookie: () => cookieInterimaire },
   { chemin: "/mes-missions", cookie: () => cookieInterimaire },
   { chemin: "/espace/entreprise", cookie: () => cookieEntreprise },
   { chemin: "/espace/entreprise/profil", cookie: () => cookieEntreprise },

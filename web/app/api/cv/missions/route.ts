@@ -1,10 +1,18 @@
 import { connexion } from "@interimatch/core/db";
-import { dechiffrerOptionnel, matcher, rapprocherMissions } from "@interimatch/core";
+import {
+  dechiffrerOptionnel,
+  matcher,
+  rapprocherMissions,
+  typeCertification,
+} from "@interimatch/core";
 import { erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
 import { chargerMissions, chargerProfilsParMetiers } from "@/lib/depot";
 
 export const dynamic = "force-dynamic";
+
+/** Les dates affichées à l'utilisateur sont au format français, jamais en ISO. */
+const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
 
 /** Nombre de suggestions rendues. Au-delà, la liste cesse d'être une suggestion. */
 const MAXIMUM = 8;
@@ -78,6 +86,20 @@ export async function GET() {
           : ecarte
             ? ("ecarte" as const)
             : ("metier_non_declare" as const),
+        // **Nommer le titre en cause, pas seulement constater l'écart.** « Habilitation
+        // manquante » laisse chercher laquelle parmi neuf types et quatorze catégories,
+        // et tait si elle manque ou si elle expire trop tôt — or la conduite à tenir
+        // n'est pas la même : passer l'examen, ou le repasser.
+        certificationManquante: ecarte
+          ? `${typeCertification(ecarte.typeCode)?.libelle ?? ecarte.typeCode}${
+              ecarte.categorieCode ? ` catégorie ${ecarte.categorieCode}` : ""
+            }`
+          : null,
+        explication: ecarte
+          ? ecarte.motif === "certification_expiree"
+            ? `Votre titre expire le ${enDateFr(ecarte.dateEcheance!)}, avant la fin de cette mission.`
+            : "Cette mission exige un titre que vous n'avez pas déclaré."
+          : null,
       });
     }
 

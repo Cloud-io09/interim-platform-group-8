@@ -5,15 +5,24 @@
    clair ne passe pas le critère 3.2. Tout ce qui informe est en texte foncé. */
 
 :root {
-  --fond: #f7f7f5;
+  /* Neutres **chauds** plutôt que gris purs : sur un écran de chantier en plein
+     jour, un gris neutre vire au bleu et fatigue. Contrastes recalculés, tous au
+     moins AA — le plus serré, le texte secondaire, est à 5,49. */
+  --fond: #fbfaf7;
   --surface: #ffffff;
-  --surface-sombre: #111111;
-  --texte: #1a1a1a;
-  --texte-secondaire: #5c5c57;
-  --texte-sur-sombre: #f4f4f1;
-  --texte-secondaire-sur-sombre: #a8a8a1;
-  --bordure: #e3e3df;
-  --bordure-forte: #1a1a1a;
+  --surface-sombre: #141a21;
+  --texte: #141a21;
+  --texte-secondaire: #5e6773;
+  --texte-sur-sombre: #f5f3ef;
+  --texte-secondaire-sur-sombre: #98a2ae;
+  --bordure: #e4e1da;
+  --bordure-forte: #1e3a5f;
+  /* Bleu marine : la couleur des actions et des repères actifs. Assez sombre pour
+     porter du texte blanc (11,5) comme pour s'écrire sur blanc. */
+  --marine: #1e3a5f;
+  /* Tuile bleutée, pour les surfaces qui doivent se distinguer d'une carte
+     ordinaire sans réclamer l'attention d'une alerte. */
+  --marine-tuile: #eef1f6;
   /* Jaune de marque, réservé au logo — cf. public/logo/LISEZ-MOI.md : il identifie,
      il ne signale rien, et n'apparaît qu'une fois par écran. */
   --marque-jaune: #f5d90a;
@@ -23,8 +32,14 @@
   --succes: #1f6b3a;
   --alerte: #a4331f;
 
-  --rayon: 10px;
-  --rayon-petit: 8px;
+  /* 5 px plutôt que 10 : un rayon large adoucit, et ce produit parle de
+     conformité et de dates d'échéance. L'angle serré se lit comme un document. */
+  --rayon: 5px;
+  --rayon-petit: 5px;
+  /* Une seule ombre dans tout le produit, très basse. Elle décolle les cartes du
+     fond sans créer de niveaux : deux profondeurs demanderaient une hiérarchie
+     qu'aucun écran ici ne justifie. */
+  --ombre-carte: 0 0 0 0.5px rgba(31, 30, 29, 0.14), 0 2px 10px rgba(0, 0, 0, 0.09);
   --colonne: 1100px;
   /* Cible tactile minimale : public d'ouvriers, souvent avec des gants. */
   --cible-tactile: 44px;
@@ -46,7 +61,20 @@ body {
   line-height: 1.6;
 }
 
-h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 0.5em; }
+/* **Une marge haute, et pas seulement basse.**
+   Les titres n'en avaient aucune : un h2 posé sous une carte venait toucher son
+   bord, et les deux se lisaient comme un seul bloc — « Entreprise utilisatrice »
+   collé au verdict qui le précédait. La marge du haut est plus grande que celle du
+   bas, parce qu'un titre appartient à ce qui le suit, pas à ce qui le précède. */
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 2rem 0 0.5em; }
+h2 { margin-top: 2.75rem; }
+h3 { margin-top: 2rem; }
+/* En tête de conteneur, la marge ferait un trou : le conteneur a déjà la sienne. */
+:is(h1, h2, h3, h4):first-child { margin-top: 0; }
+/* Dans une carte, le titre est l'entrée en matière, pas une nouvelle section. */
+.carte :is(h2, h3, h4) { margin-top: 1.25rem; }
+.carte :is(h2, h3, h4):first-child,
+.tete-carte :is(h2, h3, h4) { margin-top: 0; }
 h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 600; }
 h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 600; }
 h3 { font-size: 1.125rem; font-weight: 600; }
@@ -118,11 +146,13 @@ a:hover, a:focus-visible { text-decoration: underline; }
   min-height: var(--cible-tactile);
   padding: 0 1.25rem;
   border-radius: var(--rayon-petit);
-  border: 1px solid var(--surface-sombre);
-  background: var(--surface-sombre);
-  color: var(--texte-sur-sombre);
+  /* Marine et non noir : une action se distingue ainsi d'une carte sombre, qui
+     n'appelle aucun geste. Les deux étaient de la même encre auparavant. */
+  border: 1px solid var(--marine);
+  background: var(--marine);
+  color: #ffffff;
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
 }
@@ -149,6 +179,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
   background: var(--surface);
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
+  box-shadow: var(--ombre-carte);
   padding: 1.5rem;
 }
 
@@ -333,6 +364,13 @@ legend {
   font-size: 0.8125rem;
   font-weight: 600;
   border: 1px solid currentColor;
+}
+/* Les trois suivantes portent un état. Celle-ci n'en porte aucun : elle nomme,
+   sans juger — un type de contrat, une catégorie, un intitulé normalisé. */
+.etiquette--neutre {
+  background: var(--marine-tuile);
+  border-color: var(--marine-tuile);
+  color: var(--marine);
 }
 .etiquette--ok { color: var(--succes); }
 .etiquette--attention { color: #8a5a00; }
@@ -588,6 +626,10 @@ main code {
   border: 1px solid var(--alerte);
   border-radius: var(--rayon);
   padding: 1.25rem 1.5rem;
+  /* Détachée du bloc qui la précède, et nettement : elle n'en est pas la suite.
+     1,5 rem la collait visuellement à la carte du dessus, qui porte désormais une
+     ombre — les deux se lisaient comme un seul ensemble. */
+  margin-top: 3rem;
   background: #fdf8f7;
 }
 .bouton--danger { background: var(--alerte); border-color: var(--alerte); }
@@ -680,8 +722,10 @@ details > summary {
   width: 48px;
   height: 48px;
   border-radius: var(--rayon-petit);
-  background: var(--surface-sombre);
-  color: var(--texte-sur-sombre);
+  /* Bleutée plutôt que noire : ce carré est présent sur chaque écran, et un bloc
+     d'encre pleine y pesait plus lourd que tout ce qu'il accompagne. */
+  background: var(--marine-tuile);
+  color: var(--marine);
   display: grid;
   place-items: center;
   font-weight: 600;
@@ -862,7 +906,17 @@ details > summary {
   color: var(--texte-secondaire);
   background: var(--surface);
 }
-.puce--acquise { background: var(--fond); border-color: var(--texte-secondaire); color: var(--texte); }
+/* Ce que la personne possède déjà — un métier déclaré, une compétence validée —
+   se lit comme une étiquette pleine et non comme un contour pâle. La couleur ne
+   signale aucun état : elle dit « ceci est une chose nommée ». Marine sur tuile
+   bleutée : 10,16 de contraste. */
+.puce--acquise {
+  background: var(--marine-tuile);
+  border-color: var(--marine-tuile);
+  color: var(--marine);
+  font-weight: 500;
+}
+.puces--retirables .puce--acquise:hover { border-color: var(--alerte); color: var(--alerte); }
 
 .pastille {
   flex: none;
@@ -885,7 +939,7 @@ details > summary {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  padding: 0.7rem 0;
   border-top: 1px solid var(--bordure);
 }
 .lignes > .ligne:first-child { border-top: 0; padding-top: 0; }
@@ -1091,9 +1145,40 @@ details > summary {
   text-align: center;
 }
 @media print {
-  /* Une impression ne doit sortir que les codes, pas la navigation du site. */
-  .entete, .pied, .bandeau-espace, .bouton, .case { display: none !important; }
+  /* Une impression ne doit sortir que le document, pas la navigation du site.
+     Le document de mission se présente sur un chantier : il finit sur papier, dans
+     une pochette, ou en PDF dans un téléphone. Générer ce PDF côté serveur aurait
+     demandé un moteur de rendu dans une fonction sans état — des mégaoctets et des
+     secondes pour ce que le navigateur fait déjà, et mieux. */
+  .entete, .pied, .bandeau-espace, .bouton, .case, .onglets,
+  .ne-pas-imprimer { display: none !important; }
+
+  /* Encre et lisibilité : les ombres et les aplats colorés ne servent qu'à l'écran,
+     et un liseré de 4 px sort en barre noire sur une imprimante monochrome. */
+  .carte {
+    box-shadow: none !important;
+    border: 1px solid #999 !important;
+    border-left-width: 1px !important;
+    break-inside: avoid;
+  }
+  body { background: #fff; font-size: 11pt; }
+  .colonne, .colonne--formulaire { max-width: none; padding: 0; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Un titre seul en bas de page, coupé de ce qu'il annonce, oblige à tourner la
+     feuille pour comprendre de quoi on parle. */
+  h1, h2, h3 { break-after: avoid; }
+  h1 { font-size: 20pt; }
+  h2 { font-size: 14pt; margin-top: 1.5rem; }
+  .ligne { break-inside: avoid; }
+
+  /* L'en-tête d'impression ne s'affiche qu'ici : une feuille sortie du contexte
+     doit dire d'où elle vient et de quand elle date. */
+  .entete-impression { display: block !important; }
 }
+
+/* Visible à l'impression seulement. */
+.entete-impression { display: none; }
 
 /* Saisie de l'expérience : une ligne par métier, le nombre d'années à droite.
    Champ étroit — on saisit deux chiffres, pas une phrase — mais la cible tactile
@@ -1146,3 +1231,19 @@ details > summary {
    ne porte jamais l'information seule : chaque carte a son titre (RGAA 3.1). */
 .carte--notification { border-left: 4px solid #5865f2; }            /* le bleu de Discord */
 .carte--securite     { border-left: 4px solid var(--texte-secondaire); }
+
+/* Le nombre d'une tuile de bandeau. Gros, mais pas géant : il se lit d'un coup
+   d'œil sans écraser l'intitulé, qui est ce qui lui donne un sens. */
+.chiffre {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--texte);
+}
+
+/* Cartes en liste : une grille plutôt qu'une marge posée sur chaque élément.
+   Elles étaient séparées de 0,75 rem, à peine la moitié de leur propre rembourrage
+   — l'œil lisait un bloc continu là où il y avait plusieurs objets distincts. */
+.liste-cartes { display: grid; gap: 1.25rem; }
+.liste-cartes > .carte { margin-bottom: 0; }

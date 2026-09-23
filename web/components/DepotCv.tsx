@@ -29,15 +29,49 @@ interface Suggestion {
   proximite: number;
   motsCommuns: string[];
   conformite: "conforme" | "ecarte" | "metier_non_declare";
+  /** Le titre qui bloque, et pourquoi. `null` quand rien ne bloque. */
+  certificationManquante: string | null;
+  explication: string | null;
 }
 
 const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
 
 const VERDICT: Record<Suggestion["conformite"], { libelle: string; classe: string }> = {
   conforme: { libelle: "Vous êtes conforme", classe: "etiquette--ok" },
-  ecarte: { libelle: "Habilitation manquante", classe: "etiquette--alerte" },
+  ecarte: { libelle: "Titre manquant", classe: "etiquette--alerte" },
   metier_non_declare: { libelle: "Métier non déclaré", classe: "etiquette--attention" },
 };
+
+/**
+ * Les trois verdicts, séparés, et dans cet ordre.
+ *
+ * Ils étaient mélangés dans une liste unique, distingués par une seule étiquette. On
+ * lisait donc « Habilitation manquante » sans savoir **laquelle** — parmi neuf types
+ * et quatorze catégories — ni si elle manquait ou expirait trop tôt. Or la conduite à
+ * tenir diffère : postuler, passer un examen, ou simplement déclarer un métier qu'on
+ * exerce déjà.
+ *
+ * L'ordre est celui de l'effort demandé, du moindre au plus grand.
+ */
+const SECTIONS = [
+  {
+    cle: "conforme" as const,
+    titre: "Vous pouvez postuler",
+    intro: "Le moteur vous retient sur ces missions : habilitations à jour jusqu'au bout du chantier.",
+  },
+  {
+    cle: "metier_non_declare" as const,
+    titre: "Il vous suffit de déclarer le métier",
+    intro:
+      "Ces missions relèvent d'un métier absent de votre profil, donc le moteur ne vous y a pas évalué. L'ajouter ne prend qu'un instant.",
+  },
+  {
+    cle: "ecarte" as const,
+    titre: "Un titre vous en sépare",
+    intro:
+      "Ces missions correspondent à votre profil, mais une habilitation manque ou expire avant la fin du chantier.",
+  },
+];
 
 export default function DepotCv() {
   const idFichier = useId();
@@ -351,28 +385,46 @@ export default function DepotCv() {
           ) : suggestions.length === 0 ? (
             <p className="secondaire">Aucune mission ouverte ne partage assez de vocabulaire avec votre CV.</p>
           ) : (
-            <ul className="liste-nue">
-              {suggestions.map((s) => (
-                <li key={s.missionId} className="carte" style={{ marginBottom: "0.75rem" }}>
-                  <div className="ligne-certification">
-                    <div>
-                      <h4 style={{ fontSize: "1rem", margin: "0 0 0.2rem" }}>
-                        <a href={`/mes-missions/${s.missionId}`}>{s.titre}</a>
-                      </h4>
-                      <p className="petit secondaire" style={{ margin: 0 }}>
-                        {s.entreprise} · {s.ville} · du {enDateFr(s.dateDebut)} au {enDateFr(s.dateFin)}
-                      </p>
-                      <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
-                        Termes communs : {s.motsCommuns.join(", ")}
-                      </p>
-                    </div>
-                    <span className={`etiquette ${VERDICT[s.conformite].classe}`}>
-                      {VERDICT[s.conformite].libelle}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            SECTIONS.map(({ cle, titre, intro }) => {
+              const lot = suggestions.filter((s) => s.conformite === cle);
+              if (lot.length === 0) return null;
+              return (
+                <section key={cle} style={{ marginTop: "1.75rem" }}>
+                  <h4 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                    {titre} <span className="secondaire">({lot.length})</span>
+                  </h4>
+                  <p className="petit secondaire" style={{ marginTop: 0 }}>{intro}</p>
+                  <ul className="liste-nue liste-cartes">
+                    {lot.map((s) => (
+                      <li key={s.missionId} className="carte">
+                        <div className="ligne-certification">
+                          <div>
+                            <h5 style={{ fontSize: "1rem", margin: "0 0 0.2rem" }}>
+                              <a href={`/mes-missions/${s.missionId}`}>{s.titre}</a>
+                            </h5>
+                            <p className="petit secondaire" style={{ margin: 0 }}>
+                              {s.entreprise} · {s.ville} · du {enDateFr(s.dateDebut)} au{" "}
+                              {enDateFr(s.dateFin)}
+                            </p>
+                            {s.certificationManquante && (
+                              <p className="petit" style={{ margin: "0.4rem 0 0" }}>
+                                <strong>{s.certificationManquante}</strong> — {s.explication}
+                              </p>
+                            )}
+                            <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                              Termes communs : {s.motsCommuns.join(", ")}
+                            </p>
+                          </div>
+                          <span className={`etiquette ${VERDICT[s.conformite].classe}`}>
+                            {VERDICT[s.conformite].libelle}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })
           )}
         </>
       )}

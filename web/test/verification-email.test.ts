@@ -85,6 +85,7 @@ afterAll(async () => {
       cache.del(cle.demandesReinitialisation(e)),
     ]),
     ...comptes.map((id) => cache.del(cle.demandesReinitialisation(`verif:${id}`))),
+    ...comptes.map((id) => cache.del(cle.demandesReinitialisation(`chgt:${id}`))),
   ]);
 });
 
@@ -316,6 +317,25 @@ describe("changement d'adresse", () => {
       (await appel("/api/compte/email", "POST", { email: "pas-une-adresse", motDePasse: MOT_DE_PASSE }, cookie))
         .statut
     ).toBe(422);
+  });
+
+  it("ne devient pas un relais d'inondation", async () => {
+    // Chaque appel envoie deux courriels. Sans compteur, un compte authentifié
+    // arrosait n'importe quelle boîte en répétant la demande. Le mot de passe exigé
+    // n'y change rien : c'est le titulaire lui-même qui en abuserait.
+    const { cookie } = await inscrire("inondation");
+    const statuts = [];
+    for (let i = 0; i < 7; i++) {
+      const r = await appel(
+        "/api/compte/email",
+        "POST",
+        { email: `${MARQUE}-cible-${i}@nouvelle.test`, motDePasse: MOT_DE_PASSE },
+        cookie
+      );
+      statuts.push(r.statut);
+    }
+    expect(statuts).toContain(429);
+    expect(statuts.filter((s) => s === 200).length).toBeLessThanOrEqual(5);
   });
 
   it("n'est pas ouvert sans session", async () => {

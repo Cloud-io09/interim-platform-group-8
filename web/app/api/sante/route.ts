@@ -86,17 +86,67 @@ export async function GET() {
   ] as const;
   const manquantesDiscord = attenduesDiscord.filter((v) => !process.env[v]?.trim());
 
-  const discord = {
-    ok: manquantesDiscord.length === 0,
-    latenceMs: 0,
-    detail:
-      manquantesDiscord.length === 0
-        ? `relais configuré (${environnement}), serveur ${process.env.DISCORD_SERVEUR_ID}`
-        : `environnement « ${environnement} » : ${manquantesDiscord.join(", ")} ${
+  // Présente ne veut pas dire juste.
+  //
+  // La sonde se contentait d'afficher l'identifiant du serveur. Une valeur erronée —
+  // l'identifiant d'un salon au lieu de celui du serveur, ce que produit un clic
+  // droit au mauvais endroit — passait donc pour une configuration correcte, et
+  // n'échouait qu'au moment du rattachement, chez l'utilisateur, avec un « Unknown
+  // Guild » qui n'apparaît que dans les journaux. On demande donc à Discord.
+  const discord = await (async () => {
+    if (manquantesDiscord.length > 0) {
+      return {
+        ok: false,
+        latenceMs: 0,
+        detail:
+          `environnement « ${environnement} » : ${manquantesDiscord.join(", ")} ${
             manquantesDiscord.length > 1 ? "manquent" : "manque"
           }. Le rattachement est masqué dans l'interface ; les notifications restent ` +
           `visibles dans l'application.`,
-  };
+      };
+    }
+
+    const serveurId = process.env.DISCORD_SERVEUR_ID!.trim();
+    const debut = Date.now();
+    try {
+      const reponse = await fetch(`https://discord.com/api/v10/guilds/${serveurId}`, {
+        headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN!.trim()}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      const latenceMs = Date.now() - debut;
+
+      if (reponse.status === 404) {
+        return {
+          ok: false,
+          latenceMs,
+          detail:
+            `DISCORD_SERVEUR_ID = ${serveurId} — Discord ne connaît pas ce serveur, ` +
+            `ou le bot n'y est pas. Un identifiant de salon est souvent copié à sa ` +
+            `place : reprenez-le par clic droit sur l'icône du serveur.`,
+        };
+      }
+      if (reponse.status === 401) {
+        return { ok: false, latenceMs, detail: "DISCORD_BOT_TOKEN refusé par Discord." };
+      }
+      if (!reponse.ok) {
+        return { ok: false, latenceMs, detail: `Discord a répondu ${reponse.status}.` };
+      }
+
+      const serveur = (await reponse.json()) as { name?: string };
+      return {
+        ok: true,
+        latenceMs,
+        detail: `relais configuré (${environnement}), serveur « ${serveur.name} »`,
+      };
+    } catch (erreur) {
+      // Discord injoignable n'est pas une erreur de configuration : on le dit tel quel.
+      return {
+        ok: false,
+        latenceMs: Date.now() - debut,
+        detail: `Discord injoignable : ${erreur instanceof Error ? erreur.message : "erreur inconnue"}`,
+      };
+    }
+  })();
 
   // Rien à sonder pour la lecture des CV : elle s'exécute dans le navigateur, à
   // partir de fichiers statiques. Une sonde côté serveur ne dirait rien de ce que

@@ -231,6 +231,39 @@ verifier("un intérimaire ne peut pas s'affecter lui-même", seul.statut === 409
 const postule = await appel("/api/candidatures", "POST", { missionId, vers: "candidatee" }, conforme.cookie);
 verifier("Karim postule", postule.statut === 200, `état ${postule.corps?.etat}`);
 
+// --- La barrière de déblocage, côté serveur ---------------------------------
+//
+// Solliciter envoie une notification nominative à quelqu'un dont l'entreprise n'a
+// pas encore vu le nom : c'est l'acte qu'on facture. La barrière n'existait que dans
+// l'interface, et masquer un bouton ne protège rien — il suffisait d'appeler la
+// route. Ce parcours passait donc au vert en contournant le paywall sans le savoir.
+const avantDeblocage = await appel("/api/candidatures", "POST", {
+  missionId, interimaireId: expirePendant.id, vers: "sollicitee",
+}, ent.cookie);
+verifier(
+  "solliciter sans avoir débloqué est refusé",
+  avantDeblocage.statut === 402,
+  `statut ${avantDeblocage.statut}`
+);
+
+const droitsAvant = await appel("/api/deblocages", "GET", undefined, ent.cookie);
+verifier(
+  "l'entreprise part avec les déblocages offerts",
+  droitsAvant.corps?.credits === 3,
+  `${droitsAvant.corps?.credits} crédit(s)`
+);
+
+const deblocage = await appel("/api/deblocages", "POST", {
+  interimaireId: expirePendant.id, missionId,
+}, ent.cookie);
+verifier("elle débloque les coordonnées", deblocage.statut === 200, `statut ${deblocage.statut}`);
+verifier("et un crédit est débité", deblocage.corps?.credits === 2, `${deblocage.corps?.credits} restant(s)`);
+
+const rejeu = await appel("/api/deblocages", "POST", {
+  interimaireId: expirePendant.id, missionId,
+}, ent.cookie);
+verifier("un second déblocage du même profil ne refacture pas", rejeu.corps?.credits === 2, `${rejeu.corps?.credits}`);
+
 const sollicite = await appel("/api/candidatures", "POST", {
   missionId, interimaireId: expirePendant.id, vers: "sollicitee",
 }, ent.cookie);
@@ -292,6 +325,41 @@ const html = fiche.corps?.html ?? "";
 verifier("elle montre la conformité habilitation par habilitation", /CACES R482/.test(html));
 verifier("elle distingue l'expérience constatée de l'expérience déclarée", /Constatée par la plateforme/.test(html));
 verifier("elle dit que l'expérience déclarée n'entre pas dans le calcul", /n&#x27;entre pas dans le calcul/.test(html));
+
+// ===========================================================================
+titre("11. Une fois affecté : les deux parties ont-elles de quoi démarrer ?");
+// ===========================================================================
+//
+// Le parcours s'arrêtait à « affecté » sans jamais ouvrir un seul écran d'après.
+// Trois composants interrogeaient alors une connexion déjà refermée par leur page
+// appelante — un composant serveur asynchrone s'exécute pendant le rendu, donc
+// après le `finally` de la page — et l'utilisateur lisait « Page couldn't load ».
+// Aucun test ne pouvait l'attraper : tous s'arrêtaient à l'API.
+const pageInterimaire = await appel(`/mes-missions/${missionId}`, "GET", undefined, conforme.cookie);
+verifier("l'intérimaire ouvre sa mission", pageInterimaire.statut === 200, `statut ${pageInterimaire.statut}`);
+const vuInterimaire = pageInterimaire.corps?.html ?? "";
+verifier("il sait où et quand se présenter", /Vous présenter sur le chantier/.test(vuInterimaire));
+verifier("l'adresse du chantier y figure", /Fontenay|rue|Adresse/.test(vuInterimaire));
+verifier("et qui appeler", /Horaires/.test(vuInterimaire));
+
+const docInterimaire = await appel(`/mes-missions/${missionId}/document`, "GET", undefined, conforme.cookie);
+verifier("son document de mission s'ouvre", docInterimaire.statut === 200, `statut ${docInterimaire.statut}`);
+const htmlDoc = docInterimaire.corps?.html ?? "";
+verifier("sans entité mal échappée", !/&amp;apos;|d&apos;un mois/.test(htmlDoc), "texte cassé détecté");
+verifier("il peut l'enregistrer en PDF", /Enregistrer en PDF/.test(htmlDoc));
+verifier(
+  "et la feuille imprimée dit d'où elle vient",
+  /entete-impression/.test(htmlDoc) && /document édité le/.test(htmlDoc)
+);
+
+const pageEntreprise = await appel(`/missions/${missionId}`, "GET", undefined, ent.cookie);
+verifier("l'entreprise ouvre sa fiche pourvue", pageEntreprise.statut === 200, `statut ${pageEntreprise.statut}`);
+const vuEntreprise = pageEntreprise.corps?.html ?? "";
+verifier("elle sait qui vient", /Qui vient sur le chantier/.test(vuEntreprise));
+verifier("avec de quoi le joindre", /Téléphone|Adresse e-mail/.test(vuEntreprise));
+
+const contratApres = await appel(`/missions/${missionId}/contrat`, "GET", undefined, ent.cookie);
+verifier("le document de mission côté entreprise s'ouvre", contratApres.statut === 200, `statut ${contratApres.statut}`);
 
 // ===========================================================================
 titre("Ménage");

@@ -75,13 +75,23 @@ Tous les comptes de démonstration utilisent le mot de passe `demonstration-inte
 ## Vérifier
 
 ```bash
-npm run verifier   # typecheck + tous les tests
-npm run coverage   # rapport de couverture
-npm run parcours   # parcours complet des deux côtés, contre une instance réelle
-npm run fumee      # parcours d'authentification, contre une instance réelle
+npm run verifier      # typecheck + tous les tests
+npm run coverage      # rapport de couverture
+npm run audit         # liens morts, entités mal placées, menus qui mentent — sans serveur
+npm run parcours      # parcours complet des deux côtés, écrans compris
+npm run fumee         # parcours d'authentification
+npm run fumee:notifs  # notifications, jusqu'au message posté puis relu sur Discord
+npm run discord       # configuration du bot : nomme ce qui manque
 ```
 
-Les deux derniers prennent une URL en argument et s'exécutent aussi bien contre un déploiement : `npm run parcours -- https://mon-app.vercel.app`. Ils vérifient la **configuration** là où la suite vérifie le **code**.
+**Pourquoi quatre outils et pas seulement la suite.** Une suite de tests vérifie qu'un
+écran répond, pas qu'il mène quelque part ni qu'il se comprend. Un onglet « Profil & CV »
+menant à une page sans CV, trois pages qui ne chargeaient pas après une affectation, un
+nom masqué sur une fiche et rendu en clair dans une liste : aucun test d'API ne les
+attrape. `npm run audit` cherche les deux premiers statiquement, `npm run parcours`
+ouvre désormais les écrans et pas seulement les routes.
+
+Les trois derniers prennent une URL en argument et s'exécutent aussi bien contre un déploiement : `npm run parcours -- https://mon-app.vercel.app`. Ils vérifient la **configuration** là où la suite vérifie le **code**.
 
 `verifier` enchaîne `typecheck` puis `test` **sans pipe** : une redirection masquerait le code de sortie, et une suite rouge passerait pour verte.
 
@@ -110,11 +120,13 @@ Monorepo npm workspaces.
 
 Sans clé d'envoi configurée, les courriels partent au journal du serveur : le parcours reste complet et testable, et une configuration oubliée se voit au lieu d'échouer en silence. Voir `BREVO_API_KEY` dans `.env.example`.
 
-**Deux bases, deux usages.** PostgreSQL pour les données structurées. Redis pour cinq usages complémentaires : sessions, limitation des tentatives de connexion, cache des résultats de matching, traces d'exclusion, cache de géocodage. Une colonne JSONB ne satisferait pas l'exigence : il faut un second stockage réel.
+**Deux bases, deux usages.** PostgreSQL pour les données structurées. Redis pour huit usages complémentaires : sessions, index de révocation par compte, limitation des tentatives de connexion, jetons à usage unique, état OAuth, cache des résultats de matching, traces d'exclusion, cache de géocodage. Une colonne JSONB ne satisferait pas l'exigence : il faut un second stockage réel.
 
 **Chiffrement au repos** en AES-256-GCM sur les colonnes sensibles : téléphone, adresse, numéro de carte BTP, texte de CV. HTTPS couvre le transit, pas le stockage.
 
-**Lecture des CV dans le navigateur.** Le document ne quitte pas l'appareil : couche texte du PDF, ou reconnaissance de caractères (Tesseract en WebAssembly) pour un scan ou une photo. Le serveur ne reçoit que du texte.
+**Lecture des CV dans le navigateur.** Le document ne quitte pas l'appareil : couche texte du PDF, ou reconnaissance de caractères (Tesseract en WebAssembly) pour un scan ou une photo. Le serveur ne reçoit que du texte. Le document de mission s'enregistre en PDF par la même logique — l'impression du navigateur, plutôt qu'un moteur de rendu embarqué dans une fonction sans état.
+
+**On paie pour agir, jamais pour décider.** Le rapprochement, le score détaillé et la conformité habilitation par habilitation sont gratuits et le resteront ; l'accès aux coordonnées d'un profil se paie, à l'acte ou par abonnement. Mettre le verdict de conformité derrière un paiement reviendrait à vendre le risque que cette plateforme existe pour supprimer. Un déblocage porte sur un couple **profil × mission**, et chaque intérimaire voit combien d'entreprises ont accédé à ses coordonnées. Le paiement est simulé, et les écrans ne le cachent pas : ce qui est réel, ce sont les quotas, l'imputation, l'idempotence et la transaction. Grille publique sur `/tarifs`.
 
 ---
 
@@ -184,6 +196,7 @@ Base légale et durées de conservation énoncées sur `/confidentialite`, menti
 
 | Document | Contenu |
 |---|---|
+| [docs/decisions-techniques.md](docs/decisions-techniques.md) | **les arbitrages et leur motif** — ce qui se défend en soutenance |
 | [docs/conformite-sujet.md](docs/conformite-sujet.md) | **état des lieux exigence par exigence**, vérifié dans le code |
 | [docs/parcours.md](docs/parcours.md) | **parcours de bout en bout des deux côtés**, diagrammes et scénarios éprouvés |
 | [docs/plan-implementation.md](docs/plan-implementation.md) | décisions techniques, mesures issues de l'exploration API, arbitrages |

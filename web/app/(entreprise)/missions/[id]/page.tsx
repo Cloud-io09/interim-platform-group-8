@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connexion } from "@interimatch/core/db";
 import { typeCertification } from "@interimatch/core";
+import AffectationConclue from "@/components/AffectationConclue";
+import CandidaturesRecues from "@/components/CandidaturesRecues";
 import ResultatsMatching from "@/components/ResultatsMatching";
 import StatutMission from "@/components/StatutMission";
 import { exigerSession } from "@/lib/garde";
@@ -54,6 +56,11 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
             missionId={missionId}
             statut={mission.statut as "brouillon" | "publiee" | "pourvue" | "close"}
           />
+          {mission.statut !== "pourvue" && mission.statut !== "close" && (
+            <p className="petit" style={{ margin: "0.75rem 0 0" }}>
+              <a href={`/missions/${missionId}/modifier`}>Modifier cette fiche</a>
+            </p>
+          )}
 
           {mission.certificationsRequises.length > 0 && (
             <div className="carte" style={{ marginBottom: "2rem" }}>
@@ -72,6 +79,16 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
               </p>
             </div>
           )}
+
+          {/* Une fois pourvue, la question n'est plus « qui pourrait venir » mais
+              « qui vient » : le nom et le numéro passent devant tout le reste. */}
+          {mission.statut === "pourvue" && (
+            <AffectationConclue missionId={missionId} />
+          )}
+
+          {/* Les candidatures d'abord : quelqu'un qui a levé la main compte plus
+              qu'un profil que le moteur a seulement suggéré. */}
+          <CandidaturesRecues missionId={missionId} entrepriseId={session.compteId} />
 
           <ResultatsMatching missionId={missionId} />
         </div>

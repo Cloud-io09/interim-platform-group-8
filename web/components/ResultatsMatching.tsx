@@ -153,7 +153,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
           fin de la mission.
         </p>
       ) : (
-        <ul className="liste-nue">
+        <ul className="liste-nue liste-cartes">
           {resultat.retenus.map((s) => (
             <li key={s.interimaireId} className="carte" style={{ marginBottom: "1rem" }}>
               <div className="ligne-certification" style={{ marginBottom: "1rem" }}>
@@ -226,9 +226,9 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
       {resultat.ecartes.length === 0 ? (
         <p className="secondaire">Aucun profil écarté.</p>
       ) : (
-        <ul className="liste-nue">
+        <ul className="liste-nue liste-cartes">
           {resultat.ecartes.map((e) => (
-            <li key={e.interimaireId} className="carte" style={{ marginBottom: "0.75rem" }}>
+            <li key={e.interimaireId} className="carte">
               <div className="ligne-certification">
                 <div>
                   <h3 style={{ fontSize: "1rem", marginBottom: "0.15rem" }}>{e.prenom} {e.nom}</h3>

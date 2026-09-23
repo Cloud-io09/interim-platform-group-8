@@ -74,3 +74,58 @@ Toutes les mesures ont été prises sur le serveur de production local (`next st
 **Images de mission.** Un chantier n'a pas besoin de photo pour être compris ; en ajouter une par fiche ferait passer une liste de dix missions de quelques kilo-octets à plusieurs mégaoctets, pour rien.
 
 **Police web.** Aucune n'est chargée : la charte s'appuie sur la pile système. Zéro requête, zéro décalage de mise en page au chargement.
+
+---
+
+## Le PDF n'est pas généré côté serveur
+
+Le document de mission s'enregistre par l'impression du navigateur, pas par un moteur
+de rendu embarqué dans une fonction sans état.
+
+**Ce qu'on évite.** Une génération serveur aurait demandé de charger un navigateur
+sans interface à chaque appel — plusieurs mégaoctets et quelques secondes de calcul,
+pour produire ce que le navigateur de la personne fait déjà, et mieux : il respecte
+ses réglages d'impression, sa langue et son format de papier.
+
+**Même raisonnement que la lecture de CV**, passée côté navigateur pour les mêmes
+motifs. Une feuille de style d'impression coûte quelques lignes de CSS et zéro octet
+transféré en plus.
+
+---
+
+## Réemploi d'EPI : ce que la plateforme rendrait possible
+
+*Axe d'achat responsable propre au BTP, demandé en conditionnel par le sujet. Écrit
+comme une piste argumentée, pas comme une fonctionnalité livrée — l'annoncer
+autrement serait malhonnête.*
+
+**Le gisement.** Un intérimaire en mission courte reçoit casque, chaussures de
+sécurité, gants et parfois harnais. Sur une mission de trois semaines, l'équipement
+survit largement au contrat ; il repart avec la personne, ou finit au rebut faute de
+traçabilité. Le même chantier rééquipe l'intérimaire suivant quinze jours plus tard.
+
+**Pourquoi cette plateforme, et pas une autre.** Le rapprochement repose déjà sur
+trois données qui suffisent à organiser une mutualisation : **quel chantier**
+(`mission.lat` / `lon`, géocodés), **quelles dates** (`date_debut`, `date_fin`, déjà
+comparées au titre près pour la conformité), et **quel métier** — donc quel type
+d'équipement. Savoir que deux missions se succèdent sur le même site, à quinze jours
+d'intervalle, ne demande aucune donnée nouvelle : c'est une jointure sur des colonnes
+qui existent.
+
+**Ce qu'il faudrait ajouter, et ce que ça coûterait.** Un inventaire par chantier
+— type d'équipement, taille, état, date de mise en service — et une transition
+« rendu / vérifié / réattribué ». Quelques tables, et surtout un contrôle de
+conformité propre : un EPI a lui aussi une date de péremption, et un harnais au-delà
+de sa durée de vie est un danger, pas une économie. La logique existe déjà dans le
+produit — c'est exactement le traitement qu'on applique aux habilitations.
+
+**La limite qu'on ne franchirait pas.** Casque et chaussures se mutualisent ; ce qui
+touche à l'hygiène — gants, masques, protections auditives moussées — ne se réemploie
+pas. Et la responsabilité de la fourniture incombe à l'entreprise de travail
+temporaire, pas à la plateforme : celle-ci peut signaler une occasion de réemploi,
+jamais s'y substituer.
+
+**Ordre de grandeur.** Un équipement complet de base coûte entre 80 et 150 € par
+personne. Sur un chantier qui enchaîne dix intérimaires dans l'année, réemployer la
+moitié du casque et des chaussures représente quelques centaines d'euros et autant de
+déchets évités — modeste à l'échelle d'un chantier, significatif à celle d'un parc.

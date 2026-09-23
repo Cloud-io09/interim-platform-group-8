@@ -2,7 +2,7 @@ import { connexion } from "@interimatch/core/db";
 import { configDiscord } from "@interimatch/core";
 import { erreur, succes } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
-import { detacher, oauthConfigure } from "@/lib/discord";
+import { detacher, oauthConfigure, reparerSalon } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +19,25 @@ export async function GET() {
         from compte where id = ${garde.session.compteId}`;
     if (!compte) return erreur("Compte introuvable.", 404);
 
+    // Réparation paresseuse, au seul endroit où l'intéressé regarde.
+    //
+    // Un salon supprimé à la main laissait un identifiant mort : n8n postait dessus,
+    // Discord répondait 404 à chaque exécution, et le titulaire cessait simplement de
+    // recevoir quoi que ce soit sans jamais l'apprendre. Le vérifier ici coûte un
+    // appel sur un écran qu'on ouvre rarement, et transforme une panne muette en
+    // salon recréé.
+    const reparation = await reparerSalon(sql, garde.session.compteId);
+    const salonId = reparation.recree ? reparation.salonId : compte.discord_salon_id;
+
     const config = configDiscord();
     return succes({
       // Le relais est-il monté côté serveur ? L'écran doit pouvoir le dire plutôt
       // que de proposer un bouton qui échouera.
       disponible: oauthConfigure() && config !== null,
       relie: compte.discord_utilisateur_id !== null,
-      salonId: compte.discord_salon_id,
+      salonId,
+      // Vrai quand le salon manquait et vient d'être refait : l'écran le dit.
+      salonRecree: reparation.recree,
       relieLe: compte.discord_relie_le,
       // Adresse directe du salon. Sans elle, on annonce à quelqu'un qu'un salon
       // existe pour lui en le laissant le chercher dans une liste — or il vient
@@ -34,9 +46,7 @@ export async function GET() {
       // L'identifiant du serveur n'est pas un secret : il est visible de tout
       // membre, et il ne donne accès à rien sans y avoir été invité.
       lienSalon:
-        config && compte.discord_salon_id
-          ? `https://discord.com/channels/${config.serveurId}/${compte.discord_salon_id}`
-          : null,
+        config && salonId ? `https://discord.com/channels/${config.serveurId}/${salonId}` : null,
     });
   } finally {
     await sql.end();

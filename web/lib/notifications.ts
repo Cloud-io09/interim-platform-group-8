@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
 import { matcher, type Acteur, type EtatCandidature } from "@interimatch/core";
+import { configDiscord, posterDansSalon, sansEchec } from "@interimatch/core";
 import { chargerMission, chargerProfils } from "./depot";
 
 /**
@@ -156,7 +157,7 @@ export async function notifierCandidature(
       and type in ('candidature_proposee', 'candidature_repondue')
       and mission_id = ${missionId}`;
 
-  return enregistrer(sql, [
+  const ecrites = await enregistrer(sql, [
     {
       compteId: destinataire,
       type: versEntreprise ? "candidature_repondue" : "candidature_proposee",
@@ -166,6 +167,38 @@ export async function notifierCandidature(
       missionId,
     },
   ]);
+
+  await relayerVersDiscord(sql, destinataire, `**${titre}**${corps ? `\n${corps}` : ""}`);
+  return ecrites;
+}
+
+/**
+ * Relaie une notification vers le salon Discord de son destinataire, s'il en a un.
+ *
+ * **Pourquoi ici et non par n8n.** Les deux scénarios n8n sont périodiques et ne
+ * parcourent que des intérimaires : une entreprise qui rattachait son Discord
+ * obtenait un salon où rien n'arrivait jamais. Les mouvements de candidature, eux,
+ * sont des événements — ils ont un instant précis, et attendre le prochain passage
+ * d'un automate pour les annoncer n'aurait aucun sens.
+ *
+ * Cela ne remplace pas les deux automatisations exigées : celles-ci relèvent d'un
+ * calendrier — une échéance qui approche, des missions publiées depuis la veille —
+ * et n'ont pas d'événement applicatif où s'accrocher.
+ *
+ * Sans échec : Discord n'est qu'un écho. La notification est déjà en base, et c'est
+ * elle qui fait foi.
+ */
+async function relayerVersDiscord(sql: Sql, compteId: number, message: string): Promise<void> {
+  await sansEchec(async () => {
+    const config = configDiscord();
+    if (!config) return;
+
+    const [compte] = await sql<{ discord_salon_id: string | null }[]>`
+      select discord_salon_id from compte where id = ${compteId}`;
+    if (!compte?.discord_salon_id) return;
+
+    await posterDansSalon(config, compte.discord_salon_id, message);
+  }, "relais Discord d'une notification");
 }
 
 /** Au-delà de ce délai, une échéance n'est plus une alerte mais une information. */

@@ -2,7 +2,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { appendFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { connexion } from "@interimatch/core/db";
+import { connexion, fermerConnexion } from "@interimatch/core/db";
 import { redis } from "@interimatch/core";
 
 /**
@@ -119,6 +119,9 @@ async function purgerSessionsOrphelines(): Promise<void> {
 }
 
 export async function teardown(): Promise<void> {
+  // `end()` est sans effet sur le client partagé : sans fermeture réelle, le
+  // processus de test resterait suspendu sur des connexions ouvertes.
+  await fermerConnexion();
   serveur?.kill("SIGTERM");
   serveur = null;
   await purgerSessionsOrphelines();

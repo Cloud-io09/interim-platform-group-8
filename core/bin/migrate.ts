@@ -12,7 +12,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { connexion } from "../src/db";
+import { connexion, fermerConnexion } from "../src/db";
 
 const DOSSIER = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
@@ -84,7 +84,9 @@ program
       }
       console.log(jouees === 0 ? "Schéma déjà à jour." : `${jouees} migration(s) appliquée(s).`);
     } finally {
-      await sql.end();
+      // `end()` est sans effet sur le client partagé : un script doit fermer
+      // pour de bon, sinon le processus ne rend jamais la main.
+      await fermerConnexion();
     }
   });
 

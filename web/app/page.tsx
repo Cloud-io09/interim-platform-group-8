@@ -82,6 +82,15 @@ export default function Accueil() {
               Je cherche des missions
             </a>
           </p>
+          {/* La grille était atteignable depuis l'en-tête seulement, alors que
+              l'accueil est la page qu'on lit avant de décider. Et la phrase dit ce
+              qui est gratuit avant d'annoncer un prix : c'est l'engagement du
+              produit, pas une accroche. */}
+          <p className="petit secondaire" style={{ marginTop: "1rem" }}>
+            Pour les intérimaires, tout est gratuit. Pour les entreprises, le
+            rapprochement et la conformité le sont aussi —{" "}
+            <a href="/tarifs">voir ce qui se paie</a>.
+          </p>
         </div>
       </section>
 

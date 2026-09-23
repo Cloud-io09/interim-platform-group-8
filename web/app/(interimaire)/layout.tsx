@@ -60,7 +60,7 @@ export default async function LayoutInterimaire({ children }: { children: React.
               { href: "/mes-candidatures", libelle: "Mes candidatures" },
               { href: "/mes-missions", libelle: "Mes missions" },
               { href: "/espace/interimaire/certifications", libelle: "Habilitations" },
-              { href: "/espace/interimaire/profil", libelle: "Profil & CV" },
+              { href: "/espace/interimaire/profil", libelle: "Mon profil" },
             ]}
           />
         </div>

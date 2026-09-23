@@ -6,6 +6,7 @@ import {
   nomDeSalon,
   posterDansSalon,
   rejoindreServeur,
+  salonExiste,
   supprimerSalon,
   type ConfigDiscord,
 } from "../src/discord";
@@ -173,14 +174,67 @@ describe("les autres appels", () => {
 });
 
 describe("message d'accueil", () => {
-  it("dit qui peut lire, ce qui arrivera, et comment s'en défaire", () => {
+  it("dit à un intérimaire qui peut lire, ce qui arrivera, et comment s'en défaire", () => {
     // Un salon qui apparaît sans explication ressemble à une erreur. Et sans la
     // dernière phrase, se désinscrire supposerait de deviner où chercher.
-    const texte = messageDAccueil("Karim");
+    const texte = messageDAccueil("Karim", "interimaire");
     expect(texte).toContain("Karim");
     expect(texte).toMatch(/vous seul/i);
     expect(texte).toMatch(/échéance/i);
     expect(texte).toMatch(/missions/i);
     expect(texte).toMatch(/détachez/i);
+  });
+
+  it("ne promet pas d'habilitations à une entreprise", () => {
+    // Le défaut corrigé : le même texte partait aux deux rôles, et une entreprise
+    // lisait « vos habilitations qui approchent de leur échéance ». Elle n'en a
+    // aucune. Annoncer ce qu'on ne livrera jamais est pire que ne rien annoncer.
+    const texte = messageDAccueil("Bâtir Rhône", "entreprise");
+    expect(texte).toContain("Bâtir Rhône");
+    expect(texte).not.toMatch(/habilitation/i);
+    // Le rapprochement par profil concerne l'intérimaire ; « votre profil » seul
+    // resterait légitime — le pied du message y renvoie pour se détacher.
+    expect(texte).not.toMatch(/correspondent à votre profil/i);
+    expect(texte).toMatch(/candidatures reçues/i);
+    expect(texte).toMatch(/détachez/i);
+  });
+
+  it("annonce à chacun ce qu'il recevra vraiment", () => {
+    const pourInterimaire = messageDAccueil("Karim", "interimaire");
+    const pourEntreprise = messageDAccueil("Bâtir Rhône", "entreprise");
+    expect(pourInterimaire).not.toBe(pourEntreprise);
+    // Le sort du salon se dit dans les deux cas : c'est le seul moyen d'en sortir.
+    for (const texte of [pourInterimaire, pourEntreprise]) {
+      expect(texte).toMatch(/le salon sera supprimé/i);
+    }
+  });
+});
+
+describe("existence d'un salon", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("reconnaît un salon présent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response('{"id":"555"}', { status: 200 }));
+    expect(await salonExiste(config, "555")).toBe(true);
+  });
+
+  it("conclut à la disparition sur un 404, et sur lui seul", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 404 }));
+    expect(await salonExiste(config, "555")).toBe(false);
+  });
+
+  it("ne conclut rien quand Discord est en panne", async () => {
+    // La distinction est ce qui évite d'empiler un salon de plus à chaque incident :
+    // recréer sur une panne laisserait l'ancien en place, avec son historique.
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 500 }));
+    expect(await salonExiste(config, "555")).toBeNull();
+
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("délai dépassé"));
+    expect(await salonExiste(config, "555")).toBeNull();
+  });
+
+  it("ne conclut rien non plus sur une limitation de débit", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 429 }));
+    expect(await salonExiste(config, "555")).toBeNull();
   });
 });

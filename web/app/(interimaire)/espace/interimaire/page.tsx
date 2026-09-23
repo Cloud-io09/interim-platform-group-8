@@ -124,6 +124,38 @@ export default async function EspaceInterimaire() {
               </a>
             </div>
           ) : (
+            <>
+              {/* Trois chiffres en tête, comme côté entreprise : combien de
+                  chantiers me sont ouverts, mes titres sont-ils à jour, où en
+                  sont mes démarches. Tout est déjà calculé plus haut. */}
+              <ul className="liste-nue bandeau-chiffres">
+                <li>
+                  <a className="chiffre-lien" href="/opportunites">
+                    <strong className="chiffre">{b.suggestions.length}</strong>
+                    <span className="petit secondaire">mission(s) accessible(s)</span>
+                  </a>
+                </li>
+                <li>
+                  <a className="chiffre-lien" href="/espace/interimaire/certifications">
+                    <strong className="chiffre">
+                      {b.certifications.length - b.certificationsPerimees}
+                    </strong>
+                    <span className="petit secondaire">
+                      habilitation(s) valide(s)
+                      {b.certificationsPerimees > 0 && ` · ${b.certificationsPerimees} périmée(s)`}
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a className="chiffre-lien" href="/mes-candidatures">
+                    <strong className="chiffre">
+                      {b.candidaturesEnvoyees.length + b.propositions.length}
+                    </strong>
+                    <span className="petit secondaire">candidature(s) en cours</span>
+                  </a>
+                </li>
+              </ul>
+
             <div className="grille-bord">
               <div className="colonne-principale">
                 {/* La carte sombre porte la seule chose qui appelle une décision.
@@ -179,20 +211,46 @@ export default async function EspaceInterimaire() {
                     </a>
                   </div>
                 ) : b.prochaine ? (
-                  <div className="carte carte--sombre">
-                    <p className="sur-titre sur-titre--marque">Votre prochaine mission</p>
-                    <p className="chiffre-geant">
-                      {delai(b.prochaine.joursAvantDebut)}
-                      <span className="chiffre-suffixe">{enDateFr(b.prochaine.dateDebut)}</span>
-                    </p>
-                    <hr className="filet-sombre" />
-                    <p className="sur-sombre-secondaire" style={{ margin: 0 }}>
-                      <strong>{b.prochaine.titre}</strong>
-                      <br />
-                      {b.prochaine.entreprise} · {b.prochaine.ville} · jusqu&apos;au{" "}
-                      {enDateFr(b.prochaine.dateFin)}
-                    </p>
-                  </div>
+                  (() => {
+                    // **Un chantier commencé n'est pas « prochain ».** L'écran
+                    // annonçait « Votre prochaine mission — il y a 21 jours » pour
+                    // une mission en cours depuis trois semaines : le titre parlait
+                    // d'avenir, le chiffre de passé, et les deux se contredisaient
+                    // sous les yeux de quelqu'un qui y travaille tous les matins.
+                    const commence = b.prochaine.joursAvantDebut <= 0;
+                    return (
+                      <div className="carte carte--sombre">
+                        <p className="sur-titre sur-titre--marque">
+                          {commence ? "Votre mission en cours" : "Votre prochaine mission"}
+                        </p>
+                        <p className="chiffre-geant">
+                          {commence ? "en cours" : delai(b.prochaine.joursAvantDebut)}
+                          <span className="chiffre-suffixe">
+                            {commence
+                              ? `jusqu'au ${enDateFr(b.prochaine.dateFin)}`
+                              : enDateFr(b.prochaine.dateDebut)}
+                          </span>
+                        </p>
+                        <hr className="filet-sombre" />
+                        <p className="sur-sombre-secondaire" style={{ margin: 0 }}>
+                          <strong>{b.prochaine.titre}</strong>
+                          <br />
+                          {b.prochaine.entreprise} · {b.prochaine.ville}
+                          {commence
+                            ? ` · commencée le ${enDateFr(b.prochaine.dateDebut)}`
+                            : ` · jusqu'au ${enDateFr(b.prochaine.dateFin)}`}
+                        </p>
+                        <p style={{ margin: "1rem 0 0" }}>
+                          <a
+                            className="bouton bouton--marque"
+                            href={`/mes-missions/${b.prochaine.id}`}
+                          >
+                            {commence ? "Revoir mon chantier" : "Préparer ma venue"}
+                          </a>
+                        </p>
+                      </div>
+                    );
+                  })()
                 ) : null}
 
                 <section aria-labelledby="titre-suggestions">
@@ -301,10 +359,33 @@ export default async function EspaceInterimaire() {
                   )}
                 </section>
 
+                {/* Transparence, pas statistique de vanité : la personne dont on
+                    vend l'accès aux coordonnées doit savoir que cela s'est produit. */}
+                {b.consultations.entreprises > 0 && (
+                  <section className="carte" aria-labelledby="titre-consultations">
+                    <h2 id="titre-consultations" className="titre-carte">
+                      Qui vous a contacté
+                    </h2>
+                    <p className="petit">
+                      <strong>
+                        {b.consultations.entreprises} entreprise
+                        {b.consultations.entreprises > 1 ? "s" : ""}
+                      </strong>{" "}
+                      {b.consultations.entreprises > 1 ? "ont" : "a"} accédé à vos
+                      coordonnées, pour {b.consultations.total} mission
+                      {b.consultations.total > 1 ? "s" : ""}.
+                    </p>
+                    <p className="petit secondaire">
+                      Une entreprise n&apos;y accède que sur une mission précise, et
+                      seulement après que le moteur vous a rapproché.
+                    </p>
+                  </section>
+                )}
+
                 <section className="carte" aria-labelledby="titre-cv">
                   <div className="tete-carte">
                     <h2 id="titre-cv" className="titre-carte">Mon CV</h2>
-                    <a className="petit" href="/espace/interimaire/cv">{b.cvDepose ? "Remplacer" : "Déposer"}</a>
+                    <a className="petit" href="/espace/interimaire/profil/cv">{b.cvDepose ? "Remplacer" : "Déposer"}</a>
                   </div>
                   <p className="petit secondaire" style={{ margin: 0 }}>
                     {b.cvDepose
@@ -318,6 +399,7 @@ export default async function EspaceInterimaire() {
                 </p>
               </aside>
             </div>
+            </>
           )}
         </div>
       </section>

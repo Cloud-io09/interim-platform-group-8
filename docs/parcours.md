@@ -5,7 +5,16 @@
 ```bash
 npm run parcours                                    # contre le serveur local
 npm run parcours -- https://mon-deploiement.app     # contre un déploiement
+npm run audit                                       # sans serveur, en une seconde
 ```
+
+**Pourquoi un second outil.** `npm run parcours` vérifie qu'un écran *répond* ; il ne
+vérifie pas qu'il *mène quelque part*. Trois défauts réels lui ont échappé : un onglet
+« Profil & CV » pointant vers une page sans CV, un lien vers une route supprimée
+rendant un `404` brut, et une entité HTML dans une chaîne JavaScript affichant
+« Durée de moins d&apos;un mois ». Aucun ne demande de navigateur pour être vu.
+`npm run audit` les cherche statiquement, et les trois règles ont été éprouvées en
+restaurant les fichiers fautifs — elles attrapent bien ce qu'elles prétendent.
 
 ---
 
@@ -224,3 +233,11 @@ Dit ici plutôt que laissé supposer.
 - **La lecture de CV.** Elle s'exécute dans le navigateur ; un script en ligne de commande ne peut pas l'éprouver. Vérifiée à part, sous Chrome piloté : couche texte 0,5 s, PDF scanné 2,1 s, photo 1,5 s.
 - **Les flux n8n.** Éprouvés séparément, sur une instance n8n réelle. Voir [automatisations-n8n.md](automatisations-n8n.md).
 - **Le rendu visuel.** Vérifié en captures à 1280 px et 390 px, pas par ce script.
+
+**Ce que le parcours ne faisait pas, et fait désormais.** Il s'arrêtait à « affecté »
+sans ouvrir un seul écran d'après. Trois composants interrogeaient alors une connexion
+déjà refermée par leur page appelante — un composant serveur asynchrone s'exécute
+pendant le rendu, donc **après** le `finally` de la page — et l'utilisateur lisait
+« Page couldn't load ». Aucun test ne pouvait l'attraper : tous s'arrêtaient à l'API.
+Le parcours ouvre maintenant les quatre écrans d'après-affectation, et le défaut a été
+réintroduit volontairement pour vérifier qu'il tombe bien en `500`.

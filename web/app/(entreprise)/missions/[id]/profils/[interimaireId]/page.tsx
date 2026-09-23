@@ -4,7 +4,10 @@ import { connexion } from "@interimatch/core/db";
 import { distanceKm, estConforme, joursDeChevauchement, libelleEtat, nombreDeJours, type EtatCandidature } from "@interimatch/core";
 import ActionCandidature from "@/components/ActionCandidature";
 import { ListeConformite, PastilleConformite } from "@/components/Conformite";
+import { dechiffrerOptionnel } from "@interimatch/core";
 import { exigerSession } from "@/lib/garde";
+import { dejaDebloque, lireDroits } from "@/lib/deblocage";
+import Paywall from "@/components/Paywall";
 import { chargerMission, chargerProfils } from "@/lib/depot";
 import { chargerMissionPourConformite, conformiteDetaillee } from "@/lib/candidatures";
 import { chargerExperience } from "@/lib/experience";
@@ -44,8 +47,12 @@ export default async function ProfilPourMission({
     const profil = profils.find((p) => p.interimaireId === interimaireId);
     if (!profil) notFound();
 
-    const [identite] = await sql<{ prenom: string; nom: string; ville: string }[]>`
-      select prenom, nom, ville from interimaire where compte_id = ${interimaireId}`;
+    const [identite] = await sql<
+      { prenom: string; nom: string; ville: string; telephone_chiffre: string | null; email: string }[]
+    >`
+      select i.prenom, i.nom, i.ville, i.telephone_chiffre, c.email
+        from interimaire i join compte c on c.id = i.compte_id
+       where i.compte_id = ${interimaireId}`;
     if (!identite) notFound();
 
     // L'expérience accompagne le métier auquel elle se rapporte : « huit ans en
@@ -68,6 +75,18 @@ export default async function ProfilPourMission({
       where mission_id = ${missionId} and interimaire_id = ${interimaireId}`;
     const etat: EtatCandidature = candidature?.statut ?? "proposee";
 
+    // **Ce que l'entreprise voit sans payer, et ce qu'elle paie.**
+    //
+    // Gratuit : que ce profil est rapproché, son score, sa conformité habilitation
+    // par habilitation, sa distance, ses disponibilités — tout ce qui sert à
+    // *décider*. Payant : l'identité et les coordonnées, soit ce qui sert à *agir*.
+    //
+    // Le verdict de conformité reste de l'autre côté de la barrière, délibérément :
+    // ce produit existe pour empêcher qu'on envoie quelqu'un sans titre valable, et
+    // faire payer ce verdict reviendrait à vendre le risque.
+    const debloque = await dejaDebloque(sql, session.compteId, interimaireId, missionId);
+    const droits = debloque ? null : await lireDroits(sql, session.compteId);
+
     const distance = Math.round(distanceKm(profil, mission) * 10) / 10;
     const joursMission = nombreDeJours(mission);
     const couverts = joursDeChevauchement(mission, profil.disponibilites);
@@ -80,7 +99,16 @@ export default async function ProfilPourMission({
           </p>
 
           <h1 className="titre-page">
-            {identite.prenom} {identite.nom}
+            {debloque ? (
+              `${identite.prenom} ${identite.nom}`
+            ) : (
+              <>
+                {identite.prenom} {identite.nom.charAt(0)}.
+                <span className="petit secondaire" style={{ marginLeft: "0.6rem", fontWeight: 400 }}>
+                  identité masquée
+                </span>
+              </>
+            )}
           </h1>
           <p className="secondaire ligne-meta">
             <span>
@@ -89,6 +117,52 @@ export default async function ProfilPourMission({
             </span>
             <span className="pastille pastille--info">{libelleEtat(etat)}</span>
           </p>
+
+          {/* **Ce que le déblocage rend.** Il ne donnait qu'un nom de famille, ce qui
+              ne valait pas son prix : on paie pour pouvoir joindre quelqu'un, pas
+              pour lire une identité. Téléphone et adresse apparaissent ici, et nulle
+              part ailleurs — c'est la seule page où le déblocage a été payé. */}
+          {debloque && (
+            <div className="carte carte--notification">
+              <h2 className="titre-carte">Coordonnées</h2>
+              <ul className="liste-nue">
+                <li className="ligne">
+                  <span>Téléphone</span>
+                  {dechiffrerOptionnel(identite.telephone_chiffre) ? (
+                    <strong>
+                      <a href={`tel:${dechiffrerOptionnel(identite.telephone_chiffre)}`}>
+                        {dechiffrerOptionnel(identite.telephone_chiffre)}
+                      </a>
+                    </strong>
+                  ) : (
+                    <span className="petit secondaire">non renseigné</span>
+                  )}
+                </li>
+                <li className="ligne">
+                  <span>Adresse e-mail</span>
+                  <strong>
+                    <a href={`mailto:${identite.email}`}>{identite.email}</a>
+                  </strong>
+                </li>
+              </ul>
+              <p className="petit secondaire">
+                {identite.prenom} sait qu&apos;une entreprise a accédé à ses coordonnées
+                pour cette mission. Elles ne servent qu&apos;à ce chantier.
+              </p>
+            </div>
+          )}
+
+          {droits && (
+            <Paywall
+              interimaireId={interimaireId}
+              missionId={missionId}
+              prenom={identite.prenom}
+              plan={droits.plan.libelle}
+              quotaRestant={droits.illimite ? null : droits.quotaRestant}
+              credits={droits.credits}
+              peutDebloquer={droits.peutDebloquer}
+            />
+          )}
 
           {/* Le verdict est rendu du point de vue de cette mission-ci, jamais dans
               l'absolu : c'est la date de fin de chantier qui décide. */}
@@ -110,6 +184,14 @@ export default async function ProfilPourMission({
             </p>
 
             <div className="separation-action">
+              {/* Solliciter, c'est agir : cela envoie une notification nominative à
+                  quelqu'un dont on n'a pas encore vu le nom. La barrière tombe donc
+                  ici aussi, sans quoi on contournerait le déblocage. */}
+              {!debloque ? (
+                <p className="petit secondaire" style={{ margin: 0 }}>
+                  Débloquez les coordonnées pour pouvoir solliciter ce profil.
+                </p>
+              ) : (
               <ActionCandidature
                 missionId={missionId}
                 interimaireId={interimaireId}
@@ -126,6 +208,7 @@ export default async function ProfilPourMission({
                         : `En attente de la réponse de ${identite.prenom}.`
                 }
               />
+              )}
             </div>
           </div>
 

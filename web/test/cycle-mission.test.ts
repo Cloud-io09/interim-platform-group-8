@@ -99,9 +99,26 @@ describe("candidatures — le rapprochement est bilatéral", () => {
     expect(retenu.corps.missionPourvue).toBe(true);
   });
 
+  it("exige d'avoir débloqué le profil avant de le solliciter", async () => {
+    // Solliciter envoie une notification nominative à quelqu'un dont l'entreprise
+    // n'a pas encore vu le nom : c'est l'acte qu'on facture. La barrière n'existait
+    // que dans la page, et masquer un bouton ne protège rien.
+    const ent = await entrepriseAvecMission("bi-paywall");
+    const int = await interimaireConforme("bi-paywall-int");
+
+    const r = await appel("/api/candidatures", "POST", {
+      missionId: ent.missionId, interimaireId: int.id, vers: "sollicitee",
+    }, ent.cookie);
+    expect(r.statut).toBe(402);
+  });
+
   it("laisse l'entreprise solliciter, et l'intérimaire conclure", async () => {
     const ent = await entrepriseAvecMission("bi-sol");
     const int = await interimaireConforme("bi-sol-int");
+
+    expect((await appel("/api/deblocages", "POST", {
+      interimaireId: int.id, missionId: ent.missionId,
+    }, ent.cookie)).statut).toBe(200);
 
     expect((await appel("/api/candidatures", "POST", {
       missionId: ent.missionId, interimaireId: int.id, vers: "sollicitee",

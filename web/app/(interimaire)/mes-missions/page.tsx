@@ -64,7 +64,7 @@ export default async function MesMissions() {
     const Carte = ({ l, terminee }: { l: Ligne; terminee: boolean }) => {
       const debut = joursAvant(l.date_debut);
       return (
-        <li className="carte" style={{ marginBottom: "0.75rem" }}>
+        <li className="carte">
           <div className="ligne-meta" style={{ justifyContent: "space-between" }}>
             <div>
               <h3 style={{ margin: "0 0 0.2rem" }}>
@@ -105,7 +105,7 @@ export default async function MesMissions() {
               <a className="bouton bouton--secondaire" href="/opportunites">Voir les opportunités</a>
             </div>
           ) : (
-            <ul className="liste-nue">
+            <ul className="liste-nue liste-cartes">
               {aujourdhui.map((l) => (
                 <Carte key={l.id} l={l} terminee={false} />
               ))}
@@ -133,7 +133,7 @@ export default async function MesMissions() {
           {passees.length > 0 && (
             <>
               <h2>Historique</h2>
-              <ul className="liste-nue">
+              <ul className="liste-nue liste-cartes">
                 {passees.map((l) => (
                   <Carte key={l.id} l={l} terminee />
                 ))}

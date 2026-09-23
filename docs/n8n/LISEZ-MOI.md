@@ -2,10 +2,16 @@
 
 Les deux flux exigés par le sujet, prêts à importer.
 
-| Fichier | Scénario |
-|---|---|
-| `1-alerte-echeance.json` | Alerte avant expiration d'une habilitation |
-| `2-mission-correspondante.json` | Notification de mission correspondante |
+| Fichier | Scénario | Destinataire |
+|---|---|---|
+| `1-alerte-echeance.json` | Alerte avant expiration d'une habilitation | intérimaire |
+| `2-mission-correspondante.json` | Notification de mission correspondante | intérimaire |
+| `3-relance-missions.json` | Relance des missions non pourvues | **entreprise** |
+
+Le sujet en demande deux ; le troisième reprend son propre exemple — « relance
+automatique des missions non pourvues après un délai donné » — et répare une
+asymétrie : sans lui, une entreprise qui rattachait son Discord obtenait un salon où
+rien n'arrivait jamais.
 
 Chacun poste dans le **salon privé du destinataire**, jamais dans un salon commun.
 
@@ -95,7 +101,11 @@ avec les bonnes permissions. Une fois l'invitation acceptée, il rend le
 `DISCORD_SERVEUR_ID` à copier.
 
 `GET /api/sante` couvre le même terrain côté déploiement : il nomme chaque variable
-manquante et l'environnement courant.
+manquante et l'environnement courant, **et demande à Discord si le serveur existe**.
+Une variable présente n'est pas une variable juste : l'identifiant d'un salon copié
+à la place de celui du serveur passait pour une configuration correcte et n'échouait
+qu'au rattachement, chez l'utilisateur, avec un « Unknown Guild » visible des seuls
+journaux. Constaté le 21 septembre 2026, puis rendu détectable.
 
 ### 5. Relier un compte
 
@@ -154,7 +164,19 @@ règle métier ne vit dans les flux.
 
 ## Éprouver
 
-Bouton **Test workflow**. Chaque nœud s'allume vert l'un après l'autre.
+```bash
+npm run fumee:notifs                                    # contre le serveur local
+npm run fumee:notifs -- https://mon-deploiement.app      # contre un déploiement
+```
+
+Vingt-huit vérifications : les quatre types de notification dans l'application, les
+deux points d'entrée que n8n interroge, et **le trajet réel jusqu'à Discord** — un
+salon privé est créé pour de bon, le message y est posté, puis relu pour vérifier
+qu'il est arrivé. Un flux qui « s'allume vert » sans que rien n'atterrisse dans un
+salon est précisément ce que cet outil existe pour attraper. Les comptes et le salon
+d'essai sont supprimés en fin de parcours, même en cas d'échec.
+
+Puis, dans n8n, bouton **Test workflow**. Chaque nœud s'allume vert l'un après l'autre.
 
 Si rien n'arrive sur Discord, trois causes possibles, dans cet ordre de fréquence :
 
@@ -179,6 +201,19 @@ notifications**. Elles se répartissent désormais entre les salons privés au l
 tomber dans un seul, mais Discord limite le débit — voir ci-dessous.
 
 ---
+
+## Un salon supprimé se recrée tout seul
+
+Un salon effacé à la main — par son titulaire, ou par un administrateur qui fait le
+ménage — laissait un identifiant mort en base. Les scénarios continuaient de poster
+dessus, Discord répondait `404` à chaque exécution, et personne ne l'apprenait : ni
+l'intéressé, qui cessait simplement de recevoir quoi que ce soit, ni nous.
+
+L'application vérifie désormais l'existence du salon quand la personne ouvre
+**Profil → Notifications**, et le recrée s'il a disparu. Aucun nouveau consentement
+n'est demandé : l'identifiant Discord du titulaire est déjà connu. Une panne de
+Discord ne déclenche rien — seul un `404` vaut disparition, sans quoi chaque incident
+empilerait un salon de plus.
 
 ## Limites de débit
 

@@ -98,7 +98,7 @@ export default function ActionCandidature({
             disabled={enCours}
             onClick={() => agir(vers)}
           >
-            {enCours ? "…" : libelleAction(vers, acteur)}
+            {enCours ? "…" : libelleAction(vers, acteur, etat)}
           </button>
         ))}
       </div>

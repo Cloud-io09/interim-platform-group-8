@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
 import { attendUneReponseDe, matcher, typeCertification, type EtatCandidature } from "@interimatch/core";
+import { consultationsDuProfil } from "./deblocage";
 import { chargerMissions, chargerProfilsParMetiers } from "./depot";
 import { lireProfilEntreprise, lireProfilInterimaire, type ProfilEntrepriseLu, type ProfilInterimaireLu } from "./profils";
 import { compterNonLues, lister, rattraperEcheances, type Notification } from "./notifications";
@@ -75,6 +76,11 @@ export interface EcheanceCertification {
   joursRestants: number;
 }
 
+/** Date du jour en ISO court, pour comparer des dates de chantier stockées ainsi. */
+function dateDuJour(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export interface TableauBordInterimaire {
   profil: ProfilInterimaireLu | null;
   initiales: string;
@@ -93,6 +99,8 @@ export interface TableauBordInterimaire {
   certificationsPerimees: number;
   disponibilites: { debut: string; fin: string }[];
   cvDepose: boolean;
+  /** Entreprises ayant accédé aux coordonnées, rendu à l'intéressé seul. */
+  consultations: { entreprises: number; total: number; derniere: string | null };
 }
 
 export async function tableauBordInterimaire(sql: Sql, compteId: number): Promise<TableauBordInterimaire> {
@@ -156,7 +164,15 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
     nonLues,
     propositions: enCandidature.filter((c) => attendUneReponseDe(c.statut, "interimaire")),
     candidaturesEnvoyees: enCandidature.filter((c) => c.statut === "candidatee"),
-    prochaine: enCandidature.find((c) => c.statut === "acceptee") ?? null,
+    // **La prochaine, pas n'importe laquelle.** On prenait la première affectation
+    // trouvée, sans regarder ses dates : un chantier terminé en septembre
+    // s'affichait en octobre sous le titre « Votre prochaine mission », avec la
+    // mention « il y a 21 jours ». On écarte ce qui est fini, et on prend la plus
+    // proche — sans quoi deux affectations donneraient la mauvaise.
+    prochaine:
+      enCandidature
+        .filter((c) => c.statut === "acceptee" && c.dateFin >= dateDuJour())
+        .sort((a, b) => a.dateDebut.localeCompare(b.dateDebut))[0] ?? null,
     suggestions,
     bloquees,
     certifications: certifs.map((c) => ({
@@ -169,6 +185,10 @@ export async function tableauBordInterimaire(sql: Sql, compteId: number): Promis
     certificationsPerimees: certifs.filter((c) => joursAvant(c.date_echeance) < 0).length,
     disponibilites: dispos.map((d) => ({ debut: d.date_debut, fin: d.date_fin })),
     cvDepose: cv[0]?.depose ?? false,
+    // Qui a consulté ses coordonnées, et combien de fois. Rendu à l'intéressé, pas à
+    // l'entreprise : c'est ce qui distingue une place de marché d'un courtier en
+    // données. Vendre l'accès à quelqu'un sans le lui dire serait l'autre métier.
+    consultations: await consultationsDuProfil(sql, compteId),
   };
 }
 

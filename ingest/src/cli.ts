@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { connexion } from "@interimatch/core/db";
+import { connexion, fermerConnexion } from "@interimatch/core/db";
 import {
   DOMAINES_TERRAIN,
   LIBELLE_DOMAINE,
@@ -61,7 +61,7 @@ program
       console.log(`\n${total?.n} métiers actifs en base.`);
       if (desactives.length > 0) console.log(`${desactives.length} désactivé(s).`);
     } finally {
-      await sql.end();
+      await fermerConnexion();
     }
   });
 
@@ -237,7 +237,7 @@ program
       const [total] = await sql<{ n: number }[]>`select count(*)::int n from offre_ft`;
       console.log(`${nombre(chargees)} offres chargées. ${nombre(total?.n ?? 0)} en base au total.`);
     } finally {
-      await sql.end();
+      await fermerConnexion();
     }
   });
 
@@ -270,7 +270,7 @@ program
       console.log("\nCertifications citées :");
       for (const c of parCertif) console.log(`  ${c.type_code.padEnd(14)} ${String(c.n).padStart(5)} offres`);
     } finally {
-      await sql.end();
+      await fermerConnexion();
     }
   });
 
@@ -298,7 +298,7 @@ program
       console.log(`\nConnexion : <cle>${DOMAINE_DEMO} / ${MOT_DE_PASSE_DEMO}`);
       console.log(`Entreprise : entreprise${DOMAINE_DEMO}`);
     } finally {
-      await sql.end();
+      await fermerConnexion();
     }
   });
 
@@ -332,7 +332,7 @@ program
       console.log(`\nConnexion entreprise : <ville>${DOMAINE_DEMO_ENTREPRISE} / ${MOT_DE_PASSE_DEMO}`);
       console.log("Villes : reims, lyon, nantes, toulouse");
     } finally {
-      await sql.end();
+      await fermerConnexion();
     }
   });
 
