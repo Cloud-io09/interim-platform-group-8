@@ -132,6 +132,22 @@ describe("candidater hors de ses métiers déclarés", () => {
     expect(page.texte).toMatch(/candidature à traiter|candidatures à traiter/);
   });
 
+  it("porte son verdict dès la liste, sans ouvrir sa fiche", async () => {
+    // Il fallait ouvrir chaque fiche pour savoir si un candidat était affectable :
+    // sur dix candidatures, dix allers-retours. Le produit connaît la réponse.
+    const liste = await appel("/candidatures", "GET", undefined, ent.cookie);
+    expect(liste.statut).toBe(200);
+    expect(liste.texte).toMatch(/✓ Conforme|△ Non conforme/);
+  });
+
+  it("le dit aussi à celui qui a postulé", async () => {
+    // Une candidature peut dormir des jours pendant qu'un titre expire : le savoir
+    // depuis sa propre liste, c'est pouvoir le renouveler avant la réponse.
+    const liste = await appel("/mes-candidatures", "GET", undefined, horsMetier.cookie);
+    expect(liste.statut).toBe(200);
+    expect(liste.texte).toMatch(/Vous êtes conforme|Titre manquant/);
+  });
+
   it("figure dans les candidatures reçues de la fiche", async () => {
     const page = await appel(`/missions/${missionId}`, "GET", undefined, ent.cookie);
     expect(page.texte).toContain("Candidatures reçues");

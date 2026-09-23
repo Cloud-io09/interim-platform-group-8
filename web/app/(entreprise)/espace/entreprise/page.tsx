@@ -196,9 +196,21 @@ export default async function EspaceEntreprise() {
                 ) : null}
 
                 <section aria-labelledby="titre-fiches">
+                  {/* **Le tableau de bord n'est pas une seconde liste.** Il
+                      montrait les mêmes fiches que « Mes fiches », dans le même
+                      ordre : rien ne disait laquelle faisait autorité. Ici, ce qui
+                      attend une réponse passe devant — le reste est à un clic. */}
                   <div className="tete-section">
-                    <h2 id="titre-fiches">Mes fiches en cours</h2>
-                    <p className="petit secondaire">par date de démarrage</p>
+                    <h2 id="titre-fiches">
+                      {b.fiches.some((f) => f.candidaturesRecues > 0)
+                        ? "Ce qui attend votre réponse"
+                        : "Vos chantiers qui approchent"}
+                    </h2>
+                    <p className="petit secondaire">
+                      {b.fiches.some((f) => f.candidaturesRecues > 0)
+                        ? "candidatures d'abord, puis par date de démarrage"
+                        : "par date de démarrage"}
+                    </p>
                   </div>
 
                   {b.fiches.length === 0 ? (
@@ -211,9 +223,16 @@ export default async function EspaceEntreprise() {
                   ) : (
                     <>
                       <ul className="liste-nue">
-                        {b.fiches.slice(0, 5).map((f) => (
-                          <LigneFiche key={f.id} fiche={f} />
-                        ))}
+                        {[...b.fiches]
+                          .sort(
+                            (a, c) =>
+                              c.candidaturesRecues - a.candidaturesRecues ||
+                              a.dateDebut.localeCompare(c.dateDebut)
+                          )
+                          .slice(0, 5)
+                          .map((f) => (
+                            <LigneFiche key={f.id} fiche={f} />
+                          ))}
                       </ul>
                       <a className="bouton bouton--secondaire pleine-largeur" href="/missions">
                         Voir toutes mes fiches

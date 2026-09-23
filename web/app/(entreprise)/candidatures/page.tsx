@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { connexion } from "@interimatch/core/db";
-import { attendUneReponseDe, libelleEtat, type EtatCandidature } from "@interimatch/core";
+import {
+  attendUneReponseDe,
+  libelleEtat,
+  typeCertification,
+  type EtatCandidature,
+} from "@interimatch/core";
 import { exigerSession } from "@/lib/garde";
 
 export const metadata: Metadata = { title: "Candidatures", robots: { index: false, follow: false } };
@@ -18,6 +23,10 @@ interface Ligne {
   nom: string;
   /** Les coordonnées ont-elles été débloquées pour cette mission ? */
   debloque: boolean;
+  /** Affectable sur cette mission-ci, jugé contre sa date de fin. */
+  conforme: boolean;
+  /** Première exigence non couverte, quand il y en a une. */
+  titre_bloquant: string | null;
   ville: string;
   statut: EtatCandidature;
   motif: string | null;
@@ -54,6 +63,38 @@ export default async function CandidaturesEntreprise() {
              -- et rendu en clair dans cette liste : la barrière ne tenait qu'à
              -- l'écran où on avait pensé à la poser. On rapporte le déblocage avec
              -- la candidature, pour que l'affichage suive la même règle partout.
+             -- **Le verdict, dès la liste.** Il fallait ouvrir chaque fiche pour
+             -- savoir si un candidat était affectable — sur dix candidatures, dix
+             -- allers-retours. La règle est la même qu'ailleurs : aucune exigence
+             -- laissée sans titre couvrant la mission **jusqu'à sa date de fin**.
+             -- Une seule requête pour toute la liste, pas une par ligne.
+             not exists (
+               select 1 from mission_certification_requise r
+               left join categorie_certification rc on rc.id = r.categorie_id
+               where r.mission_id = c.mission_id
+                 and not exists (
+                   select 1 from certification cert
+                   left join categorie_certification cc on cc.id = cert.categorie_id
+                   where cert.interimaire_id = c.interimaire_id
+                     and cert.type_code = r.type_code
+                     and (rc.code is null or cc.code = rc.code)
+                     and cert.date_echeance >= m.date_fin
+                 )
+             ) as conforme,
+             (
+               select r.type_code from mission_certification_requise r
+               left join categorie_certification rc on rc.id = r.categorie_id
+               where r.mission_id = c.mission_id
+                 and not exists (
+                   select 1 from certification cert
+                   left join categorie_certification cc on cc.id = cert.categorie_id
+                   where cert.interimaire_id = c.interimaire_id
+                     and cert.type_code = r.type_code
+                     and (rc.code is null or cc.code = rc.code)
+                     and cert.date_echeance >= m.date_fin
+                 )
+               limit 1
+             ) as titre_bloquant,
              exists (
                select 1 from deblocage d
                where d.entreprise_id = ${session.compteId}
@@ -128,6 +169,21 @@ export default async function CandidaturesEntreprise() {
                             </a>
                           </strong>
                           <span className="petit secondaire"> — {l.ville}</span>
+                          {/* Le verdict avant le clic : c'est ce qui décide si on
+                              ouvre la fiche, et le taire obligeait à toutes les
+                              ouvrir. Jamais la couleur seule — le mot est écrit. */}
+                          <span
+                            className={`etiquette ${l.conforme ? "etiquette--ok" : "etiquette--alerte"}`}
+                            style={{ marginLeft: "0.5rem" }}
+                          >
+                            {l.conforme ? "✓ Conforme" : "△ Non conforme"}
+                          </span>
+                          {!l.conforme && l.titre_bloquant && (
+                            <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
+                              {typeCertification(l.titre_bloquant)?.libelle ?? l.titre_bloquant} —
+                              manquant ou expirant avant la fin du chantier.
+                            </p>
+                          )}
                           {l.statut === "declinee" && (
                             <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
                               {l.decide_par === "interimaire"
