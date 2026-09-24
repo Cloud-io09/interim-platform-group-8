@@ -6,9 +6,8 @@
  *
  * Déroule l'histoire entière — une entreprise publie un chantier, des intérimaires
  * se déclarent, le moteur tranche, les deux parties s'accordent — et vérifie à chaque
- * étape ce que le produit promet. C'est à la fois un essai de bout en bout et la
- * source du document `docs/parcours.md` : le diagramme y décrit ce qui se passe
- * réellement, et non ce qu'on croit qu'il se passe.
+ * étape ce que le produit promet. Les diagrammes de `docs/architecture.md` décrivent
+ * ce que ce script vérifie réellement, et non ce qu'on croit qu'il se passe.
  *
  * Trois profils sont créés, chacun pour éprouver une règle :
  *
