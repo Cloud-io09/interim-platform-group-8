@@ -3,6 +3,7 @@ import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { cle, redis, sansEchec } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { notifierMissionPubliee } from "@/lib/notifications";
+import { annoncerPublication } from "@/lib/notifications-n8n";
 import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
@@ -147,6 +148,7 @@ export async function POST(requete: Request) {
     // concernés est un agrément. Un échec ici ne doit pas défaire une publication.
     if (saisie.publier) {
       await sansEchec(() => notifierMissionPubliee(sql, missionId), "notification de publication");
+      annoncerPublication(missionId);
     }
 
     return succes({ id: missionId, statut: saisie.publier ? "publiee" : "brouillon" }, 201);

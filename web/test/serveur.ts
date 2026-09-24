@@ -38,6 +38,8 @@ export function journalServeur(): string {
 
 export const PORT = Number(process.env.PORT_TEST ?? 3199);
 export const BASE = `http://127.0.0.1:${PORT}`;
+/** Port du faux n8n qui reçoit les événements poussés par l'application. */
+export const PORT_RECEPTEUR_N8N = 3197;
 
 async function attendre(url: string, essaisMax = 60): Promise<void> {
   for (let i = 0; i < essaisMax; i++) {
@@ -65,6 +67,10 @@ export async function setup(): Promise<void> {
       // la réputation d'expéditeur et consomment le quota. Les messages vont donc au
       // journal, que la suite sait lire — le chemin réel se vérifie à la main.
       BREVO_API_KEY: "",
+      // L'envoi immédiat vers n8n part vers un récepteur que la suite ouvre elle-même
+      // (web/test/n8n-evenement.test.ts). Sans récepteur à l'écoute, l'envoi échoue
+      // en silence, exactement comme en production quand n8n est éteint.
+      N8N_WEBHOOK_URL: `http://127.0.0.1:${PORT_RECEPTEUR_N8N}/webhook`,
     },
   });
   rmSync(CHEMIN_JOURNAL, { force: true });
