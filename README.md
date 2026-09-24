@@ -10,6 +10,9 @@ disponibilités. Un CACES valable aujourd'hui mais échu au milieu d'un chantier
 le profil : une affectation non conforme engage la responsabilité pénale de
 l'entreprise utilisatrice.
 
+**En ligne :** <https://interim-platform-group-8-web.vercel.app>, avec les comptes de
+démonstration ci-dessous.
+
 ---
 
 ## Démarrage
@@ -49,8 +52,37 @@ Deux points d'attention dans `.env` :
 Sans clé Brevo, les courriels sont écrits dans le journal du serveur : tous les
 parcours restent utilisables en local.
 
-Le jeu de démonstration crée une entreprise et huit intérimaires, chacun illustrant un
-cas du moteur. Mot de passe commun : `demonstration-interimatch`.
+### Comptes de démonstration
+
+Créés par `npm run ingest -- seed-demo`, et présents sur le site en ligne. Mot de passe
+commun : `demonstration-interimatch`.
+
+| Compte | Rôle | Ce qu'il montre |
+|---|---|---|
+| `entreprise@demo.interimatch.test` | entreprise | Une fiche « Conducteur de pelle » à Reims, du 1er au 21 octobre 2026, exigeant un CACES R482 B1 |
+| `conforme@demo.interimatch.test` | intérimaire | Profil conforme, en tête du classement |
+| `expire-pendant@demo.interimatch.test` | intérimaire | CACES valide aujourd'hui mais échu le 10 octobre, pendant la mission : écarté |
+
+Six autres profils couvrent les autres cas du moteur (titre absent, mauvaise catégorie,
+hors rayon, peu disponible…) : voir `ingest/src/demo.ts`. Les dates de la mission sont
+fixes ; passé le 9 octobre 2026, le cas « valide aujourd'hui, échu pendant la mission »
+ne se voit plus et il faut décaler les dates dans ce fichier.
+
+### Tests
+
+```bash
+npm run verifier      # types, puis 384 tests unitaires et 230 tests fonctionnels
+```
+
+Les tests fonctionnels construisent l'application, la lancent sur le port 3199 et
+l'interrogent en HTTP : ils utilisent la base et le Redis du `.env`. Ils créent leurs
+propres comptes et les suppriment à la fin.
+
+### Configuration facultative
+
+Discord (salons privés de notification), n8n (trois automatisations), Brevo (courriels)
+et le déploiement sur Vercel sont décrits dans [docs/exploitation.md](docs/exploitation.md),
+avec un tableau de dépannage.
 
 ---
 
@@ -104,6 +136,7 @@ Livrables du projet, dans `docs/` :
 | Document | Contenu |
 |---|---|
 | [Cahier des charges](docs/cahier-des-charges-g8.pdf) | Étude de marché, modules, chiffrage prévisionnel |
+| [Présentation](docs/presentation-g8.pdf) | Support de soutenance |
 | [Business plan](docs/business-plan.pdf) | Modèle économique et tarification |
 | [Chiffrage](docs/chiffrage-g8.pdf) | Chiffrage du projet |
 | [Design](docs/design/) | Logo et pistes de design |
