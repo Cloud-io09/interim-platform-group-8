@@ -267,7 +267,8 @@ a:hover, a:focus-visible { text-decoration: underline; }
   margin-bottom: 0.5rem;
 }
 
-.champ input {
+.champ input,
+.recherche-fiches input[type="search"] {
   width: 100%;
   min-height: var(--cible-tactile);
   padding: 0.5rem 0.75rem;
@@ -298,7 +299,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
    la couleur seule — RGAA 3.1. */
 /* Liens au fil du texte : soulignés en permanence. */
 main p a,
-main li a:not(.action):not(.chiffre-lien):not(.bouton):not(.onglet):not(.lien-bloc),
+main li a:not(.action):not(.chiffre-lien):not(.bouton):not(.onglet):not(.lien-bloc):not(.filtre),
 .pied a {
   text-decoration: underline;
 }
@@ -1652,3 +1653,131 @@ details > summary {
 }
 .choix-motif:has(input:checked) { border-color: var(--marine); background: var(--marine-tuile); }
 .choix-motif input { margin-top: 0.25rem; }
+
+/* --- Console des fiches de poste --------------------------------------------
+   Pensée pour cent fiches : un tableau dense plutôt qu'une carte par fiche, et
+   des filtres qui répondent d'abord à « où dois-je agir ? ». */
+
+/* Texte réservé aux lecteurs d'écran : présent dans l'arbre d'accessibilité,
+   invisible à l'écran. */
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tete-page {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  margin-bottom: var(--espace-6);
+}
+
+/* Deux par deux sur téléphone : empilés, les quatre chiffres prenaient un écran. */
+.bandeau-chiffres--4 { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .bandeau-chiffres--4 { grid-template-columns: repeat(4, 1fr); } }
+
+.barre-fiches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-3) var(--espace-5);
+  margin-bottom: var(--espace-4);
+}
+.filtres ul { display: flex; flex-wrap: wrap; gap: var(--espace-2); }
+.filtre {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  min-height: var(--cible-tactile);
+  padding: 0 var(--espace-4);
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--texte);
+  font-weight: 500;
+}
+.filtre:hover { border-color: var(--marine); text-decoration: none; }
+.filtre--actif { background: var(--marine); border-color: var(--marine); color: #ffffff; }
+.filtre-compte {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0 var(--espace-2);
+  border-radius: 999px;
+  background: var(--marine-tuile);
+  color: var(--marine);
+}
+.filtre--actif .filtre-compte { background: #ffffff; }
+
+.recherche-fiches { display: flex; gap: var(--espace-2); }
+.recherche-fiches input[type="search"] { min-width: 16rem; }
+
+.tableau-conteneur { padding: 0; overflow-x: auto; }
+.tableau-fiches { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.tableau-fiches th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texte-secondaire);
+  padding: var(--espace-3) var(--espace-4);
+  background: var(--fond);
+  border-bottom: 1px solid var(--bordure);
+  white-space: nowrap;
+}
+.tableau-fiches td {
+  padding: var(--espace-3) var(--espace-4);
+  border-bottom: 1px solid var(--bordure);
+  vertical-align: middle;
+}
+.tableau-fiches tbody tr:last-child td { border-bottom: 0; }
+.tableau-fiches tbody tr:hover { background: var(--fond); }
+.tableau-fiches td > span { display: block; }
+/* Une date ne se coupe pas au milieu : « 16 / oct. » se lisait comme deux valeurs. */
+.tableau-fiches td[data-libelle="Dates"] > span { white-space: nowrap; }
+.tableau-fiches td > .pastille { display: inline-block; }
+.tableau-fiches .nombre { text-align: right; white-space: nowrap; }
+.tableau-titre { font-weight: 600; color: var(--texte); }
+.tableau-action { text-align: right; white-space: nowrap; }
+
+/* Sur téléphone, chaque ligne devient une carte compacte, chaque cellule porte
+   son intitulé : un tableau à six colonnes ne tient pas dans 390 px. */
+@media (max-width: 720px) {
+  .tableau-fiches thead { display: none; }
+  .tableau-fiches, .tableau-fiches tbody, .tableau-fiches tr, .tableau-fiches td { display: block; width: 100%; }
+  .tableau-fiches tr { padding: var(--espace-3) var(--espace-4); border-bottom: 1px solid var(--bordure); }
+  .tableau-fiches td { border: 0; padding: var(--espace-1) 0; text-align: left; }
+  .tableau-fiches .nombre { text-align: left; }
+  .tableau-fiches td[data-libelle]:not([data-libelle="Fiche"])::before {
+    content: attr(data-libelle) " : ";
+    color: var(--texte-secondaire);
+    font-size: 0.875rem;
+  }
+  .tableau-fiches td[data-libelle]:not([data-libelle="Fiche"]) > span { display: inline; margin-left: var(--espace-1); }
+  .tableau-action { text-align: left; padding-top: var(--espace-2) !important; }
+  /* Les filtres glissent sur une rangée, comme les puces de filtre des applications
+     d'emploi : sur trois lignes, ils repoussaient la liste hors de l'écran. */
+  .filtres { width: 100%; }
+  .filtres ul { flex-wrap: nowrap; overflow-x: auto; padding-bottom: var(--espace-1); scrollbar-width: none; }
+  .filtre { white-space: nowrap; }
+  .recherche-fiches { width: 100%; }
+  .recherche-fiches input[type="search"] { min-width: 0; flex: 1; }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-3);
+  margin-top: var(--espace-4);
+}
