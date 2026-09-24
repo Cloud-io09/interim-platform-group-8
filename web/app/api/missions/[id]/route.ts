@@ -165,6 +165,17 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
           publiee_le = ${vise === "publiee" ? sql`coalesce(publiee_le, now())` : sql`publiee_le`}
       where id = ${missionId}`;
 
+    // **Fermer la fiche ferme aussi les dossiers en cours.** Déclarée pourvue hors de
+    // la plateforme, ou close, elle laissait ses candidatures « en attente » : les
+    // intérimaires attendaient une réponse sur un poste qui n'existait plus. Même
+    // traitement que lorsqu'un autre candidat est retenu.
+    if (vise === "pourvue" || vise === "close") {
+      await sql`
+        update candidature set statut = 'expiree', decide_le = now()
+        where mission_id = ${missionId}
+          and statut in ('proposee', 'candidatee', 'sollicitee')`;
+    }
+
     await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation changement de statut");
     if (vise === "publiee") {
       await sansEchec(() => notifierMissionPubliee(sql, missionId), "notification de publication");
