@@ -203,6 +203,32 @@ describe("candidatures — le rapprochement est bilatéral", () => {
   });
 });
 
+describe("missions actives et palier", () => {
+  it("borne le palier Découverte à une fiche en ligne, brouillons exclus", async () => {
+    const ent = await entrepriseAvecMission("palier-decouverte");
+
+    const seconde = await appel("/api/missions", "POST", MISSION, ent.cookie);
+    // 402 comme un contact refusé : c'est le palier qui bloque, pas la saisie.
+    expect(seconde.statut).toBe(402);
+
+    // Un brouillon ne sollicite personne : il reste permis, mais sa mise en ligne non.
+    const brouillon = await appel("/api/missions", "POST", { ...MISSION, publier: false }, ent.cookie);
+    expect(brouillon.statut).toBe(201);
+    const miseEnLigne = await appel(`/api/missions/${brouillon.corps.id}`, "PATCH", { statut: "publiee" }, ent.cookie);
+    expect(miseEnLigne.statut).toBe(402);
+
+    // Une fiche pourvue libère sa place.
+    await appel(`/api/missions/${ent.missionId}`, "PATCH", { statut: "pourvue" }, ent.cookie);
+    expect((await appel(`/api/missions/${brouillon.corps.id}`, "PATCH", { statut: "publiee" }, ent.cookie)).statut).toBe(200);
+  });
+
+  it("lève la borne au palier supérieur", async () => {
+    const ent = await entrepriseAvecMission("palier-starter");
+    await appel("/api/abonnement", "POST", { planCode: "starter" }, ent.cookie);
+    expect((await appel("/api/missions", "POST", MISSION, ent.cookie)).statut).toBe(201);
+  });
+});
+
 describe("cycle de vie d'une mission", () => {
   it("passe de publiée à pourvue, puis close", async () => {
     const ent = await entrepriseAvecMission("statut");

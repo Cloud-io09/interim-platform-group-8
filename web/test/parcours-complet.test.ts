@@ -289,7 +289,9 @@ describe("robustesse des entrées", () => {
     const avecInconnue = await appel(
       "/api/missions",
       "POST",
-      { ...mission(), competencesRequises: ["999999-inexistante"] },
+      // En brouillon : le palier Découverte n'admet qu'une fiche en ligne, et la
+      // précédente l'occupe déjà. Ce qui est vérifié ici ne dépend pas de la publication.
+      { ...mission(), competencesRequises: ["999999-inexistante"], publier: false },
       cookie
     );
     expect(avecInconnue.statut, "compétence inconnue").toBe(201);

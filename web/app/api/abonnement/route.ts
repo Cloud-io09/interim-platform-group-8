@@ -50,7 +50,7 @@ export async function POST(requete: Request) {
 
       return succes({
         credits: compte?.credits ?? 0,
-        message: `${pack.credits} déblocage${pack.credits > 1 ? "s" : ""} ajouté${pack.credits > 1 ? "s" : ""}. Ils n'expirent pas.`,
+        message: `${pack.credits} crédit${pack.credits > 1 ? "s" : ""} ajouté${pack.credits > 1 ? "s" : ""}, sans date d'expiration.`,
       });
     }
 

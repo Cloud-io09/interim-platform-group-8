@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { enEuros, PACKS, PLANS } from "@interimatch/core/offre";
+import { contenuPlan, enEuros, MENTION_CREDITS, PACKS, PLANS } from "@interimatch/core/offre";
 
 export const metadata: Metadata = {
   title: "L'intérim du BTP, sur habilitations vérifiées",
@@ -208,7 +208,7 @@ export default function Accueil() {
           </h2>
           <p className="secondaire" style={{ maxWidth: "60ch" }}>
             Le rapprochement, le score détaillé et la conformité habilitation par
-            habilitation sont gratuits. Un déblocage donne le nom, le téléphone et
+            habilitation sont gratuits. Un contact donne le nom, le téléphone et
             l&apos;agence d&apos;un profil pour une mission.
           </p>
           <ul className="liste-nue grille grille--3" style={{ marginTop: "2rem" }}>
@@ -218,21 +218,17 @@ export default function Accueil() {
                 <p className="chiffre" style={{ margin: "0.25rem 0" }}>
                   {p.prixMensuelCents === 0 ? "Gratuit" : `${enEuros(p.prixMensuelCents)} / mois`}
                 </p>
-                <p className="petit secondaire" style={{ margin: 0 }}>
-                  {p.quotaMensuel === null
-                    ? "Déblocages sans limite"
-                    : p.quotaMensuel > 0
-                      ? `${p.quotaMensuel} déblocages par mois`
-                      : `${p.creditsOfferts} déblocages offerts`}
-                </p>
+                {contenuPlan(p).map((ligne) => (
+                  <p key={ligne} className="petit secondaire" style={{ margin: 0 }}>{ligne}</p>
+                ))}
               </li>
             ))}
           </ul>
           <p className="petit secondaire" style={{ marginTop: "1rem" }}>
-            Sans abonnement, les déblocages s&apos;achètent en crédits, de{" "}
+            Sans abonnement, les contacts s&apos;achètent en crédits, de{" "}
             {enEuros(Math.min(...PACKS.map((k) => k.prixCents / k.credits)))} à{" "}
             {enEuros(Math.max(...PACKS.map((k) => k.prixCents / k.credits)))} l&apos;unité
-            selon la quantité.
+            selon la quantité. {MENTION_CREDITS}
           </p>
           <p style={{ marginTop: "1.5rem" }}>
             <a className="bouton bouton--secondaire" href="/tarifs">Voir le détail des tarifs</a>

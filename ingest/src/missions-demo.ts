@@ -156,8 +156,10 @@ export async function semerMissions(sql: Sql): Promise<BilanMissions> {
   const identifiants = new Map<string, number>();
   for (const e of EMPLOYEURS) {
     const [compte] = await sql<{ id: number }[]>`
-      insert into compte (email, mot_de_passe_hash, mot_de_passe_sel, role)
-      values (${`${e.cle}${DOMAINE_DEMO_ENTREPRISE}`}, ${hash}, ${sel}, 'entreprise') returning id`;
+      insert into compte (email, mot_de_passe_hash, mot_de_passe_sel, role, plan_code)
+      values (${`${e.cle}${DOMAINE_DEMO_ENTREPRISE}`}, ${hash}, ${sel}, 'entreprise', 'pro') returning id`;
+    // Palier Pro : chaque employeur de démonstration porte des dizaines de fiches
+    // publiées, au-delà de ce qu'un palier borné lui laisserait remettre en ligne.
     await sql`
       insert into entreprise (compte_id, raison_sociale, siret, adresse, code_postal, ville, lat, lon)
       values (${compte!.id}, ${e.raisonSociale}, ${e.siret}, ${"1 rue des Chantiers"},

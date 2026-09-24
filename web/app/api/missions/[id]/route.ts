@@ -6,6 +6,7 @@ import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 import { notifierMissionPubliee } from "@/lib/notifications";
 import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
+import { refusSiLimiteAtteinte } from "@/lib/palier";
 
 export const dynamic = "force-dynamic";
 
@@ -163,11 +164,21 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
       ]);
     }
 
-    await sql`
-      update mission
-      set statut = ${vise!},
-          publiee_le = ${vise === "publiee" ? sql`coalesce(publiee_le, now())` : sql`publiee_le`}
-      where id = ${missionId}`;
+    // La remise en ligne (brouillon → publiée, ou attribution tombée) est bornée par
+    // le palier, dans la même transaction que la mise à jour.
+    const refus = await sql.begin(async (tx) => {
+      if (vise === "publiee") {
+        const r = await refusSiLimiteAtteinte(tx, garde.session.compteId);
+        if (r) return r;
+      }
+      await tx`
+        update mission
+        set statut = ${vise!},
+            publiee_le = ${vise === "publiee" ? tx`coalesce(publiee_le, now())` : tx`publiee_le`}
+        where id = ${missionId}`;
+      return null;
+    });
+    if (refus) return refus;
 
     // **Fermer la fiche ferme aussi les dossiers en cours.** Déclarée pourvue hors de
     // la plateforme, ou close, elle laissait ses candidatures « en attente » : les

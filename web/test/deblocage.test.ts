@@ -280,13 +280,13 @@ describe("déblocage", () => {
 
 describe("paliers et crédits", () => {
   it("change de palier et ouvre le quota mensuel", async () => {
-    const r = await appel("/api/abonnement", "POST", { planCode: "chantier" }, ent.cookie);
+    const r = await appel("/api/abonnement", "POST", { planCode: "starter" }, ent.cookie);
     expect(r.statut).toBe(200);
     expect(r.corps.quotaRestant).toBeGreaterThan(0);
 
     // Le quota se consomme avant les crédits : ceux-ci ne périment pas.
     const droits = await appel("/api/deblocages", "GET", undefined, ent.cookie);
-    expect(droits.corps.plan.code).toBe("chantier");
+    expect(droits.corps.plan.code).toBe("starter");
   });
 
   it("ajoute des crédits qui s'additionnent", async () => {
@@ -302,7 +302,7 @@ describe("paliers et crédits", () => {
   });
 
   it("n'est pas ouvert à un intérimaire", async () => {
-    expect((await appel("/api/abonnement", "POST", { planCode: "regie" }, inte.cookie)).statut).toBe(403);
+    expect((await appel("/api/abonnement", "POST", { planCode: "pro" }, inte.cookie)).statut).toBe(403);
   });
 });
 
