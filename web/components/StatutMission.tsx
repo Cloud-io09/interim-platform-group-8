@@ -31,7 +31,7 @@ const MOTIFS: { vise: Statut; libelle: string; effet: string }[] = [
     vise: "pourvue",
     libelle: "J'ai trouvé quelqu'un en dehors d'Intérimatch",
     effet:
-      "La fiche reste consultable. Les candidatures en cours sont closes. Vous pourrez la republier si l'embauche tombe.",
+      "La fiche reste consultable. Les candidatures en cours sont closes.",
   },
   {
     vise: "close",
@@ -86,11 +86,6 @@ export default function StatutMission({ missionId, statut }: { missionId: number
         {statut === "publiee" && (
           <button className="bouton bouton--secondaire" onClick={() => changer("brouillon")} disabled={enCours}>
             Repasser en brouillon
-          </button>
-        )}
-        {statut === "pourvue" && (
-          <button className="bouton bouton--secondaire" onClick={() => changer("publiee")} disabled={enCours}>
-            Republier, l&apos;embauche est tombée
           </button>
         )}
         {(clorePossible || statut === "pourvue") && (
