@@ -230,7 +230,6 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
   const tauxIncoherents =
     tauxMin !== "" && tauxMax !== "" && Number(tauxMax) <= Number(tauxMin);
 
-  const typeDe = (code: string) => types.find((t) => t.code === code);
 
   return (
     <form onSubmit={envoyer} onChange={() => setModifie(true)} noValidate>

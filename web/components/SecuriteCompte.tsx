@@ -181,7 +181,7 @@ export default function SecuriteCompte() {
               onClick={renvoyerVerification}
               disabled={enCours}
             >
-              M'envoyer un lien de confirmation
+              M&apos;envoyer un lien de confirmation
             </button>
           </>
         )}
