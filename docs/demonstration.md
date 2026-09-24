@@ -84,6 +84,7 @@ Sofiane est encore valide, soit jusqu'au 9 octobre 2026. Au-delà, décaler
 | Nouvelle fiche, métier « conducteur d'engins » | Encart des offres publiques : intitulés fréquents, habilitations typiques, fourchette de salaire locale avec le nombre d'offres | Données France Travail nettoyées par notre CLI |
 | Exiger CACES R482 | Catégorie obligatoire, liste fermée | Aucun texte libre |
 | Durée de plus de 18 mois | Refus citant l'article L1251-12 et la date limite | Contrôle légal à la saisie |
+| Taux horaires | Préremplis sur la fourchette observée, avec la source sous les champs | Un repère tiré du marché, modifiable |
 | Publier, puis modifier | Matching recalculé | Cache invalidé à la modification |
 
 ### B3. Le moteur
@@ -98,10 +99,11 @@ Sofiane est encore valide, soit jusqu'au 9 octobre 2026. Au-delà, décaler
 
 | Faire | On doit voir | À dire |
 |---|---|---|
-| Profil de Karim | Conformité habilitation par habilitation ; nom réduit à « Karim B. » | Le verdict est visible avant de payer |
+| Liste des candidats, puis profil de Karim | « Karim B. », mention « Coordonnées masquées » ; conformité habilitation par habilitation | Le verdict est visible avant de payer ; le nom complet ne l'est nulle part |
 | Agence | Présence d'une agence, sans son nom | On sait qu'il y a un intermédiaire avant de payer |
-| Débloquer les coordonnées | Confirmation, un crédit consommé, nom, téléphone, agence | Débloquer deux fois ne coûte qu'une fois |
-| Solliciter un profil non débloqué, crédits épuisés | Écran de paiement | Contrôlé côté serveur, pas seulement masqué |
+| « Débloquer et solliciter » | Fenêtre de confirmation : ce qu'on obtient, ce qui est consommé (forfait ou crédit), ce qu'il restera | Rien n'est débité sans avoir été annoncé |
+| Confirmer | Nom complet, téléphone, agence ; profil sollicité | Débloquer deux fois ne coûte qu'une fois |
+| Même geste, crédits épuisés | La fenêtre l'annonce et propose les formules | Contrôlé aussi côté serveur (`402`), pas seulement à l'écran |
 
 ### B5. Conclure
 
@@ -110,6 +112,7 @@ Sofiane est encore valide, soit jusqu'au 9 octobre 2026. Au-delà, décaler
 | Candidatures | Chaque chantier dans sa carte, verdict dès la liste | |
 | « Retenir ce profil » ou « Écarter ce profil » | Un motif facultatif peut accompagner le refus | Il est transmis : un refus expliqué dit quoi corriger |
 | Fiche pourvue | Qui vient, comment le joindre | |
+| Sur une autre fiche : « Clore la fiche… » | Deux motifs, chacun avec ses conséquences écrites | Les candidatures en attente passent à « expirée » : personne n'attend une réponse qui ne viendra pas |
 | Document de mission → imprimer | Six mentions obligatoires, ou la liste de celles qui manquent | Impression du navigateur, rien n'est généré côté serveur |
 | Tableau de bord | Chiffres clés, activité, prochain chantier | |
 
