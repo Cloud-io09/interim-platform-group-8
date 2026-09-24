@@ -427,6 +427,12 @@ temps constant.
 | Mission correspondante | `GET /api/n8n/missions-a-notifier?heures=24` (max 720) | Missions publiées dans la fenêtre ; matching rejoué, seuls les retenus | intérimaire |
 | Relance des fiches sans intérimaire | `GET /api/n8n/missions-non-pourvues?jours=7` (max 90) | Missions publiées depuis au moins N jours, chantier non commencé | entreprise |
 
+Les premiers flux, prototypés par Sandrine Yu, déclenchaient n8n à intervalle régulier
+et postaient par webhook dans un salon Discord commun. Leur structure (déclencheur
+planifié, préparation des données, envoi HTTP) est restée ; le webhook commun a été
+remplacé par un salon privé par personne, pour ne plus exposer les alertes de chacun
+à tout le serveur ([D18](decisions.md#d18-discord-par-un-bot-un-salon-par-personne)).
+
 Chaque flux suit la même chaîne : déclencheur quotidien, appel API, éclatement du
 tableau, filtre sur `discordSalonId` non vide, envoi dans le salon. Le texte du message
 est rédigé par l'application ; n8n ne porte aucune règle métier. Mise en place :
