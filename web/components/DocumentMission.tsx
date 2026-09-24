@@ -111,7 +111,7 @@ export default async function DocumentMission({
       ...exigences.map(
         (e) =>
           (typeCertification(e.type_code)?.libelle ?? e.type_code.replace(/_/g, " ")) +
-          (e.categorie_code ? ` - catégorie ${e.categorie_code}` : "")
+          (e.categorie_code ? `, catégorie ${e.categorie_code}` : "")
       ),
     ].filter(Boolean);
 

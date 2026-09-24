@@ -62,7 +62,7 @@ export function ListeConformite({
           <div>
             <strong>
               {e.libelleType}
-              {e.categorieCode ? ` - catégorie ${e.categorieCode}` : ""}
+              {e.categorieCode ? `, catégorie ${e.categorieCode}` : ""}
             </strong>
             <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
               {e.precision}

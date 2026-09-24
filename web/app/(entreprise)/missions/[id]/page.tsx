@@ -69,7 +69,7 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
                 {mission.certificationsRequises.map((c) => (
                   <li key={c.typeCode}>
                     {typeCertification(c.typeCode)?.libelle ?? c.typeCode}
-                    {c.categorieCode && ` - catégorie ${c.categorieCode}`}
+                    {c.categorieCode && `, catégorie ${c.categorieCode}`}
                   </li>
                 ))}
               </ul>

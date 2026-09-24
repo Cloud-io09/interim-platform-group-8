@@ -158,7 +158,7 @@ export default function Certifications() {
                   <div>
                     <h3 style={{ marginBottom: "0.25rem" }}>
                       {c.typeLibelle}
-                      {c.categorieCode && <> - catégorie {c.categorieCode}</>}
+                      {c.categorieCode && <>, catégorie {c.categorieCode}</>}
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
                       {c.organismeEmetteur} · n° {c.numero} · obtenu le {enDateFr(c.dateObtention)}
