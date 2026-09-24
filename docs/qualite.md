@@ -57,7 +57,7 @@ mission par la date du jour fait échouer deux tests unitaires et un test foncti
 
 | Instructions | Branches | Fonctions | Lignes |
 |---|---|---|---|
-| 96,8 % | 92,3 % | 97,9 % | 98,2 % |
+| 96,8 % | 92,4 % | 97,9 % | 98,2 % |
 
 Seuils configurés dans `core/vitest.config.ts` : 90 % (lignes, fonctions,
 instructions), 85 % (branches). En dessous, la commande échoue. Le rapport HTML est
