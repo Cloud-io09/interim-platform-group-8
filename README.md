@@ -99,5 +99,12 @@ Vercel. Détail : [docs/architecture.md](docs/architecture.md).
 | [Exploitation](docs/exploitation.md) | Variables, déploiement, Discord, n8n, dépannage |
 | [Conformité](docs/conformite.md) | État de chaque exigence du sujet et sa preuve |
 
-Également dans `docs/` : le cahier des charges (`cahier-des-charges-g8.pdf`) et les
-exports des flux n8n (`n8n/`).
+Livrables du projet, dans `docs/` :
+
+| Document | Contenu |
+|---|---|
+| [Cahier des charges](docs/cahier-des-charges-g8.pdf) | Étude de marché, modules, chiffrage prévisionnel |
+| [Business plan](docs/business-plan.pdf) | Modèle économique et tarification |
+| [Chiffrage](docs/chiffrage-g8.pdf) | Chiffrage du projet |
+| [Design](docs/design/) | Logo et pistes de design |
+| [Flux n8n](docs/n8n/) | Exports des trois automatisations |

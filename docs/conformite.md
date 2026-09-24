@@ -118,6 +118,6 @@ mission**, vérifiée par un test de mutation.
 | Dépôt avec README d'installation et de lancement | Fait |
 | Export des scénarios n8n | Fait : `docs/n8n/` |
 | Script de nettoyage des données publiques | Fait : `ingest/` |
-| Dossier d'étude de marché | Partiel : volumes par domaine dans le cahier des charges ; pas de dossier dédié dans le dépôt |
-| Chiffrage réel, écart avec l'estimé | Absent du dépôt |
+| Dossier d'étude de marché | Fait : cahier des charges et [business plan](business-plan.pdf) |
+| Chiffrage réel, écart avec l'estimé | Fait : [chiffrage](chiffrage-g8.pdf) |
 | Support de pitch | Absent du dépôt |
