@@ -65,7 +65,7 @@ mission**, vérifiée par un test de mutation.
 
 | Exigence | État | Preuve |
 |---|---|---|
-| Deux automatisations réalistes | Fait | Quatre flux n8n : trois quotidiens, un déclenché à la publication. [Flux](architecture.md#flux-n8n) |
+| Deux automatisations réalistes | Fait | Trois flux n8n. [Flux](architecture.md#flux-n8n) |
 | Canal webhook plutôt que courriel ou SMS | Fait | Discord, un salon privé par personne. [D18](decisions.md#d18-discord-par-un-bot-un-salon-par-personne) |
 | Export des scénarios | Fait | `docs/n8n/*.json`, sans secret |
 
@@ -103,8 +103,8 @@ mission**, vérifiée par un test de mutation.
 | Backend Node en TypeScript | Fait | Routes d'API Next.js |
 | Base relationnelle | Fait | PostgreSQL : 22 tables, 15 migrations |
 | Base non relationnelle complémentaire | Fait | Redis, dix usages. [Détail](architecture.md#base-non-relationnelle) |
-| Tests unitaires | Fait | 379 dans `core` |
-| Tests fonctionnels : inscription, mission, matching | Fait | 230 dans `web`, contre un serveur réel |
+| Tests unitaires | Fait | 374 dans `core` |
+| Tests fonctionnels : inscription, mission, matching | Fait | 226 dans `web`, contre un serveur réel |
 | Rapport de couverture | Partiel | `core` : 96,8 % des instructions. Pas de rapport pour `web`, délibérément. [D20](decisions.md#d20-pas-de-rapport-de-couverture-pour-web) |
 | Bibliothèque en ligne de commande | Fait | `commander` dans `ingest/` |
 

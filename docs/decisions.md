@@ -256,11 +256,6 @@ poste lui-même sur Discord. L'application rédige les messages.
 
 **Écarté.** L'application qui pousse vers n8n.
 
-**Complément.** Un quatrième flux est poussé : à la publication d'une fiche,
-l'application appelle un webhook n8n (`N8N_WEBHOOK_URL`), pour prévenir dans la minute
-plutôt que le lendemain. Il est facultatif, parce qu'il exige que n8n soit joignable
-depuis Internet ; sans lui, les flux quotidiens suffisent.
-
 **Motif.** n8n tourne sur un poste sans adresse publique. En tirant, il n'a jamais
 besoin d'être joignable, et reste la couche d'automatisation : cadence, mise en forme,
 reprises. Un secret plutôt qu'un compte : n8n n'est pas un utilisateur.
