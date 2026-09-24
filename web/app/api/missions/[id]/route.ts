@@ -4,6 +4,7 @@ import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 import { notifierMissionPubliee } from "@/lib/notifications";
+import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
 
 export const dynamic = "force-dynamic";
@@ -67,8 +68,8 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
 
   const sql = connexion();
   try {
-    const [mission] = await sql<{ entreprise_id: number; statut: Statut }[]>`
-      select entreprise_id, statut from mission where id = ${missionId}`;
+    const [mission] = await sql<{ entreprise_id: number; statut: Statut; date_debut: string }[]>`
+      select entreprise_id, statut, date_debut::text from mission where id = ${missionId}`;
     if (!mission) return erreur("Mission introuvable.", 404);
     if (mission.entreprise_id !== garde.session.compteId) {
       return erreur("Cette mission ne vous appartient pas.", 403);
@@ -85,7 +86,10 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
         );
       }
 
-      const problemes = validerMission(saisie);
+      const problemes = validerMission(saisie, {
+        aujourdhui: aujourdhuiParis(),
+        debutActuel: mission.date_debut,
+      });
       if (problemes.length > 0) return erreur("Le formulaire comporte des erreurs.", 422, problemes);
 
       const codePostal = saisie.codePostal!.trim();

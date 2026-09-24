@@ -100,3 +100,35 @@ describe("certifications exigées", () => {
     ).toEqual([]);
   });
 });
+
+describe("dates d'une fiche au regard du jour", () => {
+  const le = { aujourdhui: "2026-10-05" };
+
+  it("refuse un début passé à la création", () => {
+    const p = validerMission(mission, le);
+    expect(champs(p)).toContain("dateDebut");
+    expect(p.find((x) => x.champ === "dateDebut")?.message).toMatch(/05\/10\/2026/);
+  });
+
+  it("accepte un début le jour même", () => {
+    expect(validerMission({ ...mission, dateDebut: "2026-10-05" }, le)).toEqual([]);
+  });
+
+  it("refuse une fin passée, même quand le début est conservé", () => {
+    const p = validerMission(
+      { ...mission, dateDebut: "2026-09-01", dateFin: "2026-09-30" },
+      { ...le, debutActuel: "2026-09-01" }
+    );
+    expect(champs(p)).toEqual(["dateFin"]);
+  });
+
+  it("laisse corriger un chantier commencé sans exiger de repousser son début", () => {
+    const p = validerMission(mission, { ...le, debutActuel: mission.dateDebut });
+    expect(p).toEqual([]);
+  });
+
+  it("refuse de déplacer le début d'un chantier commencé vers une autre date passée", () => {
+    const p = validerMission({ ...mission, dateDebut: "2026-09-20" }, { ...le, debutActuel: "2026-10-01" });
+    expect(champs(p)).toContain("dateDebut");
+  });
+});

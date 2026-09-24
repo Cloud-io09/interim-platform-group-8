@@ -235,3 +235,24 @@ describe("clore une fiche", () => {
     expect(siennes.every((x) => x.statut === "expiree")).toBe(true);
   });
 });
+
+describe("fiche de poste : règles ajoutées après recette", () => {
+  it("refuse une fiche qui commence dans le passé", async () => {
+    // Le formulaire acceptait un début à hier : on publiait un chantier déjà commencé.
+    const r = await appel("/api/missions", "POST", {
+      titre: `Passé — ${MARQUE}`, metierCode: "F1502", description: "",
+      adresse: "3 rue du Calvaire", codePostal: "44000", ville: "Nantes",
+      dateDebut: dansNJours(-3), dateFin: dansNJours(10),
+      certificationsRequises: [], competencesRequises: [], publier: true,
+    }, ent.cookie);
+    expect(r.statut).toBe(422);
+    expect(JSON.stringify(r.corps.problemes)).toContain("dateDebut");
+  });
+
+  it("donne un repère de rémunération même à un métier sans offre observée", async () => {
+    // L'engin de damage (F1303) n'a aucune offre : on se replie sur son domaine.
+    const r = await appel("/api/enrichissement?metier=F1303", "GET", undefined, ent.cookie);
+    expect(r.statut).toBe(200);
+    expect(r.corps.remuneration).toMatchObject({ source: "domaine", domaine: "Engins de chantier" });
+  });
+});

@@ -3,6 +3,7 @@ import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { cle, redis, sansEchec } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { notifierMissionPubliee } from "@/lib/notifications";
+import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 
@@ -66,7 +67,7 @@ export async function POST(requete: Request) {
   const saisie = await corpsJson<Saisie>(requete);
   if (!saisie) return erreur("Requête illisible.", 400);
 
-  const problemes = validerMission(saisie);
+  const problemes = validerMission(saisie, { aujourdhui: aujourdhuiParis() });
   if (problemes.length > 0) return erreur("Le formulaire comporte des erreurs.", 422, problemes);
 
   const sql = connexion();

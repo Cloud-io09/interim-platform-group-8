@@ -36,7 +36,24 @@ export interface ExigenceSaisie {
 /** Les messages d'erreur s'adressent à un humain : jamais de date ISO. */
 const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("fr-FR");
 
-export function validerMission(saisie: SaisieMission): Probleme[] {
+/**
+ * Ce que la validation doit savoir du moment, sans lire l'horloge elle-même.
+ *
+ * **Une fiche pouvait commencer hier.** Rien n'opposait la date du jour : on publiait
+ * un chantier déjà commencé, voire déjà terminé, que le moteur rapprochait comme les
+ * autres. La date est passée en paramètre, comme pour le moteur de matching, pour que
+ * la règle se teste sans figer le temps.
+ */
+export interface ContexteTemporel {
+  aujourdhui: DateISO;
+  /**
+   * Début déjà enregistré, à la modification d'une fiche. Un chantier commencé peut
+   * être corrigé sans qu'on exige de repousser son début dans le futur.
+   */
+  debutActuel?: DateISO;
+}
+
+export function validerMission(saisie: SaisieMission, temps?: ContexteTemporel): Probleme[] {
   const problemes: Probleme[] = [];
 
   const titre = typeof saisie.titre === "string" ? saisie.titre.trim() : "";
@@ -67,6 +84,16 @@ export function validerMission(saisie: SaisieMission): Probleme[] {
   if (debutValide && finValide) {
     const debut = enMsUTC(saisie.dateDebut as DateISO);
     const fin = enMsUTC(saisie.dateFin as DateISO);
+    const jour = temps ? enMsUTC(temps.aujourdhui) : null;
+    if (jour !== null && debut < jour && saisie.dateDebut !== temps!.debutActuel) {
+      problemes.push({
+        champ: "dateDebut",
+        message: `La date de début ne peut pas être passée. Au plus tôt : le ${enDateFr(temps!.aujourdhui)}.`,
+      });
+    }
+    if (jour !== null && fin < jour) {
+      problemes.push({ champ: "dateFin", message: "La date de fin est passée : ce chantier serait déjà terminé." });
+    }
     if (fin < debut) {
       problemes.push({ champ: "dateFin", message: "La date de fin ne peut pas précéder la date de début." });
     } else {
