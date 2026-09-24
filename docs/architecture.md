@@ -21,42 +21,18 @@ raisons des choix sont dans [decisions.md](decisions.md).
 
 ```mermaid
 flowchart LR
-  subgraph NAV["Navigateur"]
-    UI["Interfaces"]
-    OCR["Lecture du CV<br/>pdf.js, Tesseract WASM"]
-  end
-
-  subgraph APP["Vercel, région fra1"]
-    WEB["web<br/>pages et routes d'API"]
-    CORE["core<br/>règles métier"]
-    WEB --> CORE
-  end
-
-  CLI["CLI ingest<br/>poste de l'équipe"]
-  N8N["n8n"]
-  PG[("PostgreSQL<br/>Supabase")]
-  RD[("Redis<br/>Upstash")]
-  BAN["API Adresse"]
-  BREVO["Brevo"]
-  DISCORD["Discord"]
-  FT["API France Travail"]
-
-  UI -->|HTTPS| WEB
-  OCR -->|texte seul| WEB
-  APP --> PG
-  APP --> RD
-  APP -->|géocodage| BAN
-  APP -->|courriels| BREVO
-  APP -->|salons, messages d'événement| DISCORD
-  N8N -->|"GET /api/n8n/*"| WEB
-  N8N -->|messages planifiés| DISCORD
-  CLI -->|offres, référentiels| FT
-  CLI --> PG
+  NAV[Navigateur] --> APP[Application Next.js sur Vercel]
+  N8N[n8n] --> APP
+  APP --> PG[(PostgreSQL)]
+  APP --> RD[(Redis)]
+  APP --> EXT[API Adresse, Brevo, Discord]
+  N8N --> EXT
 ```
 
-`web` et `core` sont déployés ensemble et appellent tous deux les services de droite :
-les flèches partent donc du déploiement, pas d'une couche. La CLI d'ingestion tourne sur
-un poste de l'équipe, pas sur Vercel ; elle réutilise le code de `core`.
+L'application regroupe `web` (pages et API) et `core` (règles métier), déployés
+ensemble. n8n lit l'application chaque jour et poste lui-même dans Discord. La CLI
+d'ingestion, qui réutilise `core`, tourne sur un poste de l'équipe et non sur Vercel :
+voir [Ingestion](#ingestion-france-travail).
 
 | Composant | Technologie | Rôle |
 |---|---|---|
@@ -232,14 +208,13 @@ et rendent un résultat. Aucun accès à la base, aucun appel à l'horloge.
 
 ```mermaid
 flowchart TD
-  P["Profils du métier de la mission<br/>+ candidats hors métier"] --> F{"Chaque habilitation exigée"}
-  F -->|"aucun titre du bon type et de la bonne catégorie"| X1["Écarté : certification_absente"]
-  F -->|"titre qui échoit avant la fin de mission"| X2["Écarté : certification_expiree"]
-  F -->|"titre valide jusqu'à la fin"| S["Retenu"]
-  S --> N["Score par critère"]
-  X1 --> T[("Trace Redis")]
+  P[Profils de la mission] --> F{Habilitations exigées ?}
+  F -->|titre absent| X1[Écarté : certification absente]
+  F -->|titre échu avant la fin| X2[Écarté : certification expirée]
+  F -->|titre valide jusqu'à la fin| S[Retenu, puis noté]
+  X1 --> T[(Trace Redis)]
   X2 --> T
-  N --> T
+  S --> T
 ```
 
 ### Étape 1 : filtre éliminatoire
@@ -287,21 +262,15 @@ exige l'accord de l'autre.
 
 ```mermaid
 flowchart LR
-  R(["Rapproché<br/>par le moteur"])
-  C["candidatee<br/>attend l'entreprise"]
-  S["sollicitee<br/>attend l'intérimaire"]
-  A(["acceptee<br/>mission attribuée"])
-  D(["declinee"])
-
-  R -->|"Intérimaire : postuler"| C
-  C -->|"Entreprise : retenir"| A
-  R -->|"Entreprise : solliciter"| S
-  S -->|"Intérimaire : accepter"| A
-
-  R -.->|refus| D
-  C -.->|refus ou retrait| D
-  S -.->|refus ou annulation| D
+  R([Rapproché]) -->|l'intérimaire postule| C[candidatee]
+  R -->|l'entreprise sollicite| S[sollicitee]
+  C -->|l'entreprise retient| A([acceptee])
+  S -->|l'intérimaire accepte| A
 ```
+
+`candidatee` attend la réponse de l'entreprise, `sollicitee` celle de l'intérimaire.
+À chaque étape, l'une ou l'autre partie peut refuser : la candidature passe alors à
+`declinee` (détail dans le tableau ci-dessous).
 
 **« Rapproché » n'est pas un état stocké.** Aucune ligne n'existe tant que personne n'a
 agi ; la première action crée la ligne directement dans l'état visé. L'écran affiche
@@ -346,72 +315,20 @@ npm run ingest -- seed-demo           # jeu de démonstration
 ### Cycle de vie de la donnée
 
 ```mermaid
-flowchart TD
-  API["API France Travail<br/>Offres d'emploi v2<br/>OAuth2 client_credentials"]
-
-  subgraph C["1. Collecte : ingest fetch"]
-    C1["Offres d'intérim (typeContrat=MIS)<br/>domaines F13, F15, F16, F17<br/>150 par page, 600 max par domaine"]
-    C2["Pagination par l'en-tête Content-Range<br/>(206 = réponse partielle normale)<br/>appels espacés de 140 ms"]
-    C1 --> C2
-  end
-
-  BRUT[("offres-brutes.json<br/>1 800 offres")]
-
-  subgraph N["2. Nettoyage : ingest clean (core/src/ingestion)"]
-    N1{"Doublon exact ?<br/>même identifiant d'offre"}
-    N2{"Code ROME présent ?"}
-    N3{"Domaine de terrain ?<br/>F11 conception et F12 encadrement exclus"}
-    N4["Intitulé normalisé<br/>sur l'appellation du référentiel"]
-    N5["Rémunération : texte libre → taux horaire<br/>mensuel ÷ 151,67 · annuel ÷ 1 820"]
-    N6["Lieu : code postal, commune, département<br/>coordonnées reprises si présentes"]
-    N7["Habilitations : motifs repérés dans le texte<br/>projetés sur la liste fermée"]
-    N8["Compétences : codes et libellés de l'offre"]
-    N9{"Doublon proche ?<br/>empreinte intitulé + commune + entreprise"}
-    N1 -->|non| N2
-    N2 -->|oui| N3
-    N3 -->|oui| N4 --> N5 --> N6 --> N7 --> N8 --> N9
-  end
-
-  REJ["Offres écartées, comptées par motif<br/>ici : 38 doublons proches"]
-  NET[("offres-nettoyees.json<br/>1 762 offres")]
-
-  subgraph L["3. Chargement : ingest load"]
-    L1[("offre_ft")]
-    L2[("offre_ft_certification")]
-    L3[("offre_ft_competence")]
-    L4[("competence<br/>référentiel complété")]
-  end
-
-  subgraph U["4. Usages dans le produit"]
-    U1["Fiche de poste enrichie<br/>intitulés, habilitations typiques,<br/>fourchette de salaire locale"]
-    U2["Compétences du profil intérimaire<br/>classées par fréquence réelle"]
-  end
-
-  subgraph P["Publication : ingest export"]
-    P1["Contacts de recruteurs retirés<br/>courriels et téléphones masqués"]
-    P2["docs/donnees/"]
-    P1 --> P2
-  end
-
-  API --> C1
-  C2 --> BRUT --> N1
-  N1 -->|oui| REJ
-  N2 -->|non| REJ
-  N3 -->|non| REJ
-  N4 -->|intitulé introuvable| REJ
-  N9 -->|oui| REJ
-  N9 -->|non| NET
-  NET --> L1
-  NET --> L2
-  NET --> L3
-  NET --> L4
-  L1 --> U1
-  L2 --> U1
-  L3 --> U2
-  L4 --> U2
-  BRUT -.-> P1
-  NET -.-> P2
+flowchart LR
+  API[API France Travail] -->|fetch| BRUT[(1 800 offres brutes)]
+  BRUT -->|clean| NET[(1 762 offres nettoyées)]
+  BRUT -.->|38 doublons écartés| REJ[Rejets]
+  NET -->|load| BASE[(Base Supabase)]
+  BASE --> FICHE[Fiche de poste enrichie]
+  BASE --> COMP[Compétences du profil]
+  NET -->|export| DOCS[docs/donnees]
 ```
+
+`clean` écarte les offres hors des domaines de terrain ou sans intitulé reconnu,
+normalise ce qu'il garde, puis retire les doublons ; le détail est dans le tableau
+[Nettoyage](#nettoyage). `export` publie les deux jeux sans les coordonnées des
+recruteurs.
 
 ### Particularités de l'API
 
