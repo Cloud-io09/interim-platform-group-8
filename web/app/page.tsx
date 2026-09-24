@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { enEuros, PACKS, PLANS } from "@interimatch/core/offre";
 
 export const metadata: Metadata = {
   title: "L'intérim du BTP, sur habilitations vérifiées",
@@ -192,6 +193,49 @@ export default function Accueil() {
           </div>
           <p style={{ marginTop: "2rem" }}>
             <a className="bouton" href="/inscription/interimaire">Créer mon profil</a>
+          </p>
+        </div>
+      </section>
+
+      {/* **Le prix, sur la page qu'on lit avant de décider.** La grille n'était
+          atteignable que par l'en-tête. Les montants viennent du même module que la
+          page Tarifs et que le débit réel : aucun chiffre recopié qui divergerait. */}
+      <section className="section" style={{ borderTop: "1px solid var(--bordure)" }} aria-labelledby="titre-tarifs">
+        <div className="colonne">
+          <p className="sur-titre sur-titre--accent-jaune">Tarifs</p>
+          <h2 id="titre-tarifs" style={{ maxWidth: "30ch" }}>
+            Gratuit pour les intérimaires. Les entreprises ne paient que le contact.
+          </h2>
+          <p className="secondaire" style={{ maxWidth: "60ch" }}>
+            Le rapprochement, le score détaillé et la conformité habilitation par
+            habilitation sont gratuits. Un déblocage donne le nom, le téléphone et
+            l&apos;agence d&apos;un profil pour une mission.
+          </p>
+          <ul className="liste-nue grille grille--3" style={{ marginTop: "2rem" }}>
+            {PLANS.map((p) => (
+              <li key={p.code} className="carte">
+                <h3 className="titre-carte">{p.libelle}</h3>
+                <p className="chiffre" style={{ margin: "0.25rem 0" }}>
+                  {p.prixMensuelCents === 0 ? "Gratuit" : `${enEuros(p.prixMensuelCents)} / mois`}
+                </p>
+                <p className="petit secondaire" style={{ margin: 0 }}>
+                  {p.quotaMensuel === null
+                    ? "Déblocages sans limite"
+                    : p.quotaMensuel > 0
+                      ? `${p.quotaMensuel} déblocages par mois`
+                      : `${p.creditsOfferts} déblocages offerts`}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="petit secondaire" style={{ marginTop: "1rem" }}>
+            Sans abonnement, les déblocages s&apos;achètent en crédits, de{" "}
+            {enEuros(Math.min(...PACKS.map((k) => k.prixCents / k.credits)))} à{" "}
+            {enEuros(Math.max(...PACKS.map((k) => k.prixCents / k.credits)))} l&apos;unité
+            selon la quantité.
+          </p>
+          <p style={{ marginTop: "1.5rem" }}>
+            <a className="bouton bouton--secondaire" href="/tarifs">Voir le détail des tarifs</a>
           </p>
         </div>
       </section>
