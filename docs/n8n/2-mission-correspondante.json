@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://VOTRE-DOMAINE/api/n8n/missions-a-notifier?heures=24",
+        "url": "https://interim-platform-group-8-web.vercel.app/api/n8n/missions-a-notifier?heures=24",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}

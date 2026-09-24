@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://VOTRE-DOMAINE/api/n8n/missions-non-pourvues?jours=7",
+        "url": "https://interim-platform-group-8-web.vercel.app/api/n8n/missions-non-pourvues?jours=7",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
