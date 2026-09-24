@@ -16,17 +16,21 @@
  * traite pas comme une place de marché.
  */
 
-export type CodePlan = "decouverte" | "chantier" | "regie";
+export type CodePlan = "decouverte" | "starter" | "pro";
 
 export interface Plan {
   code: CodePlan;
   libelle: string;
   /** En centimes, pour ne jamais manipuler de flottant sur de l'argent. */
   prixMensuelCents: number;
-  /** Déblocages inclus chaque mois. `null` = sans limite. */
+  /** Contacts inclus chaque mois. `null` = sans limite. */
   quotaMensuel: number | null;
   /** Crédits remis à l'ouverture du compte, une seule fois. */
   creditsOfferts: number;
+  /** Fiches publiées simultanément. `null` = sans limite. Les brouillons ne comptent pas. */
+  missionsActivesMax: number | null;
+  /** Mis en avant sur les grilles. Un seul palier à la fois. */
+  recommande: boolean;
   argument: string;
 }
 
@@ -39,28 +43,33 @@ export const PLANS: readonly Plan[] = [
     // Trois, et pas un : assez pour éprouver le rapprochement sur une vraie fiche,
     // trop peu pour recruter une équipe sans jamais payer.
     creditsOfferts: 3,
-    argument: "Publiez, consultez les rapprochements, débloquez trois profils.",
+    // Une fiche : de quoi aller au bout d'un recrutement, pas de quoi faire tourner
+    // une activité entière sur le palier gratuit.
+    missionsActivesMax: 1,
+    recommande: false,
+    argument: "Publiez une fiche, consultez les rapprochements, obtenez trois contacts.",
   },
   {
-    code: "chantier",
-    libelle: "Chantier",
-    prixMensuelCents: 8900,
-    quotaMensuel: 10,
+    code: "starter",
+    libelle: "Starter",
+    prixMensuelCents: 3900,
+    quotaMensuel: 40,
     creditsOfferts: 0,
-    // La première version promettait ici « la relance automatique de vos fiches non
-    // pourvues ». Elle n'était réservée à personne — tous les paliers la reçoivent —
-    // et le rappel dit justement combien de profils restent à solliciter : le
-    // retirer au palier gratuit reviendrait à couper la conversion de ceux qu'on
-    // veut convertir. La promesse est corrigée, pas la fonctionnalité.
-    argument: "Dix déblocages par mois, pour une équipe qui se renouvelle au fil des chantiers.",
+    missionsActivesMax: 4,
+    recommande: true,
+    // Ne jamais promettre ici une fonctionnalité que tous les paliers reçoivent
+    // (la relance des fiches non pourvues, par exemple) : un test y veille.
+    argument: "Quarante contacts par mois et quatre fiches en ligne, pour une équipe qui se renouvelle au fil des chantiers.",
   },
   {
-    code: "regie",
-    libelle: "Régie",
-    prixMensuelCents: 24900,
+    code: "pro",
+    libelle: "Pro",
+    prixMensuelCents: 12900,
     quotaMensuel: null,
     creditsOfferts: 0,
-    argument: "Déblocages sans limite, pour qui recrute toute l'année.",
+    missionsActivesMax: null,
+    recommande: false,
+    argument: "Contacts et fiches sans limite, pour qui recrute toute l'année.",
   },
 ] as const;
 
@@ -76,16 +85,39 @@ export interface PackCredits {
  * Le bâtiment recrute par à-coups : une entreprise qui embauche deux fois l'an ne
  * s'abonnera pas, et lui refuser le produit pour autant serait absurde.
  *
- * Le prix unitaire décroît — 12, 11, puis 10 € — mais reste au-dessus des 8,90 €
- * qu'implique le palier Chantier. La première grille descendait à 8 € l'unité sur le
- * gros pack : des crédits moins chers que l'abonnement *et* sans péremption rendaient
- * l'abonnement strictement moins bon. Un test le vérifie désormais.
+ * Le prix unitaire décroît — 5, 4, puis 3,50 € — mais reste au-dessus des 0,975 €
+ * qu'implique le palier Starter. Des crédits moins chers que l'abonnement *et* sans
+ * péremption rendraient l'abonnement strictement moins bon. Un test le vérifie.
  */
 export const PACKS: readonly PackCredits[] = [
-  { code: "unite", credits: 1, prixCents: 1200 },
-  { code: "cinq", credits: 5, prixCents: 5500 },
-  { code: "vingt", credits: 20, prixCents: 20000 },
+  { code: "unite", credits: 1, prixCents: 500 },
+  { code: "cinq", credits: 5, prixCents: 2000 },
+  { code: "dix", credits: 10, prixCents: 3500 },
 ] as const;
+
+/** Mention légale des crédits, affichée partout où ils se vendent. */
+export const MENTION_CREDITS =
+  "Crédits sans date d'expiration. Un contact = les coordonnées d'un profil pour une mission.";
+
+/**
+ * Ce que contient un palier, en clair — une ligne par limite.
+ *
+ * Partagé par la page Tarifs, l'accueil et l'espace abonnement : trois grilles qui
+ * formuleraient chacune les quotas à leur façon finiraient par se contredire.
+ */
+export function contenuPlan(p: Plan): string[] {
+  const contacts =
+    p.quotaMensuel === null
+      ? "Contacts illimités"
+      : p.quotaMensuel === 0
+        ? `${p.creditsOfferts} contacts offerts`
+        : `${p.quotaMensuel} contacts par mois`;
+  const missions =
+    p.missionsActivesMax === null
+      ? "Missions actives illimitées"
+      : `${p.missionsActivesMax} mission${p.missionsActivesMax > 1 ? "s" : ""} active${p.missionsActivesMax > 1 ? "s" : ""}`;
+  return [contacts, missions];
+}
 
 export function planParCode(code: string): Plan | undefined {
   return PLANS.find((p) => p.code === code);
@@ -141,6 +173,18 @@ export type SourceDeblocage = "abonnement" | "credit";
 export function sourceDuProchain(droits: EtatDroits): SourceDeblocage | null {
   if (droits.illimite || droits.quotaRestant > 0) return "abonnement";
   return droits.credits > 0 ? "credit" : null;
+}
+
+/**
+ * L'entreprise peut-elle mettre une fiche de plus en ligne ?
+ *
+ * Seules les fiches publiées comptent : un brouillon ne coûte rien et ne sollicite
+ * personne, une fiche pourvue ou close n'est plus en recherche. Un passage à un
+ * palier inférieur ne dépublie rien — il empêche seulement d'en publier de nouvelles.
+ */
+export function peutPublier(planCode: string, missionsActives: number): boolean {
+  const plan = planParCode(planCode) ?? PLANS[0]!;
+  return plan.missionsActivesMax === null || missionsActives < plan.missionsActivesMax;
 }
 
 /** Prix en euros, à la française. Jamais de division flottante ailleurs que là. */

@@ -102,9 +102,9 @@ mission**, vérifiée par un test de mutation.
 |---|---|---|
 | Frontend JS en TypeScript, responsive | Fait | Next.js 16, React 19, TypeScript strict ; vérifié à 1280 et 390 px |
 | Backend Node en TypeScript | Fait | Routes d'API Next.js |
-| Base relationnelle | Fait | PostgreSQL : 22 tables, 15 migrations |
+| Base relationnelle | Fait | PostgreSQL : 22 tables, 16 migrations |
 | Base non relationnelle complémentaire | Fait | Redis, dix usages. [Détail](architecture.md#base-non-relationnelle) |
-| Tests unitaires | Fait | 379 dans `core` |
+| Tests unitaires | Fait | 384 dans `core` |
 | Tests fonctionnels : inscription, mission, matching | Fait | 228 dans `web`, contre un serveur réel |
 | Rapport de couverture | Partiel | `core` : 96,8 % des instructions. Pas de rapport pour `web`, délibérément. [D20](decisions.md#d20-pas-de-rapport-de-couverture-pour-web) |
 | Bibliothèque en ligne de commande | Fait | `commander` dans `ingest/` |

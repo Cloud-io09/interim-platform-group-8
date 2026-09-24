@@ -6,6 +6,7 @@ import { notifierMissionPubliee } from "@/lib/notifications";
 import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
+import { refusSiLimiteAtteinte } from "@/lib/palier";
 
 export const dynamic = "force-dynamic";
 
@@ -101,7 +102,13 @@ export async function POST(requete: Request) {
       ]);
     }
 
-    const missionId = await sql.begin(async (tx) => {
+    const resultat = await sql.begin(async (tx) => {
+      // Un brouillon ne compte pas : seule la mise en ligne est bornée par le palier.
+      if (saisie.publier) {
+        const refus = await refusSiLimiteAtteinte(tx, garde.session.compteId);
+        if (refus) return refus;
+      }
+
       const [creee] = await tx<{ id: number }[]>`
         insert into mission (
           entreprise_id, titre, metier_code, description, adresse, code_postal, ville,
@@ -138,6 +145,8 @@ export async function POST(requete: Request) {
       }
       return id;
     });
+    if (resultat instanceof Response) return resultat;
+    const missionId = resultat;
 
     // Invalidation du cache : agrément, pas condition. La mission est déjà créée —
     // échouer ici renverrait une erreur pour une opération qui a réussi.

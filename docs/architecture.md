@@ -75,7 +75,7 @@ teste unitairement.
 
 ## Modèle de données
 
-22 tables métier (plus `schema_migrations`, tenue par le script de migration), 15
+22 tables métier (plus `schema_migrations`, tenue par le script de migration), 16
 migrations (`core/migrations/`). Les deux diagrammes reprennent **toutes**
 les clés étrangères de la base, relevées dans `information_schema` le 24 septembre
 2026. Un `|o` du côté de la table référencée signale une clé étrangère facultative

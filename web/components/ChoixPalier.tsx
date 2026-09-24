@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { enEuros, PACKS, PLANS } from "@interimatch/core/offre";
+import { contenuPlan, enEuros, MENTION_CREDITS, PACKS, PLANS } from "@interimatch/core/offre";
 import { envoyerJson } from "@/lib/client";
 
 /**
@@ -56,13 +56,9 @@ export default function ChoixPalier({
             <p className="petit secondaire">
               {p.prixMensuelCents === 0 ? "sans engagement" : "par mois"}
             </p>
-            <p className="petit">
-              {p.quotaMensuel === null
-                ? "Déblocages sans limite"
-                : p.quotaMensuel === 0
-                  ? `${p.creditsOfferts} déblocages offerts à l'ouverture`
-                  : `${p.quotaMensuel} déblocages par mois`}
-            </p>
+            {contenuPlan(p).map((ligne) => (
+              <p key={ligne} className="petit" style={{ margin: 0 }}>{ligne}</p>
+            ))}
             <p className="petit secondaire">{p.argument}</p>
             {p.code !== planActuel && (
               <button
@@ -79,15 +75,16 @@ export default function ChoixPalier({
 
       <h2 style={{ marginTop: "2rem" }}>Crédits à l&apos;acte</h2>
       <p className="secondaire">
-        Ils <strong>n&apos;expirent pas</strong> et se consomment après le quota de votre
-        palier. Vous en avez {credits} en réserve.
+        Ils se consomment après le quota de votre palier. Vous en avez {credits} en
+        réserve.
       </p>
+      <p className="petit"><strong>{MENTION_CREDITS}</strong></p>
       <ul className="liste-nue grille grille--3">
         {PACKS.map((p) => (
           <li key={p.code} className="carte">
             <p className="chiffre">{p.credits}</p>
             <p className="petit secondaire">
-              déblocage{p.credits > 1 ? "s" : ""} · {enEuros(p.prixCents)}
+              contact{p.credits > 1 ? "s" : ""} · {enEuros(p.prixCents)}
             </p>
             <p className="petit secondaire">
               soit {enEuros(Math.round(p.prixCents / p.credits))} l&apos;unité

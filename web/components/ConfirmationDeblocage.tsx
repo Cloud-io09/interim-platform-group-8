@@ -25,7 +25,7 @@ function cout(d: DroitsAffiches): { consomme: string; reste: string } {
   const quota = d.quotaRestant ?? 0;
   if (quota > 0) {
     return {
-      consomme: `Utilise 1 des ${quota} déblocages inclus ce mois-ci dans votre palier ${d.plan}.`,
+      consomme: `Utilise 1 des ${quota} contacts inclus ce mois-ci dans votre palier ${d.plan}.`,
       reste: `Il vous en restera ${quota - 1} ce mois-ci.`,
     };
   }
@@ -130,7 +130,7 @@ export default function ConfirmationDeblocage({
           </>
         ) : (
           <p className="petit">
-            Votre palier {droits.plan} n&apos;a plus de déblocage ce mois-ci, et vous
+            Votre palier {droits.plan} n&apos;a plus de contact inclus ce mois-ci, et vous
             n&apos;avez pas de crédit. Vous pouvez acheter des crédits à l&apos;unité ou
             changer de palier.
           </p>
