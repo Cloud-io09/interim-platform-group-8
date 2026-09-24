@@ -42,8 +42,7 @@ Sans clé Brevo, les courriels sont écrits dans le journal du serveur : tous le
 parcours restent utilisables en local.
 
 Le jeu de démonstration crée une entreprise et huit intérimaires, chacun illustrant un
-cas du moteur. Mot de passe commun : `demonstration-interimatch`. Détail :
-[docs/demonstration.md](docs/demonstration.md).
+cas du moteur. Mot de passe commun : `demonstration-interimatch`.
 
 ---
 
@@ -91,7 +90,6 @@ Vercel. Détail : [docs/architecture.md](docs/architecture.md).
 | [Qualité](docs/qualite.md) | Tests, couverture, outils de contrôle, accessibilité, éco-conception |
 | [Exploitation](docs/exploitation.md) | Variables, déploiement, Discord, n8n, dépannage |
 | [Conformité](docs/conformite.md) | État de chaque exigence du sujet et sa preuve |
-| [Démonstration](docs/demonstration.md) | Déroulé de l'oral et recette manuelle |
 
 Également dans `docs/` : le cahier des charges (`cahier-des-charges-g8.pdf`) et les
 exports des flux n8n (`n8n/`).
