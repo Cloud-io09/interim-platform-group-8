@@ -30,12 +30,19 @@ const pluriel = (n: number, mot: string, terminaison = "s") => `${n} ${mot}${n >
  */
 function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
   const brouillon = fiche.statut === "brouillon";
+  // Ce qui attend une réponse humaine passe devant un chiffre du moteur.
+  const aRepondre = !brouillon && fiche.candidaturesRecues > 0;
   return (
-    <li className="carte carte-mission">
+    <li className="carte carte-mission carte--cliquable">
       <div className="carte-mission-corps">
         <h3>
-          <a className="lien-bloc" href={`/missions/${fiche.id}`}>{fiche.titre}</a>
+          <a className="lien-etire" href={`/missions/${fiche.id}`}>{fiche.titre}</a>
         </h3>
+        {/* **Un compteur n'est pas un score.** Le nombre de candidatures tenait
+            dans une tuile chiffrée empruntée au score de compatibilité : un « 1 »
+            en gros caractères, à côté d'un libellé cassé sur deux lignes, dans un
+            cadre posé à l'intérieur d'un autre cadre. Il se dit en toutes lettres,
+            sur la ligne qui porte déjà le lieu, les dates et l'état. */}
         <p className="petit secondaire ligne-meta">
           <span>
             {fiche.ville} · {enJourMois(fiche.dateDebut)} → {enJourMois(fiche.dateFin)}
@@ -45,37 +52,28 @@ function LigneFiche({ fiche }: { fiche: FicheSuivie }) {
           ) : (
             <span className="pastille pastille--info">Démarre {delai(fiche.joursAvantDebut)}</span>
           )}
+          {aRepondre && (
+            <span className="pastille pastille--attention">
+              {pluriel(fiche.candidaturesRecues, "candidature")} à traiter
+            </span>
+          )}
         </p>
-        {brouillon && (
-          <p className="petit secondaire" style={{ margin: "0.5rem 0 0" }}>
-            Tant qu&apos;elle n&apos;est pas publiée, cette fiche n&apos;est proposée à personne.
-          </p>
-        )}
+        <p className="petit secondaire" style={{ margin: 0 }}>
+          {brouillon
+            ? "Tant qu'elle n'est pas publiée, cette fiche n'est proposée à personne."
+            : aRepondre
+              ? `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} par ailleurs`
+              : fiche.propositionsEnAttente > 0
+                ? `${pluriel(fiche.propositionsEnAttente, "proposition")} sans réponse`
+                : `${pluriel(fiche.candidatsConformes, "profil conforme")} rapproché${fiche.candidatsConformes > 1 ? "s" : ""} · personne n'a encore postulé`}
+          {!brouillon && fiche.acceptees > 0 && ` · ${pluriel(fiche.acceptees, "acceptée", "s")}`}
+        </p>
       </div>
 
-      <div className="encart-score">
-        {brouillon ? (
-          <>
-            <p className="petit secondaire" style={{ margin: "0 0 0.9rem" }}>
-              Aucun candidat tant que la fiche est en brouillon.
-            </p>
-            <a className="bouton" href={`/missions/${fiche.id}`}>Terminer et publier</a>
-          </>
-        ) : (
-          <>
-            <p className="encart-score-tete">
-              <span className="petit secondaire">Profils conformes</span>
-              <strong>{fiche.candidatsConformes}</strong>
-            </p>
-            <p className="petit secondaire" style={{ margin: "0 0 0.9rem" }}>
-              {fiche.propositionsEnAttente > 0
-                ? `${pluriel(fiche.propositionsEnAttente, "proposition")} sans réponse`
-                : "Aucune proposition en attente"}
-              {fiche.acceptees > 0 && ` · ${pluriel(fiche.acceptees, "acceptée", "s")}`}
-            </p>
-            <a className="bouton" href={`/missions/${fiche.id}`}>Voir les candidats</a>
-          </>
-        )}
+      <div className="carte-mission-action">
+        <a className="bouton" href={`/missions/${fiche.id}`}>
+          {brouillon ? "Terminer et publier" : aRepondre ? "Répondre aux candidats" : "Voir les candidats"}
+        </a>
       </div>
     </li>
   );
@@ -136,7 +134,7 @@ export default async function EspaceEntreprise() {
                 <li>
                   <a className="chiffre-lien" href="/missions">
                     <strong className="chiffre">{b.fiches.filter((f) => f.statut === "pourvue").length}</strong>
-                    <span className="petit secondaire">poste(s) pourvu(s)</span>
+                    <span className="petit secondaire">poste(s) attribué(s)</span>
                   </a>
                 </li>
               </ul>
@@ -179,9 +177,21 @@ export default async function EspaceEntreprise() {
                 ) : null}
 
                 <section aria-labelledby="titre-fiches">
+                  {/* **Le tableau de bord n'est pas une seconde liste.** Il
+                      montrait les mêmes fiches que « Mes fiches », dans le même
+                      ordre : rien ne disait laquelle faisait autorité. Ici, ce qui
+                      attend une réponse passe devant — le reste est à un clic. */}
                   <div className="tete-section">
-                    <h2 id="titre-fiches">Mes fiches en cours</h2>
-                    <p className="petit secondaire">par date de démarrage</p>
+                    <h2 id="titre-fiches">
+                      {b.fiches.some((f) => f.candidaturesRecues > 0)
+                        ? "Ce qui attend votre réponse"
+                        : "Vos chantiers qui approchent"}
+                    </h2>
+                    <p className="petit secondaire">
+                      {b.fiches.some((f) => f.candidaturesRecues > 0)
+                        ? "candidatures d'abord, puis par date de démarrage"
+                        : "par date de démarrage"}
+                    </p>
                   </div>
 
                   {b.fiches.length === 0 ? (
@@ -194,9 +204,16 @@ export default async function EspaceEntreprise() {
                   ) : (
                     <>
                       <ul className="liste-nue">
-                        {b.fiches.slice(0, 5).map((f) => (
-                          <LigneFiche key={f.id} fiche={f} />
-                        ))}
+                        {[...b.fiches]
+                          .sort(
+                            (a, c) =>
+                              c.candidaturesRecues - a.candidaturesRecues ||
+                              a.dateDebut.localeCompare(c.dateDebut)
+                          )
+                          .slice(0, 5)
+                          .map((f) => (
+                            <LigneFiche key={f.id} fiche={f} />
+                          ))}
                       </ul>
                       <a className="bouton bouton--secondaire pleine-largeur" href="/missions">
                         Voir toutes mes fiches
@@ -239,7 +256,7 @@ export default async function EspaceEntreprise() {
                     </li>
                   </ul>
                   {b.brouillons > 0 && (
-                    <p className="petit secondaire" style={{ margin: "0.9rem 0 0" }}>
+                    <p className="petit secondaire" style={{ margin: "1rem 0 0" }}>
                       Un brouillon ne reçoit aucun candidat tant qu&apos;il n&apos;est pas publié.
                     </p>
                   )}

@@ -21,6 +21,13 @@ const JOURS_PAR_DEFAUT = 60;
  * membres du serveur. `discordSalonId` vaut `null` pour qui n'a pas relié son compte
  * — le scénario n8n l'écarte, et la notification reste lisible dans l'application.
  */
+/** « dans 0 jours » et « dans 1 jours » partaient tels quels dans les salons. */
+function quand(jours: number): string {
+  if (jours <= 0) return "aujourd'hui";
+  if (jours === 1) return "demain";
+  return `dans ${jours} jours`;
+}
+
 export async function GET(requete: Request) {
   if (!n8nAutorise(requete)) return refusN8n();
 
@@ -80,11 +87,11 @@ export async function GET(requete: Request) {
           missionsDebloquees: l.missions_debloquees,
           // Message prêt à poster : n8n n'a pas à connaître nos règles métier.
           message:
-            `**${l.prenom}**, votre ${titre} expire dans ${l.jours_restants} jours ` +
+            `**${l.prenom}**, votre ${titre} expire ${quand(l.jours_restants)} ` +
             `(le ${new Date(`${l.date_echeance}T00:00:00Z`).toLocaleDateString("fr-FR")}).` +
             (l.missions_debloquees > 0
               ? ` Le renouveler vous rouvrirait **${l.missions_debloquees} mission${l.missions_debloquees > 1 ? "s" : ""}** actuellement ouverte${l.missions_debloquees > 1 ? "s" : ""}.`
-              : ` Aucune mission ouverte n'en dépend pour l'instant, mais sans lui vous serez écarté des prochaines.`),
+              : ` Aucune mission ouverte n'en dépend pour l'instant, mais sans ce titre à jour vous serez écarté des prochaines.`),
         };
       }),
     });

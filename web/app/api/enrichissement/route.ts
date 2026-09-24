@@ -1,5 +1,5 @@
 import { connexion } from "@interimatch/core/db";
-import { typeCertification } from "@interimatch/core";
+import { LIBELLE_DOMAINE, typeCertification } from "@interimatch/core";
 import { erreur } from "@/lib/reponses";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +27,8 @@ export async function GET(requete: Request) {
 
   const sql = connexion();
   try {
-    const [metier] = await sql<{ code: string; libelle: string }[]>`
-      select code, libelle from metier where code = ${metierCode} and actif`;
+    const [metier] = await sql<{ code: string; libelle: string; domaine: string }[]>`
+      select code, libelle, domaine from metier where code = ${metierCode} and actif`;
     if (!metier) return erreur("Métier inconnu.", 404);
 
     // On tente d'abord le département : une rémunération se juge localement.
@@ -63,6 +63,28 @@ export async function GET(requete: Request) {
         and taux_horaire_min is not null
         ${filtreDepartement ? sql`and departement = ${departement}` : sql``}`;
 
+    // **Un métier sans offre laissait les taux sans repère.** Huit métiers sur
+    // cinquante-deux n'ont aucune offre observée — l'engin de damage, le ramonage,
+    // les voies ferrées. Plutôt que « aucune donnée », on se replie sur les offres du
+    // même domaine (les engins de chantier pour le damage), et l'écran dit que le
+    // repère vient du domaine et non du métier.
+    type Repere = { mediane: string | null; q1: string | null; q3: string | null; effectif: number; source: "metier" | "domaine" };
+    let repere: Repere | null =
+      remuneration && remuneration.effectif > 0 ? { ...remuneration, source: "metier" } : null;
+    if (!repere) {
+      const [voisin] = await sql<
+        { mediane: string | null; q1: string | null; q3: string | null; effectif: number }[]
+      >`
+        select
+          percentile_cont(0.5) within group (order by (o.taux_horaire_min + o.taux_horaire_max) / 2)::numeric(6,2) as mediane,
+          percentile_cont(0.25) within group (order by (o.taux_horaire_min + o.taux_horaire_max) / 2)::numeric(6,2) as q1,
+          percentile_cont(0.75) within group (order by (o.taux_horaire_min + o.taux_horaire_max) / 2)::numeric(6,2) as q3,
+          count(*)::int as effectif
+        from offre_ft o join metier m on m.code = o.metier_code
+        where m.domaine = ${metier.domaine} and o.taux_horaire_min is not null`;
+      if (voisin && voisin.effectif > 0) repere = { ...voisin, source: "domaine" };
+    }
+
     const certifications = await sql<{ type_code: string; n: number }[]>`
       select c.type_code, count(*)::int as n
       from offre_ft_certification c
@@ -92,15 +114,16 @@ export async function GET(requete: Request) {
       departement: portee === "departement" ? departement : null,
       effectif,
       intitulesFrequents: intitules.map((i) => i.intitule_normalise),
-      remuneration:
-        remuneration && remuneration.effectif > 0
-          ? {
-              mediane: Number(remuneration.mediane),
-              q1: Number(remuneration.q1),
-              q3: Number(remuneration.q3),
-              effectif: remuneration.effectif,
-            }
-          : null,
+      remuneration: repere
+        ? {
+            mediane: Number(repere.mediane),
+            q1: Number(repere.q1),
+            q3: Number(repere.q3),
+            effectif: repere.effectif,
+            source: repere.source,
+            domaine: LIBELLE_DOMAINE[metier.domaine] ?? metier.domaine,
+          }
+        : null,
       certifications: certifications.map((c) => ({
         typeCode: c.type_code,
         libelle: typeCertification(c.type_code)?.libelle ?? c.type_code,

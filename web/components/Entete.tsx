@@ -55,7 +55,6 @@ export default function Entete() {
         <a href="/" className="marque" aria-label="Intérimatch, accueil">
           <Logo taille={28} />
           Intérimatch
-          <span className="marque-etiquette">BTP</span>
         </a>
 
         <nav aria-label="Navigation principale" className="navigation">

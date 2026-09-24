@@ -47,7 +47,7 @@ export default function ChoixPalier({
         {PLANS.map((p) => (
           <li key={p.code} className={`carte${p.code === planActuel ? " carte--verdict-ok" : ""}`}>
             <div className="tete-carte">
-              <h3 style={{ fontSize: "1rem", margin: 0 }}>{p.libelle}</h3>
+              <h3 className="titre-carte" style={{ margin: 0 }}>{p.libelle}</h3>
               {p.code === planActuel && <span className="pastille pastille--ok">actuel</span>}
             </div>
             <p className="chiffre">
@@ -77,7 +77,7 @@ export default function ChoixPalier({
         ))}
       </ul>
 
-      <h2 style={{ marginTop: "2.5rem" }}>Crédits à l&apos;acte</h2>
+      <h2 style={{ marginTop: "2rem" }}>Crédits à l&apos;acte</h2>
       <p className="secondaire">
         Ils <strong>n&apos;expirent pas</strong> et se consomment après le quota de votre
         palier. Vous en avez {credits} en réserve.

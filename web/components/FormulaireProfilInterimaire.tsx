@@ -23,6 +23,7 @@ interface Profil {
   carteBtpEcheance: string | null;
   metiers: string[];
   competences: string[];
+  agences: { nom: string; ville: string | null }[];
 }
 
 const RAYON_DEFAUT_KM = 50;
@@ -33,6 +34,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
   const [charge, setCharge] = useState(false);
   const [rayon, setRayon] = useState(RAYON_DEFAUT_KM);
   const [metiers, setMetiers] = useState<string[]>([]);
+  const [agences, setAgences] = useState<{ nom: string; ville: string }[]>([]);
   const [competences, setCompetences] = useState<string[]>([]);
   const [experience, setExperience] = useState<Record<string, string>>({});
   const [refCompetences, setRefCompetences] = useState<Element[]>([]);
@@ -69,6 +71,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           setRayon(mien.profil.rayonMobiliteKm);
           setMetiers(mien.profil.metiers);
           setCompetences(mien.profil.competences ?? []);
+          setAgences((mien.profil.agences ?? []).map((a: { nom: string; ville: string | null }) => ({ nom: a.nom, ville: a.ville ?? "" })));
           setExperience(
             Object.fromEntries(
               Object.entries(mien.profil.experienceParMetier ?? {}).map(([code, annees]) => [
@@ -110,6 +113,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           anneesExperience: experience[code]?.trim() ? Number(experience[code]) : null,
         })),
         competences,
+        agences: agences.filter((a) => a.nom.trim().length >= 2),
       }
     );
     setEnCours(false);
@@ -181,7 +185,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         {problemeDe("metiers") && <p className="petit message-erreur">{problemeDe("metiers")}</p>}
         <SelecteurReferentiel
           legende="Vos métiers"
-          aide="Ils décident des missions qui vous sont proposées. Cherchez par mot — « maçon », « engins », « couverture »."
+          aide="Ils décident des missions qui vous sont proposées. Cherchez par mot - « maçon », « engins », « couverture »."
           placeholder="Maçon, grutier, coffreur…"
           elements={domaines.flatMap((d) => d.metiers.map((m) => ({ ...m, groupe: d.libelle })))}
           selection={metiers}
@@ -195,7 +199,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
           <p className="petit secondaire">
             Le nombre d&apos;années sur chaque métier déclaré. Facultatif, et c&apos;est
             volontaire : <strong>l&apos;expérience n&apos;entre pas dans le calcul de
-            correspondance</strong> — ce sont vos habilitations et leurs dates qui
+            correspondance</strong> - ce sont vos habilitations et leurs dates qui
             décident de votre accès aux chantiers. Elle est montrée à l&apos;entreprise
             qui consulte votre profil.
           </p>
@@ -214,7 +218,7 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
                       max={60}
                       step={1}
                       inputMode="numeric"
-                      placeholder="—"
+                      placeholder="-"
                       value={experience[code] ?? ""}
                       onChange={(e) => setExperience({ ...experience, [code]: e.target.value })}
                     />
@@ -243,6 +247,75 @@ export default function FormulaireProfilInterimaire({ apresEnregistrement }: { a
         selection={competences}
         surChangement={setCompetences}
       />
+
+      <fieldset>
+        {/* **Le maillon que le produit taisait.** Le contrat de mission lie l'agence
+            et le salarié, jamais l'entreprise utilisatrice : sans cette donnée, une
+            entreprise débloquait un téléphone puis découvrait qu'il fallait un
+            second appel pour savoir par qui passer. Déclaratif, comme le reste. */}
+        <legend>Vos agences d&apos;emploi</legend>
+        <p className="petit secondaire">
+          C&apos;est votre agence qui établit le contrat de mission, pas l&apos;entreprise
+          du chantier. L&apos;indiquer permet à celle-ci de la contacter directement —
+          sans quoi elle vous appelle, puis rappelle votre agence.
+        </p>
+
+        <ul className="liste-nue liste-cartes">
+          {agences.map((a, i) => (
+            <li key={i} className="champ">
+              <div className="grille grille--2">
+                <div className="champ">
+                  <label htmlFor={`agence-nom-${i}`}>Agence</label>
+                  <input
+                    id={`agence-nom-${i}`}
+                    value={a.nom}
+                    placeholder="Adecco, Randstad, Manpower…"
+                    maxLength={120}
+                    onChange={(e) =>
+                      setAgences(agences.map((x, j) => (j === i ? { ...x, nom: e.target.value } : x)))
+                    }
+                  />
+                </div>
+                <div className="champ">
+                  <label htmlFor={`agence-ville-${i}`}>Ville de l&apos;agence</label>
+                  <input
+                    id={`agence-ville-${i}`}
+                    value={a.ville}
+                    placeholder="Reims"
+                    maxLength={80}
+                    onChange={(e) =>
+                      setAgences(agences.map((x, j) => (j === i ? { ...x, ville: e.target.value } : x)))
+                    }
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="bouton-discret"
+                onClick={() => setAgences(agences.filter((_, j) => j !== i))}
+              >
+                Retirer cette agence
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        {agences.length < 10 && (
+          <button
+            type="button"
+            className="bouton bouton--secondaire"
+            onClick={() => setAgences([...agences, { nom: "", ville: "" }])}
+          >
+            {agences.length === 0 ? "Ajouter mon agence" : "Ajouter une autre agence"}
+          </button>
+        )}
+        {agences.length === 0 && (
+          <p className="petit secondaire">
+            Vous pouvez postuler sans en déclarer : l&apos;entreprise saura simplement
+            qu&apos;il faudra passer par la sienne, ce qui rallonge la mise en place.
+          </p>
+        )}
+      </fieldset>
 
       <fieldset>
         {/* Bloc séparé des certifications : la carte BTP atteste d'une situation

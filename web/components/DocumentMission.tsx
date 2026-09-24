@@ -111,7 +111,7 @@ export default async function DocumentMission({
       ...exigences.map(
         (e) =>
           (typeCertification(e.type_code)?.libelle ?? e.type_code.replace(/_/g, " ")) +
-          (e.categorie_code ? ` — catégorie ${e.categorie_code}` : "")
+          (e.categorie_code ? `, catégorie ${e.categorie_code}` : "")
       ),
     ].filter(Boolean);
 
@@ -142,7 +142,7 @@ export default async function DocumentMission({
               quand elle date : sur un chantier, un papier sans origine ne vaut
               rien. Visible à l'impression seulement. */}
           <p className="entete-impression petit">
-            Intérimatch BTP — document édité le{" "}
+            Intérimatch BTP - document édité le{" "}
             {new Date().toLocaleDateString("fr-FR", {
               day: "numeric",
               month: "long",
@@ -214,12 +214,12 @@ export default async function DocumentMission({
           <ul className="liste-nue lignes">
             {MENTIONS_OBLIGATOIRES.map((mention) => (
               <li key={mention} className="ligne">
-                <span>
+                <div>
                   <strong className="petit">{LIBELLE_MENTION[mention]}</strong>
-                  <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
-                    {valeurs[mention] ?? "— non renseigné"}
+                  <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
+                    {valeurs[mention] ?? "- non renseigné"}
                   </p>
-                </span>
+                </div>
                 <span className={manquantes.includes(mention) ? "pastille pastille--alerte" : "pastille pastille--ok"}>
                   {manquantes.includes(mention) ? "Manquante" : "Renseignée"}
                 </span>

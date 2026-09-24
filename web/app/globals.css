@@ -32,10 +32,25 @@
   --succes: #1f6b3a;
   --alerte: #a4331f;
 
-  /* 5 px plutôt que 10 : un rayon large adoucit, et ce produit parle de
-     conformité et de dates d'échéance. L'angle serré se lit comme un document. */
-  --rayon: 5px;
-  --rayon-petit: 5px;
+  /* **Échelle d'espacement.** Seize valeurs distinctes circulaient dans les styles
+     en ligne — 0,15 · 0,2 · 0,25 · 0,3 · 0,4 · 0,6 · 0,9 · 1,1 · 1,75 · 2,1 · 2,5 —
+     sans aucun rapport entre elles. C'est ce qui produit des éléments tantôt collés
+     tantôt trop écartés : chaque écran inventait sa propre mesure. Sept paliers,
+     doublés à chaque fois ou presque, suffisent à tout le produit. */
+  --espace-1: 0.25rem;
+  --espace-2: 0.5rem;
+  --espace-3: 0.75rem;
+  --espace-4: 1rem;
+  --espace-5: 1.5rem;
+  --espace-6: 2rem;
+  --espace-7: 3rem;
+
+  /* Un rayon un peu plus généreux qu'à l'origine : le produit reste sérieux
+     (dates d'échéance, conformité) mais n'a plus besoin de se lire comme un
+     document administratif. Les boutons, eux, sont en pilule — cf. --rayon-bouton. */
+  --rayon: 10px;
+  --rayon-petit: 8px;
+  --rayon-bouton: 999px;
   /* Une seule ombre dans tout le produit, très basse. Elle décolle les cartes du
      fond sans créer de niveaux : deux profondeurs demanderaient une hiérarchie
      qu'aucun écran ici ne justifie. */
@@ -67,7 +82,7 @@ body {
    collé au verdict qui le précédait. La marge du haut est plus grande que celle du
    bas, parce qu'un titre appartient à ce qui le suit, pas à ce qui le précède. */
 h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; margin: 2rem 0 0.5em; }
-h2 { margin-top: 2.75rem; }
+h2 { margin-top: 3rem; }
 h3 { margin-top: 2rem; }
 /* En tête de conteneur, la marge ferait un trou : le conteneur a déjà la sienne. */
 :is(h1, h2, h3, h4):first-child { margin-top: 0; }
@@ -128,24 +143,15 @@ a:hover, a:focus-visible { text-decoration: underline; }
   flex-wrap: wrap;
 }
 
-.marque { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1.15rem; }
-.marque-etiquette {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid var(--bordure);
-  border-radius: 4px;
-  color: var(--texte-secondaire);
-}
+.marque { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 1.15rem; }
 
 .bouton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: var(--cible-tactile);
-  padding: 0 1.25rem;
-  border-radius: var(--rayon-petit);
+  padding: 0 1.5rem;
+  border-radius: var(--rayon-bouton);
   /* Marine et non noir : une action se distingue ainsi d'une carte sombre, qui
      n'appelle aucun geste. Les deux étaient de la même encre auparavant. */
   border: 1px solid var(--marine);
@@ -155,13 +161,25 @@ a:hover, a:focus-visible { text-decoration: underline; }
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
-.bouton:hover { opacity: 0.88; }
+/* Le survol bascule franchement en jaune de marque plutôt que de simplement
+   assombrir ou cerner d'un liseré : le texte noir dessus reste à 12,6:1, comme
+   partout ailleurs où ce jaune porte du texte. */
+.bouton:hover {
+  background: var(--marque-jaune);
+  border-color: var(--marque-jaune);
+  color: #1a1a18;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(20, 26, 33, 0.18);
+}
+.bouton:active { transform: translateY(0); box-shadow: none; }
 .bouton--secondaire {
   background: var(--surface);
   color: var(--texte);
   border-color: var(--bordure);
 }
+.bouton--secondaire:hover { box-shadow: 0 10px 22px rgba(20, 26, 33, 0.1); border-color: var(--texte-secondaire); }
 
 /* Le sur-titre est du texte : il suit donc les règles du texte, pas celles d'un
    ornement. Mesuré : l'ambre de l'accent plafonne à 3,38:1 sur fond clair, sous le
@@ -180,8 +198,21 @@ a:hover, a:focus-visible { text-decoration: underline; }
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
   box-shadow: var(--ombre-carte);
-  padding: 1.5rem;
+  padding: var(--espace-5);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+
+/* **Deux cartes qui se suivent ne se touchent jamais.** Aucun des conteneurs de
+   page — `.colonne`, `.liste-nue` — ne portait de gouttière : les cartes
+   s'empilaient bord à bord, soudées en un bloc où l'œil ne trouvait plus la
+   limite d'un chantier. La règle porte sur la succession elle-même, pas sur une
+   classe de conteneur qu'il faudrait penser à ajouter à chaque nouvel écran. */
+.carte + .carte { margin-top: var(--espace-3); }
+/* Sauf là où le conteneur gère déjà son espacement — sans quoi il doublerait. */
+.grille > .carte + .carte,
+.liste-nue > .carte + .carte { margin-top: 0; }
+/* Ce qui clôt une liste de cartes — « Voir toutes mes fiches » — en est séparé. */
+.liste-nue:has(> .carte) + .bouton { margin-top: var(--espace-3); }
 
 .grille { display: grid; gap: 1rem; }
 @media (min-width: 720px) {
@@ -196,6 +227,11 @@ a:hover, a:focus-visible { text-decoration: underline; }
 }
 .section--sombre .sur-titre { color: var(--texte-secondaire-sur-sombre); }
 .section--sombre .secondaire { color: var(--texte-secondaire-sur-sombre); }
+/* Une carte blanche posée sur une section sombre reste une surface claire :
+   sans ceci, son titre héritait la couleur claire du fond et devenait
+   illisible sur son propre fond blanc — texte quasi blanc sur blanc. */
+.section--sombre .carte:not(.carte--sombre) { color: var(--texte); }
+.section--sombre .carte:not(.carte--sombre) .secondaire { color: var(--texte-secondaire); }
 
 .secondaire { color: var(--texte-secondaire); }
 .petit { font-size: 0.875rem; }
@@ -210,7 +246,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
 }
 .pied h2 { color: var(--texte-sur-sombre); font-size: 1rem; margin-bottom: 0.75rem; }
 .pied ul { list-style: none; margin: 0; padding: 0; }
-.pied li { margin-bottom: 0.35rem; }
+.pied li { margin-bottom: 0.25rem; }
 
 /* RGESN / RGAA : respecter le réglage système de réduction des animations. */
 @media (prefers-reduced-motion: reduce) {
@@ -228,13 +264,14 @@ a:hover, a:focus-visible { text-decoration: underline; }
 .champ label {
   display: block;
   font-weight: 500;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
-.champ input {
+.champ input,
+.recherche-fiches input[type="search"] {
   width: 100%;
   min-height: var(--cible-tactile);
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
   background: var(--surface);
@@ -250,11 +287,11 @@ a:hover, a:focus-visible { text-decoration: underline; }
 
 .message-erreur {
   color: var(--alerte);
-  margin: 0.4rem 0 0;
+  margin: 0.5rem 0 0;
   font-weight: 500;
 }
 
-.champ .secondaire { margin: 0.4rem 0 0; }
+.champ .secondaire { margin: 0.5rem 0 0; }
 
 .bouton[disabled] { opacity: 0.6; cursor: not-allowed; }
 
@@ -262,7 +299,7 @@ a:hover, a:focus-visible { text-decoration: underline; }
    la couleur seule — RGAA 3.1. */
 /* Liens au fil du texte : soulignés en permanence. */
 main p a,
-main li a:not(.action):not(.chiffre-lien):not(.bouton):not(.onglet):not(.lien-bloc),
+main li a:not(.action):not(.chiffre-lien):not(.bouton):not(.onglet):not(.lien-bloc):not(.filtre),
 .pied a {
   text-decoration: underline;
 }
@@ -309,7 +346,7 @@ legend {
 .champ select {
   width: 100%;
   min-height: var(--cible-tactile);
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
   background: var(--surface);
@@ -336,7 +373,7 @@ legend {
 .case {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   min-height: var(--cible-tactile);
   padding: 0.25rem 0.5rem;
   border-radius: var(--rayon-petit);
@@ -359,7 +396,7 @@ legend {
    toujours « périmé », « expire le… » ou « valide jusqu'au… » — RGAA 3.1. */
 .etiquette {
   display: inline-block;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 999px;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -377,6 +414,12 @@ legend {
 .etiquette--alerte { color: var(--alerte); }
 
 .liste-nue { list-style: none; margin: 0; padding: 0; }
+/* **Une liste de cartes doit séparer ses cartes.** `.liste-nue` ne retirait que
+   les puces : cinq écrans empilaient donc des cartes bord à bord, soudées en un
+   seul bloc où l'on ne distinguait plus où une mission finissait. La gouttière
+   est attachée à la PRÉSENCE d'une carte, pas à une classe qu'il faudrait penser
+   à écrire — une classe s'oublie, la condition non. */
+.liste-nue:has(> .carte) { display: grid; gap: var(--espace-3); }
 
 .ligne-certification {
   display: flex;
@@ -399,13 +442,13 @@ legend {
   border: 1px solid var(--bordure);
   border-left: 3px solid var(--accent);
   border-radius: var(--rayon-petit);
-  padding: 0.9rem 1.1rem;
+  padding: 1rem 1rem;
   margin-bottom: 1.25rem;
 }
 
 .champ textarea {
   width: 100%;
-  padding: 0.6rem 0.85rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
   background: var(--surface);
@@ -429,7 +472,7 @@ legend {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.25rem;
   font-size: 0.9375rem;
 }
 
@@ -478,7 +521,7 @@ main caption { text-align: left; margin-bottom: 0.5rem; }
 main th, main td {
   text-align: left;
   vertical-align: top;
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--bordure);
 }
 main thead th { border-bottom-width: 2px; }
@@ -523,7 +566,7 @@ main code {
 /* --- Espace connecté ------------------------------------------------------ */
 
 .espace-entete { margin-bottom: 2rem; }
-.espace-entete h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: 0.25rem; }
+.espace-entete h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 0.25rem; }
 
 /* Bandeau : ce qui bloque doit se voir avant le reste, pas se découvrir en
    parcourant une grille de cartes toutes identiques. */
@@ -537,7 +580,7 @@ main code {
   border-left: 4px solid var(--texte-secondaire);
   border-radius: var(--rayon);
   background: var(--surface);
-  padding: 1.1rem 1.35rem;
+  padding: 1rem 1.25rem;
   margin-bottom: 2rem;
 }
 .bandeau--attention { border-left-color: #8a5a00; background: #fffaf0; }
@@ -553,7 +596,7 @@ main code {
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
   overflow: hidden;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 @media (min-width: 600px) { .bandeau-chiffres { grid-template-columns: repeat(3, 1fr); } }
 .bandeau-chiffres > li { background: var(--surface); }
@@ -561,13 +604,21 @@ main code {
 .chiffre-lien {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 1.1rem 1.25rem;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
   min-height: var(--cible-tactile);
   text-decoration: none;
 }
 .chiffre-lien:hover { background: var(--fond); }
-.chiffre { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+/* Marine et non noir : ces trois nombres sont des liens vers ce qu'il y a à
+   faire, pas de la donnée inerte. 11,5 de contraste sur blanc. */
+.chiffre {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--marine);
+}
 
 .actions { display: grid; gap: 0.75rem; }
 
@@ -577,8 +628,8 @@ main code {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 0.2rem 1rem;
-  padding: 1.1rem 1.35rem;
+  gap: 0.25rem 1rem;
+  padding: 1rem 1.25rem;
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
   background: var(--surface);
@@ -589,7 +640,7 @@ main code {
 .action-titre {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
   font-weight: 600;
   font-size: 1.05rem;
@@ -600,7 +651,7 @@ main code {
 .actions-candidature {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
   margin-bottom: 1.25rem;
   padding-bottom: 1.25rem;
@@ -618,7 +669,7 @@ main code {
   background: var(--surface);
   margin-bottom: 2rem;
 }
-.statut-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-left: auto; }
+.statut-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; }
 
 /* Zone dangereuse : visuellement distincte, en fin de page, jamais mêlée aux
    réglages courants. */
@@ -633,6 +684,9 @@ main code {
   background: #fdf8f7;
 }
 .bouton--danger { background: var(--alerte); border-color: var(--alerte); }
+/* Une action destructrice ne doit jamais devenir accueillante au survol : elle
+   garde sa famille de couleur, juste assombrie — pas le jaune de marque. */
+.bouton--danger:hover { background: #7a281a; border-color: #7a281a; color: #ffffff; }
 
 /* Zone de protection de la marque : un quart de la hauteur du pavé, comme l'exige
    la charte. Le `gap` la matérialise, rien ne vient s'y loger. */
@@ -646,7 +700,7 @@ main code {
 /* Le passage d'origine : décalé sous la case, en retrait, pour qu'on le lise comme
    une justification et non comme une seconde option. */
 .extrait-source {
-  margin: 0 0 0 2.1rem;
+  margin: 0 0 0 2rem;
   padding-left: 0.75rem;
   border-left: 2px solid var(--bordure);
   font-size: 0.8125rem;
@@ -660,7 +714,7 @@ details > summary {
   min-height: var(--cible-tactile);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
@@ -670,7 +724,7 @@ details > summary {
   background: var(--fond);
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
-  padding: 0.9rem 1.1rem;
+  padding: 1rem 1rem;
   margin: 0.75rem 0 0;
   font-size: 0.8125rem;
   line-height: 1.5;
@@ -685,7 +739,7 @@ details > summary {
   border-left: 3px solid var(--texte-secondaire);
   border-radius: var(--rayon-petit);
   background: var(--fond);
-  padding: 0.85rem 1.1rem;
+  padding: 0.75rem 1rem;
   margin-bottom: 1.25rem;
 }
 .progression .jauge { margin-top: 0.5rem; }
@@ -715,7 +769,7 @@ details > summary {
 }
 .identite { display: flex; align-items: center; gap: 1rem; }
 .identite h1 { font-size: 1.5rem; margin: 0; }
-.identite p { margin: 0.15rem 0 0; }
+.identite p { margin: 0.25rem 0 0; }
 
 .pastille-initiales {
   flex: none;
@@ -740,7 +794,18 @@ details > summary {
   color: var(--texte-secondaire);
   border-bottom: 2px solid transparent;
 }
-.onglet--actif { color: var(--texte); font-weight: 600; border-bottom-color: var(--bordure-forte); }
+/* **Le jaune revient, mais comme surface — jamais comme encre.** Le produit
+   était devenu entièrement marine et gris : rien n'y rappelait la marque une
+   fois passé le logo. Le repère de l'onglet courant est l'endroit juste — il est
+   déjà doublé par la couleur du texte, la graisse et `aria-current`, donc le
+   trait ne porte aucune information à lui seul et le critère 3.2 du RGAA, qui
+   vise le texte, ne s'y applique pas. Essayé puis retiré : un filet sous le
+   titre d'écran, qui séparait le titre du sous-titre qui lui appartient. */
+.onglet--actif {
+  color: var(--texte);
+  font-weight: 600;
+  border-bottom: 3px solid var(--marque-jaune);
+}
 /* Le soulignement du survol ferait doublon avec le filet de l'onglet actif. */
 .onglet:hover, .onglet:focus-visible { text-decoration: none; color: var(--texte); border-bottom-color: var(--bordure-forte); }
 
@@ -759,7 +824,7 @@ details > summary {
 .sur-titre {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   margin: 0 0 0.75rem;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -821,7 +886,7 @@ details > summary {
   border-color: #4a4a45;
   width: 100%;
 }
-.bouton--sur-sombre:hover { border-color: var(--texte-sur-sombre); }
+.bouton--sur-sombre:hover { background: transparent; border-color: var(--texte-sur-sombre); }
 .bouton--discret {
   background: transparent;
   color: var(--texte-secondaire);
@@ -830,9 +895,9 @@ details > summary {
   min-height: var(--cible-tactile);
   text-decoration: underline;
 }
-.bouton--discret:hover { color: var(--texte); }
+.bouton--discret:hover { background: transparent; color: var(--texte); }
 .pleine-largeur { width: 100%; }
-.reponse-proposition { display: grid; gap: 0.6rem; margin-top: 1.5rem; }
+.reponse-proposition { display: grid; gap: 0.5rem; margin-top: 1.5rem; }
 
 .tete-section {
   display: flex;
@@ -847,21 +912,53 @@ details > summary {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 1rem;
 }
-.titre-carte { font-size: 1rem; font-weight: 600; margin: 0; letter-spacing: 0; }
+/* **Une taille de sous-titre, pas dix-huit réglages.** Dix-huit éléments fixaient
+   chacun la taille de leur titre en style en ligne, pour quatre valeurs dont trois
+   tiennent dans deux pixels — 1 · 1,05 · 1,0625 · 1,125 rem. Aucune n'était un
+   choix : chacune était un tâtonnement local, et l'ensemble n'avait plus de
+   hiérarchie lisible. Deux tailles suffisent à tout le produit.
+
+   `margin: 0` retirait aussi la marge basse que tout titre porte par défaut : le
+   titre d'un panneau venait donc toucher la liste qu'il annonce. La marge haute,
+   elle, reste au cascade — un titre en milieu de carte ouvre une sous-section et
+   doit respirer, un titre en tête de carte n'en a pas besoin. */
+.titre-carte { font-size: 1rem; font-weight: 600; margin-bottom: var(--espace-2); letter-spacing: 0; }
+.tete-carte .titre-carte { margin-bottom: 0; }
+/* Le nom d'un élément de liste : il doit dominer sa ligne sans peser comme un
+   titre de section. */
+.titre-carte-liste { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+/* Chapeau d'une page publique : du texte courant, en plus grand. */
+.accroche { font-size: 1.125rem; }
 
 /* Carte de mission : le descriptif à gauche, le verdict du moteur dans un encart
    à droite. Le verdict est visuellement séparé parce qu'il ne décrit pas la
    mission, il décrit la relation entre la mission et celui qui la lit. */
 .carte-mission {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  /* La colonne de droite réclamait 220 px minimum : sur une carte qui n'affiche
+     que deux chiffres et un bouton, elle imposait une hauteur de bloc démesurée
+     pour trois lignes d'information. 180 px suffisent, et le rembourrage suit. */
+  /* La colonne d'action se dimensionne sur son contenu. Une largeur imposée
+     forçait « Répondre aux candidats » à se casser sur deux lignes et gonflait
+     la carte entière pour loger un bouton. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--espace-3) var(--espace-5);
+  /* **En haut, pas au centre.** Centré, le titre d'une mission flottait au
+     milieu d'une carte dont la hauteur était dictée par la colonne de droite :
+     un grand vide au-dessus, un grand vide en dessous, et rien qui s'aligne. */
+  align-items: start;
 }
-.carte-mission h3 { margin: 0 0 0.2rem; }
-.carte-mission-corps > p { margin: 0 0 0.6rem; }
+/* Une carte de liste n'a pas besoin du rembourrage d'une carte de contenu : le
+   même 1,5 rem qui aère un formulaire gonfle une ligne de mission. */
+.carte.carte-mission { padding: var(--espace-4) var(--espace-5); }
+.carte-mission-corps { min-width: 0; }
+/* Titre d'une carte de liste : il nomme une ligne, il n'ouvre pas une section.
+   Trois écrans le réglaient chacun par un style en ligne — donc trois tailles. */
+.carte-mission :is(h2, h3) { font-size: 1.125rem; margin: 0 0 var(--espace-1); }
+.carte-mission-corps > p { margin: 0 0 var(--espace-2); }
+.carte-mission-corps > p:last-child { margin-bottom: 0; }
 @media (max-width: 720px) {
   .carte-mission { grid-template-columns: 1fr; }
 }
@@ -875,32 +972,60 @@ details > summary {
 }
 .ligne-conditions strong { font-size: 1.0625rem; }
 
+/* **Une tuile chiffrée, et rien d'autre.** `.encart-score` avait été détournée
+   en colonne de droite générique : elle encadrait tantôt un score, tantôt un
+   simple bouton. Un cadre dans un cadre, dimensionné pour un pourcentage, qui
+   comprimait tout le reste. Elle ne sert plus qu'à ce pour quoi elle est faite :
+   un chiffre qui se lit d'un coup d'œil, avec sa jauge. */
 .encart-score {
   background: var(--fond);
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
-  padding: 0.9rem 1rem;
+  padding: var(--espace-3);
   align-self: start;
+  /* La tuile est bornée : sans largeur propre, la colonne « auto » se calait sur
+     la plus longue ligne du détail — « 3/5 compétences · 12 km · 20/20 jours » —
+     et le score mangeait la moitié de la carte. La jauge, elle, n'a pas de
+     largeur intrinsèque et ne peut donc pas tenir ce rôle. */
+  width: 14rem;
+  max-width: 100%;
+}
+@media (max-width: 720px) { .encart-score { width: 100%; } }
+
+/* Colonne d'action d'une carte de liste : ce qu'on vient y faire, aligné à
+   droite, sans cadre. Le bouton ne se casse jamais — c'est lui qui fixe la
+   largeur de la colonne, et une action coupée en deux lignes se lit mal. */
+.carte-mission-action {
+  display: grid;
+  gap: var(--espace-2);
+  align-content: start;
+  justify-items: stretch;
+}
+.carte-mission-action .bouton { white-space: nowrap; }
+.carte-mission-action > p { margin: 0; }
+@media (max-width: 720px) {
+  .carte-mission-action { justify-items: start; }
+  .carte-mission-action .bouton { white-space: normal; }
 }
 .encart-score-tete {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem;
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.5rem;
 }
-.encart-score-tete strong { font-size: 1.375rem; letter-spacing: -0.02em; }
-.encart-score p:last-of-type { margin: 0.45rem 0 0.9rem; }
+.encart-score-tete strong { font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1; }
+.encart-score p:last-of-type { margin: 0.25rem 0 0.75rem; }
 .encart-score .bouton { width: 100%; }
 .jauge-remplie--marque { background: var(--marque-jaune); }
 
 /* Puces de compétence : acquise en foncé, exigée non acquise en contour. La
    distinction ne tient pas qu'à la couleur — le fond plein la double. */
-.puces { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.6rem 0 0; }
+.puces { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.5rem 0 0; }
 .puce {
   font-size: 0.8125rem;
   line-height: 1.3;
-  padding: 0.25rem 0.55rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 999px;
   border: 1px solid var(--bordure);
   color: var(--texte-secondaire);
@@ -923,15 +1048,18 @@ details > summary {
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.3;
-  padding: 0.2rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 999px;
   border: 1px solid currentColor;
   white-space: nowrap;
 }
-.pastille--ok { color: var(--succes); }
-.pastille--attention { color: #8a5a00; }
-.pastille--alerte { color: var(--alerte); }
-.pastille--info { color: var(--texte); }
+/* Un fond teinté plutôt qu'un contour nu : une pastille cerclée sur fond blanc
+   se lit comme un champ vide. La teinte ne porte aucune information — le mot la
+   porte, et le contraste de chaque paire est vérifié au moins AA. */
+.pastille--ok { color: var(--succes); background: #eef6f0; border-color: #cfe4d7; }
+.pastille--attention { color: #8a5a00; background: #fdf4e3; border-color: #ecdcb8; }
+.pastille--alerte { color: var(--alerte); background: #fbeeec; border-color: #eed3cd; }
+.pastille--info { color: var(--texte); background: #f2f0ec; border-color: var(--bordure); }
 
 .lignes { display: grid; gap: 0.5rem; }
 .ligne {
@@ -939,7 +1067,7 @@ details > summary {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.7rem 0;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--bordure);
 }
 .lignes > .ligne:first-child { border-top: 0; padding-top: 0; }
@@ -952,8 +1080,8 @@ details > summary {
 .fil:first-child > .fil-ligne:first-child { border-top: 0; }
 .fil-ligne > a {
   display: grid;
-  gap: 0.15rem;
-  padding: 0.7rem 0.6rem 0.7rem 0.75rem;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
   border-left: 3px solid transparent;
   min-height: var(--cible-tactile);
 }
@@ -968,7 +1096,7 @@ details > summary {
   text-transform: uppercase;
   color: var(--texte-secondaire);
 }
-.alerte-texte { color: var(--alerte); margin: 0 0 0.6rem; }
+.alerte-texte { color: var(--alerte); margin: 0 0 0.5rem; }
 
 /* Un lien qui occupe un titre entier ou une ligne entière tient son affordance de
    sa position, pas d'un soulignement — qui y ressemblerait à un oubli. Ces liens
@@ -980,7 +1108,7 @@ details > summary {
 
 /* Méta d'une carte : la pastille d'état doit rester sur la ligne plutôt que de la
    couper en deux au milieu d'un nombre. */
-.ligne-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
+.ligne-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espace-2); }
 
 /* --- Conformité ------------------------------------------------------------
    Le différenciateur du produit. Trois contraintes : « expire pendant » n'est pas
@@ -992,11 +1120,11 @@ details > summary {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.3;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 999px;
   border: 1px solid currentColor;
   white-space: nowrap;
@@ -1014,7 +1142,7 @@ details > summary {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.85rem 0;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--bordure);
 }
 .lignes-conformite > .ligne-conformite:first-child { border-top: 0; padding-top: 0; }
@@ -1026,7 +1154,7 @@ details > summary {
 
 .separation-action { border-top: 1px solid var(--bordure); margin-top: 1.25rem; padding-top: 1.25rem; }
 .bloc-action { display: grid; gap: 0.75rem; }
-.boutons-action { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.boutons-action { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .boutons-action .bouton { flex: 1 1 auto; }
 
 /* Boutons posés sur la carte sombre : sans cette reprise, le bouton noir sur fond
@@ -1052,12 +1180,13 @@ details > summary {
    ordinaire — c'est un chrome, pas un contenu. */
 .bandeau-espace { padding-top: 2rem; }
 .bandeau-espace .entete-espace { margin-bottom: 0; }
-.bandeau-espace + .section { padding-top: clamp(1.75rem, 3vw, 2.5rem); }
+.bandeau-espace + .section { padding-top: clamp(1.5rem, 3vw, 2rem); }
 .identite-nom { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; line-height: 1.2; }
 
 /* Titre d'écran sous le bandeau d'espace : plus discret qu'un h1 de page publique,
    qui viserait 3 rem — ici le bandeau tient déjà le haut de la page. */
-.titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: 0.35rem; }
+.titre-page { font-size: clamp(1.5rem, 3vw, 1.875rem); margin-bottom: var(--espace-1); }
+
 
 /* --- Sélecteur dans un référentiel long ------------------------------------ */
 .selecteur { margin-bottom: 1.5rem; }
@@ -1072,7 +1201,7 @@ details > summary {
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 0.75rem;
 }
 .puces--retirables .puce:hover { border-color: var(--alerte); color: var(--alerte); }
 
@@ -1099,7 +1228,7 @@ details > summary {
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
   background: var(--surface);
-  padding: 1.1rem 1.25rem;
+  padding: 1rem 1.25rem;
   margin: 0;
 }
 .filtre-criteres legend,
@@ -1108,7 +1237,7 @@ details > summary {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--texte-secondaire);
-  padding-inline: 0.35rem;
+  padding-inline: 0.25rem;
 }
 .filtre-criteres .champ { margin-bottom: 1rem; }
 .filtre-criteres input[type="search"],
@@ -1138,7 +1267,7 @@ details > summary {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 1rem;
   letter-spacing: 0.06em;
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   background: var(--fond);
   border: 1px solid var(--bordure);
   border-radius: var(--rayon-petit);
@@ -1184,7 +1313,7 @@ details > summary {
    Champ étroit — on saisit deux chiffres, pas une phrase — mais la cible tactile
    reste à 44 px, le public portant souvent des gants. */
 .ligne-experience label { font-size: 0.9375rem; }
-.saisie-annees { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+.saisie-annees { display: flex; align-items: center; gap: 0.5rem; flex: none; }
 .saisie-annees input {
   width: 5rem;
   min-height: var(--cible-tactile);
@@ -1194,7 +1323,7 @@ details > summary {
 /* Les deux volets de l'expérience — constatée, déclarée — doivent se lire comme
    deux blocs distincts. Sans cet espace, le second titre colle à la dernière ligne
    du premier et on croit lire une suite. */
-.section-experience h3 { margin-top: 1.75rem; }
+.section-experience h3 { margin-top: 1.5rem; }
 .section-experience h3:first-child { margin-top: 0; }
 
 /* Proposition de rattachement Discord, sous le fil d'activité.
@@ -1247,3 +1376,408 @@ details > summary {
    — l'œil lisait un bloc continu là où il y avait plusieurs objets distincts. */
 .liste-cartes { display: grid; gap: 1.25rem; }
 .liste-cartes > .carte { margin-bottom: 0; }
+
+/* --- Carte entièrement cliquable -------------------------------------------
+   Une carte dont seul le titre souligné réagissait au clic : la cible utile
+   faisait quelques dizaines de pixels au milieu d'un bloc de plusieurs centaines,
+   et le soulignement faisait « vieux lien » au milieu d'une mise en page moderne.
+
+   Le lien reste UNIQUE dans le balisage — un lecteur d'écran annonce un lien, pas
+   une carte piégée — et son pseudo-élément recouvre la carte. Les autres éléments
+   interactifs de la carte remontent au-dessus par `position: relative`. */
+.carte--cliquable,
+.ligne-candidat { position: relative; transition: border-color 120ms, background-color 120ms; }
+.carte--cliquable:hover { border-color: var(--marine); }
+/* **Le décollement au survol, sur les seules cartes qui se cliquent.** Appliqué
+   à toutes les cartes, il faisait se soulever sous la souris un formulaire de
+   profil ou un encart d'explication : une promesse de clic que rien ne tient. Un
+   effet de survol est une affordance, pas une décoration. */
+.carte--cliquable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(20, 26, 33, 0.1), 0 0 0 0.5px rgba(31, 30, 29, 0.14);
+}
+
+/* RGAA 13.8 et confort vestibulaire : qui a demandé moins de mouvement à son
+   système n'en reçoit pas — ni cartes qui se soulèvent, ni boutons qui sautent. */
+@media (prefers-reduced-motion: reduce) {
+  .carte, .bouton { transition: none; }
+  .carte--cliquable:hover, .bouton:hover { transform: none; }
+}
+/* Le trait de focus se pose sur la surface entière, jamais sur le pseudo-élément
+   qui la recouvre : sinon le clavier n'obtient qu'un rectangle invisible. */
+.carte--cliquable:has(.lien-etire:focus-visible),
+.ligne-candidat:has(.lien-etire:focus-visible) {
+  outline: 3px solid var(--marine);
+  outline-offset: -3px;
+}
+.lien-etire { text-decoration: none; color: inherit; }
+.lien-etire::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+/* Le focus est porté par la carte, pas par le pseudo-élément qui la recouvre. */
+.lien-etire:focus-visible { outline: none; }
+/* Tout ce qui doit rester cliquable par-dessus la surface du lien. */
+/* **Tout ce qui se saisit passe aussi au-dessus.** Le champ de motif de « Retirer ma
+   candidature » était sous la surface du lien étiré : un clic dans la zone de texte
+   ouvrait la mission au lieu d'y placer le curseur. */
+.carte--cliquable :is(input, textarea, select, label, details, summary),
+.ligne-candidat :is(input, textarea, select, label),
+.carte--cliquable .bouton,
+.carte--cliquable button,
+.carte--cliquable a:not(.lien-etire),
+.ligne-candidat .bouton,
+.ligne-candidat button,
+.ligne-candidat a:not(.lien-etire) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ligne de candidature : un bloc de texte à gauche, l'état à droite, alignés en
+   HAUT et non au centre — une pastille centrée sur deux lignes de motif flotte au
+   milieu de nulle part. La grille borne aussi la colonne de gauche, sans quoi un
+   intitulé d'habilitation long pousse l'état hors de l'écran. */
+/* **Un chantier, une carte.** Les candidatures étaient posées à nu sur le fond
+   de page, séparées du titre de leur mission par deux marges cumulées : rien ne
+   disait où un chantier commençait ni où le précédent finissait, et le texte
+   semblait flotter. Elles vivent maintenant DANS la carte de leur mission —
+   c'est contre les dates de ce chantier-là qu'elles se jugent. */
+.groupe-candidatures { padding: 0; overflow: hidden; }
+.tete-groupe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-1) var(--espace-4);
+  padding: var(--espace-3) var(--espace-5);
+  background: var(--fond);
+  border-bottom: 1px solid var(--bordure);
+}
+.tete-groupe h2 { font-size: 1rem; margin: 0; }
+.tete-groupe p { margin: 0; }
+
+.ligne-candidat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--espace-1) var(--espace-4);
+  padding: var(--espace-3) var(--espace-5);
+  border-top: 1px solid var(--bordure);
+}
+.ligne-candidat:first-child { border-top: 0; }
+.ligne-candidat:hover { background: var(--fond); }
+.ligne-candidat-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin: 0;
+}
+.ligne-candidat-detail { margin: 0.25rem 0 0; }
+
+/* --- Grille tarifaire : plan mis en avant --------------------------------- */
+.carte--recommandee {
+  position: relative;
+  border-color: var(--marine);
+  border-width: 2px;
+}
+.etiquette-recommandee {
+  position: absolute;
+  top: -0.7rem;
+  left: 1.25rem;
+  background: var(--marque-jaune);
+  color: #1a1a18;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+}
+
+/* --- Habillage visuel : accueil --------------------------------------------
+   Quelques photos de chantier pour donner un visage au produit, toujours
+   secondaires au texte : chaque section garde son sens sans elles. */
+
+/* Bannière plein cadre : la photo occupe tout l'espace de la colonne, sans
+   voile dessus — seul le panneau qui porte le texte a un fond opaque, mesuré
+   pour rester lisible quel que soit ce qu'il y a derrière lui sur la photo. */
+/* Le bandeau referme déjà visuellement le haut de page : un espacement de
+   section classique en dessous, cumulé à celui de la section suivante,
+   ouvrait un vide de près de 10rem avant "Pourquoi le BTP" — et grignotait
+   d'autant la hauteur disponible pour la photo elle-même. */
+.hero-section { padding-top: 0; padding-bottom: 0; }
+/* Pleine largeur d'écran, pas seulement de colonne : la bannière sort du
+   conteneur centré pour toucher les deux bords, comme le reste des sections
+   sombres en dessous. */
+.hero-banniere {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  min-height: clamp(460px, 56vw, 640px);
+  display: flex;
+  align-items: flex-end;
+}
+.hero-banniere-image { object-fit: cover; }
+/* Cale le panneau de texte sur la même colonne que le reste du site : l'image
+   déborde plein écran, mais le contenu reste aligné avec l'en-tête au-dessus. */
+.hero-banniere-alignement { width: 100%; }
+.hero-banniere-contenu {
+  position: relative;
+  margin: 0 0 clamp(1.5rem, 4vw, 2.75rem);
+  padding: clamp(1.5rem, 3.5vw, 2.25rem);
+  max-width: 560px;
+  border-radius: var(--rayon-petit);
+  background: rgba(15, 20, 26, 0.88);
+  color: var(--texte-sur-sombre);
+}
+.hero-banniere-contenu h1 { color: #ffffff; margin-top: 0; }
+.hero-texte {
+  max-width: 52ch;
+  font-size: 1.0625rem;
+  color: var(--texte-secondaire-sur-sombre);
+}
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.75rem; margin-bottom: 0; }
+.hero-note { margin: 1.25rem 0 0; font-size: 0.875rem; color: var(--texte-secondaire-sur-sombre); }
+/* Bouton secondaire posé sur la photo : un contour clair plutôt qu'une bordure
+   grise, invisible sur un fond sombre et variable. */
+.bouton--sur-image {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+}
+.bouton--sur-image:hover {
+  background: var(--marque-jaune);
+  color: #1a1a18;
+  border-color: var(--marque-jaune);
+}
+/* Même raison que pour .carte--sombre .bouton plus haut : marine sur un fond
+   presque noir ne se distingue plus, le jaune reprend le rôle de repère. Ciblé
+   sur la colonne directe pour ne pas toucher les boutons du bandeau hero, qui
+   ont déjà leur propre traitement. */
+.section--sombre > .colonne .bouton:not(.bouton--secondaire) {
+  background: var(--marque-jaune);
+  color: #1a1a18;
+  border-color: var(--marque-jaune);
+}
+.section--sombre > .colonne .bouton:not(.bouton--secondaire):hover {
+  background: #e3c909;
+  border-color: #e3c909;
+}
+@media (max-width: 640px) {
+  .hero-banniere-contenu { max-width: none; }
+}
+
+.section-illustree {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+@media (min-width: 860px) {
+  .section-illustree { grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); }
+  .section-illustree--inverse { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr); }
+  .section-illustree--inverse > .section-illustree-media { order: -1; }
+}
+
+.section-illustree-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--rayon);
+  overflow: hidden;
+  box-shadow: var(--ombre-carte);
+}
+.section-illustree-media img { object-fit: cover; }
+
+/* Section sombre avec photo en toile de fond : un dégradé encre couvre
+   l'image pour que le texte blanc garde son contraste (RGAA 3.2 — mesuré au
+   point le plus clair de la photo, jamais sur la moyenne). */
+.section--illustree-fond {
+  position: relative;
+  isolation: isolate;
+}
+.section--illustree-fond .fond-image {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.section--illustree-fond .fond-image img { object-fit: cover; }
+.section--illustree-fond .fond-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Sombre partout, pas seulement en dégradé vers un bord : le texte peut se
+     retrouver au-dessus de n'importe quelle zone de la photo, y compris son
+     ciel, sa partie la plus claire — c'est elle qui doit passer le contraste. */
+  background: linear-gradient(100deg, rgba(20, 26, 33, 0.96) 0%, rgba(20, 26, 33, 0.9) 100%);
+}
+
+/* Amorce jaune devant un sur-titre, en section claire : décorative, jamais
+   support d'un texte — donc pas soumise au contraste 3:1 des éléments
+   fonctionnels. */
+.sur-titre--accent-jaune::before { background: var(--marque-jaune); }
+
+/* --- Fenêtre de confirmation ------------------------------------------------
+   `<dialog>` natif : le navigateur fournit le piège du focus, Échap et le fond
+   inerte. On ne règle que l'apparence. */
+.fenetre {
+  width: min(32rem, calc(100vw - 2rem));
+  padding: var(--espace-5);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  color: var(--texte);
+  box-shadow: 0 20px 48px rgba(20, 26, 33, 0.22);
+}
+.fenetre::backdrop { background: rgba(20, 26, 33, 0.45); }
+.fenetre ul { margin: 0 0 var(--espace-4); padding-left: var(--espace-5); }
+.fenetre-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espace-2);
+  margin-top: var(--espace-5);
+}
+
+.choix-motif {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--espace-3);
+  align-items: start;
+  padding: var(--espace-3);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  margin-top: var(--espace-2);
+  cursor: pointer;
+}
+.choix-motif:has(input:checked) { border-color: var(--marine); background: var(--marine-tuile); }
+.choix-motif input { margin-top: 0.25rem; }
+
+/* --- Console des fiches de poste --------------------------------------------
+   Pensée pour cent fiches : un tableau dense plutôt qu'une carte par fiche, et
+   des filtres qui répondent d'abord à « où dois-je agir ? ». */
+
+/* Texte réservé aux lecteurs d'écran : présent dans l'arbre d'accessibilité,
+   invisible à l'écran. */
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tete-page {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  margin-bottom: var(--espace-6);
+}
+
+/* Deux par deux sur téléphone : empilés, les quatre chiffres prenaient un écran. */
+.bandeau-chiffres--4 { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 720px) { .bandeau-chiffres--4 { grid-template-columns: repeat(4, 1fr); } }
+
+.barre-fiches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-3) var(--espace-5);
+  margin-bottom: var(--espace-4);
+}
+.filtres ul { display: flex; flex-wrap: wrap; gap: var(--espace-2); }
+.filtre {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  min-height: var(--cible-tactile);
+  padding: 0 var(--espace-4);
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--texte);
+  font-weight: 500;
+}
+.filtre:hover { border-color: var(--marine); text-decoration: none; }
+.filtre--actif { background: var(--marine); border-color: var(--marine); color: #ffffff; }
+.filtre-compte {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0 var(--espace-2);
+  border-radius: 999px;
+  background: var(--marine-tuile);
+  color: var(--marine);
+}
+.filtre--actif .filtre-compte { background: #ffffff; }
+
+.recherche-fiches { display: flex; gap: var(--espace-2); }
+.recherche-fiches input[type="search"] { min-width: 16rem; }
+
+.tableau-conteneur { padding: 0; overflow-x: auto; }
+.tableau-fiches { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.tableau-fiches th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texte-secondaire);
+  padding: var(--espace-3) var(--espace-4);
+  background: var(--fond);
+  border-bottom: 1px solid var(--bordure);
+  white-space: nowrap;
+}
+.tableau-fiches td {
+  padding: var(--espace-3) var(--espace-4);
+  border-bottom: 1px solid var(--bordure);
+  vertical-align: middle;
+}
+.tableau-fiches tbody tr:last-child td { border-bottom: 0; }
+.tableau-fiches tbody tr:hover { background: var(--fond); }
+.tableau-fiches td > span { display: block; }
+/* Une date ne se coupe pas au milieu : « 16 / oct. » se lisait comme deux valeurs. */
+.tableau-fiches td[data-libelle="Dates"] > span { white-space: nowrap; }
+.tableau-fiches td > .pastille { display: inline-block; }
+.tableau-fiches .nombre { text-align: right; white-space: nowrap; }
+.tableau-titre { font-weight: 600; color: var(--texte); }
+.tableau-action { text-align: right; white-space: nowrap; }
+
+/* Sur téléphone, chaque ligne devient une carte compacte, chaque cellule porte
+   son intitulé : un tableau à six colonnes ne tient pas dans 390 px. */
+@media (max-width: 720px) {
+  .tableau-fiches thead { display: none; }
+  .tableau-fiches, .tableau-fiches tbody, .tableau-fiches tr, .tableau-fiches td { display: block; width: 100%; }
+  .tableau-fiches tr { padding: var(--espace-3) var(--espace-4); border-bottom: 1px solid var(--bordure); }
+  .tableau-fiches td { border: 0; padding: var(--espace-1) 0; text-align: left; }
+  .tableau-fiches .nombre { text-align: left; }
+  .tableau-fiches td[data-libelle]:not([data-libelle="Fiche"])::before {
+    content: attr(data-libelle) " : ";
+    color: var(--texte-secondaire);
+    font-size: 0.875rem;
+  }
+  .tableau-fiches td[data-libelle]:not([data-libelle="Fiche"]) > span { display: inline; margin-left: var(--espace-1); }
+  .tableau-action { text-align: left; padding-top: var(--espace-2) !important; }
+  /* Les filtres glissent sur une rangée, comme les puces de filtre des applications
+     d'emploi : sur trois lignes, ils repoussaient la liste hors de l'écran. */
+  .filtres { width: 100%; }
+  .filtres ul { flex-wrap: nowrap; overflow-x: auto; padding-bottom: var(--espace-1); scrollbar-width: none; }
+  .filtre { white-space: nowrap; }
+  .recherche-fiches { width: 100%; }
+  .recherche-fiches input[type="search"] { min-width: 0; flex: 1; }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-3);
+  margin-top: var(--espace-4);
+}

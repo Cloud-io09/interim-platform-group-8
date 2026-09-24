@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useRef, useId, useState } from "react";
 import RetourFormulaire, { type Probleme } from "./RetourFormulaire";
 import { envoyerJson, rechargerVers } from "@/lib/client";
 
@@ -22,7 +22,15 @@ interface Enrichissement {
   departement: string | null;
   effectif: number;
   intitulesFrequents: string[];
-  remuneration: { mediane: number; q1: number; q3: number; effectif: number } | null;
+  remuneration: {
+    mediane: number;
+    q1: number;
+    q3: number;
+    effectif: number;
+    /** « domaine » quand le métier n'a aucune offre et qu'on s'est replié sur ses voisins. */
+    source: "metier" | "domaine";
+    domaine: string;
+  } | null;
   certifications: { typeCode: string; libelle: string; occurrences: number; part: number }[];
   competences: { code: string; libelle: string; occurrences: number; part: number }[];
 }
@@ -58,10 +66,51 @@ export interface MissionAModifier {
  * ressaisir. Un même formulaire sert les deux cas, sans quoi les deux divergeraient
  * au premier champ ajouté.
  */
+/**
+ * Horaires courants sur un chantier, proposés avant la saisie libre.
+ *
+ * Le champ était entièrement libre : on pouvait y écrire n'importe quoi, alors que
+ * c'est une mention obligatoire du contrat de mission. Les formules les plus
+ * fréquentes se choisissent d'un geste ; « Autre » garde la liberté pour les
+ * chantiers qui alternent des journées de longueurs différentes.
+ */
+const HORAIRES_COURANTS = [
+  "7h30-12h / 13h-16h30, 35 h par semaine",
+  "8h-12h / 13h-17h, 39 h par semaine",
+  "7h-15h en journée continue, 35 h par semaine",
+  "6h-13h en horaires décalés, 35 h par semaine",
+];
+
+/** La date du jour à Paris, celle que le serveur oppose aussi. */
+const aujourdhuiParis = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
+
 export default function FormulaireMission({ initiale }: { initiale?: MissionAModifier }) {
   const [domaines, setDomaines] = useState<Domaine[]>([]);
   const [types, setTypes] = useState<TypeCertification[]>([]);
   const [metierCode, setMetierCode] = useState(initiale?.metierCode ?? "");
+  const [debut, setDebut] = useState(initiale?.dateDebut ?? "");
+  const [choixHoraires, setChoixHoraires] = useState(
+    !initiale?.horaires ? "" : HORAIRES_COURANTS.includes(initiale.horaires) ? initiale.horaires : "autre"
+  );
+  const [horairesLibres, setHorairesLibres] = useState(
+    initiale?.horaires && !HORAIRES_COURANTS.includes(initiale.horaires) ? initiale.horaires : ""
+  );
+
+  // **Une saisie perdue sans prévenir.** Quitter la page au milieu d'une fiche
+  // effaçait tout en silence. Le navigateur sait demander confirmation : on le lui
+  // demande dès le premier champ touché, et on cesse après un envoi réussi.
+  const [modifie, setModifie] = useState(false);
+  const envoiReussi = useRef(false);
+  useEffect(() => {
+    if (!modifie) return;
+    const retenir = (e: BeforeUnloadEvent) => {
+      if (envoiReussi.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", retenir);
+    return () => window.removeEventListener("beforeunload", retenir);
+  }, [modifie]);
   const [codePostal, setCodePostal] = useState(initiale?.codePostal ?? "");
   const [enrichissement, setEnrichissement] = useState<Enrichissement | null>(null);
   const [exigences, setExigences] = useState<Exigence[]>(
@@ -78,6 +127,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
   // le champ fautif en haut d'un formulaire long.
   const [tauxMin, setTauxMin] = useState(String(initiale?.tauxHoraireMin ?? ""));
   const [tauxMax, setTauxMax] = useState(String(initiale?.tauxHoraireMax ?? ""));
+  // Vrai tant que les taux affichés sont ceux proposés par les offres observées, et
+  // non une saisie : le texte sous les champs le dit, pour qu'on ne publie pas un
+  // chiffre en croyant l'avoir choisi.
+  const [tauxSuggeres, setTauxSuggeres] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = {
@@ -109,6 +162,20 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
     };
   }, [metierCode, codePostal]);
 
+  // **La fourchette observée arrive dans les champs, pas seulement dans l'encart.**
+  // Elle n'était affichée qu'en haut du formulaire, loin des taux, qui restaient
+  // vides : on lisait deux champs libres sans repère. Ils sont préremplis sur la
+  // moitié centrale des offres du métier, et seulement s'ils sont encore vides — une
+  // saisie n'est jamais écrasée.
+  useEffect(() => {
+    const r = enrichissement?.remuneration;
+    if (!r) return;
+    setTauxMin((m) => (m === "" ? r.q1.toFixed(2) : m));
+    setTauxMax((m) => (m === "" ? r.q3.toFixed(2) : m));
+    setTauxSuggeres((s) => s || (tauxMin === "" && tauxMax === ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enrichissement]);
+
   function basculerExigence(typeCode: string) {
     setExigences((actuelles) => {
       const existe = actuelles.some((e) => e.typeCode === typeCode);
@@ -136,7 +203,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
         ville: d.get("ville"),
         dateDebut: d.get("dateDebut"),
         dateFin: d.get("dateFin"),
-        horaires: d.get("horaires"),
+        horaires: choixHoraires === "autre" ? horairesLibres : choixHoraires,
         tauxHoraireMin: d.get("tauxHoraireMin") ? Number(d.get("tauxHoraireMin")) : null,
         tauxHoraireMax: d.get("tauxHoraireMax") ? Number(d.get("tauxHoraireMax")) : null,
         certificationsRequises: exigences.map((e) => ({
@@ -155,6 +222,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
       setErreur(corps.message ?? (initiale ? "Modification impossible." : "Publication impossible."));
       return;
     }
+    envoiReussi.current = true;
     rechargerVers(`/missions/${initiale?.id ?? corps.id}`);
   }
 
@@ -162,10 +230,9 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
   const tauxIncoherents =
     tauxMin !== "" && tauxMax !== "" && Number(tauxMax) <= Number(tauxMin);
 
-  const typeDe = (code: string) => types.find((t) => t.code === code);
 
   return (
-    <form onSubmit={envoyer} noValidate>
+    <form onSubmit={envoyer} onChange={() => setModifie(true)} noValidate>
       <fieldset>
         <legend>Le poste</legend>
         <div className="champ">
@@ -192,7 +259,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
               {enrichissement.portee === "departement"
                 ? ` dans le département ${enrichissement.departement}`
                 : " en France"}
-              {enrichissement.remuneration && (
+              {enrichissement.remuneration?.source === "metier" && (
                 <>
                   {" "}· rémunération médiane <strong>{enrichissement.remuneration.mediane.toFixed(2)} €/h</strong>{" "}
                   (moitié centrale : {enrichissement.remuneration.q1.toFixed(2)} à{" "}
@@ -242,7 +309,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
             <ul className="liste-nue petit" style={{ margin: 0 }}>
               {enrichissement.certifications.map((c) => (
                 <li key={c.typeCode}>
-                  <strong>{c.libelle}</strong> — {c.part} % des offres ({c.occurrences} sur{" "}
+                  <strong>{c.libelle}</strong> - {c.part} % des offres ({c.occurrences} sur{" "}
                   {enrichissement.effectif})
                 </li>
               ))}
@@ -264,7 +331,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
                   <span>{t.libelle}</span>
                 </label>
                 {choisie && t.categories.length > 0 && (
-                  <div className="champ" style={{ marginLeft: "2.1rem", marginBottom: "0.75rem" }}>
+                  <div className="champ" style={{ marginLeft: "2rem", marginBottom: "0.75rem" }}>
                     <label htmlFor={`cat-${t.code}`} className="petit">Catégorie exigée</label>
                     <select
                       id={`cat-${t.code}`}
@@ -304,7 +371,7 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
                     setCompetences((a) => (a.includes(c.code) ? a.filter((x) => x !== c.code) : [...a, c.code]))
                   }
                 />
-                <span>{c.libelle} <span className="secondaire">— {c.part} %</span></span>
+                <span>{c.libelle} <span className="secondaire">- {c.part} %</span></span>
               </label>
             ))}
           </div>
@@ -336,12 +403,29 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
         <div className="grille grille--2">
           <div className="champ">
             <label htmlFor={ids.debut}>Début</label>
-            <input id={ids.debut} name="dateDebut" defaultValue={initiale?.dateDebut ?? ""} type="date" required />
+            {/* Le calendrier n'offre pas le passé. Un chantier déjà commencé garde
+                son début, qu'on peut corriger sans devoir le repousser. */}
+            <input
+              id={ids.debut}
+              name="dateDebut"
+              type="date"
+              required
+              value={debut}
+              onChange={(e) => setDebut(e.target.value)}
+              min={initiale && initiale.dateDebut < aujourdhuiParis() ? initiale.dateDebut : aujourdhuiParis()}
+            />
             {problemeDe("dateDebut") && <p className="petit message-erreur">{problemeDe("dateDebut")}</p>}
           </div>
           <div className="champ">
             <label htmlFor={ids.fin}>Fin</label>
-            <input id={ids.fin} name="dateFin" defaultValue={initiale?.dateFin ?? ""} type="date" required />
+            <input
+              id={ids.fin}
+              name="dateFin"
+              defaultValue={initiale?.dateFin ?? ""}
+              type="date"
+              required
+              min={debut > aujourdhuiParis() ? debut : aujourdhuiParis()}
+            />
             <p className="petit secondaire">
               C&apos;est contre cette date que la validité des habilitations est vérifiée.
             </p>
@@ -349,18 +433,27 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
           </div>
         </div>
 
-        {/* Mention obligatoire du contrat de mission. Texte libre : un chantier
-            alterne des journées de 7 h et de 9 h, une grille mentirait. */}
+        {/* Mention obligatoire du contrat de mission. */}
         <div className="champ">
           <label htmlFor={ids.horaires}>Horaires de travail</label>
-          <input
-            id={ids.horaires}
-            name="horaires"
-            defaultValue={initiale?.horaires ?? ""}
-            type="text"
-            maxLength={300}
-            placeholder="7h30-12h / 13h-16h30, 35 h par semaine"
-          />
+          <select id={ids.horaires} value={choixHoraires} onChange={(e) => setChoixHoraires(e.target.value)}>
+            <option value="">Choisir des horaires…</option>
+            {HORAIRES_COURANTS.map((h) => (
+              <option key={h} value={h}>{h}</option>
+            ))}
+            <option value="autre">Autre, à préciser</option>
+          </select>
+          {choixHoraires === "autre" && (
+            <input
+              aria-label="Horaires, à préciser"
+              type="text"
+              maxLength={300}
+              value={horairesLibres}
+              onChange={(e) => setHorairesLibres(e.target.value)}
+              placeholder="Lundi-jeudi 7h-16h, vendredi 7h-12h, 39 h par semaine"
+              style={{ marginTop: "0.5rem" }}
+            />
+          )}
           <p className="petit secondaire">
             Mention obligatoire du contrat de mission. Sans elle, le document de mission
             est incomplet.
@@ -379,7 +472,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
               min="0"
               inputMode="decimal"
               value={tauxMin}
-              onChange={(e) => setTauxMin(e.target.value)}
+              onChange={(e) => {
+                setTauxMin(e.target.value);
+                setTauxSuggeres(false);
+              }}
             />
             {problemeDe("tauxHoraireMin") && <p className="petit message-erreur">{problemeDe("tauxHoraireMin")}</p>}
           </div>
@@ -393,7 +489,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
               min="0"
               inputMode="decimal"
               value={tauxMax}
-              onChange={(e) => setTauxMax(e.target.value)}
+              onChange={(e) => {
+                setTauxMax(e.target.value);
+                setTauxSuggeres(false);
+              }}
               aria-invalid={tauxIncoherents || undefined}
               aria-describedby={tauxIncoherents ? `${ids.max}-err` : undefined}
             />
@@ -409,6 +508,39 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
             )}
           </div>
         </div>
+        {enrichissement?.remuneration ? (
+          <p className="petit secondaire" style={{ margin: 0 }}>
+            {tauxSuggeres ? "Prérempli d'après " : "Repère : "}
+            la moitié centrale des taux observés,{" "}
+            <strong>
+              {enrichissement.remuneration.q1.toFixed(2)} à {enrichissement.remuneration.q3.toFixed(2)} €/h
+            </strong>{" "}
+            (médiane {enrichissement.remuneration.mediane.toFixed(2)} €/h), sur{" "}
+            {enrichissement.remuneration.source === "domaine" ? (
+              <>
+                {enrichissement.remuneration.effectif} offres d&apos;intérim du domaine «{" "}
+                {enrichissement.remuneration.domaine} » en France : aucune offre n&apos;a été
+                observée pour ce métier précis.
+              </>
+            ) : (
+              <>
+                {enrichissement.remuneration.effectif} offres d&apos;intérim de ce métier
+                {enrichissement.portee === "departement"
+                  ? ` dans le département ${enrichissement.departement}`
+                  : " en France"}
+                .
+              </>
+            )}{" "}
+            Modifiable librement.
+          </p>
+        ) : (
+          metierCode && (
+            <p className="petit secondaire" style={{ margin: 0 }}>
+              Aucune offre publique observée pour ce métier : pas de repère de
+              rémunération à proposer.
+            </p>
+          )
+        )}
       </fieldset>
 
       <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />

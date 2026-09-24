@@ -45,7 +45,7 @@ export default function Experience({ constatee, declaree, vue }: Props) {
         <p className="petit secondaire">
           {titulaire
             ? "Aucune mission terminée pour l'instant. Elle se remplira d'elle-même : chaque chantier achevé via la plateforme y apparaîtra."
-            : "Aucune mission terminée via la plateforme. Ce profil peut être expérimenté par ailleurs — voir ce qu'il déclare."}
+            : "Aucune mission terminée via la plateforme. Ce profil peut être expérimenté par ailleurs - voir ce qu'il déclare."}
         </p>
       ) : (
         <>
@@ -57,12 +57,12 @@ export default function Experience({ constatee, declaree, vue }: Props) {
           <ul className="liste-nue lignes">
             {constatee.parMetier.map((m) => (
               <li key={m.metierCode} className="ligne">
-                <span>
+                <div>
                   <strong className="petit">{m.metierLibelle}</strong>
-                  <p className="petit secondaire" style={{ margin: "0.15rem 0 0" }}>
+                  <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
                     {resumeExperience(m)} · dernière le {enDateFr(m.derniereFin)}
                   </p>
-                </span>
+                </div>
                 <span className="pastille pastille--ok">Vérifiée</span>
               </li>
             ))}

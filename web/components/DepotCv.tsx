@@ -210,7 +210,7 @@ export default function DepotCv() {
       <h2 id="titre-cv">Dépôt du CV</h2>
       <p className="secondaire">
         Déposez votre CV pour préremplir votre profil. Nous en extrayons vos métiers, vos
-        compétences et les habilitations citées — vous validez chaque élément avant qu&apos;il
+        compétences et les habilitations citées, vous validez chaque élément avant qu&apos;il
         soit ajouté.
       </p>
       <p className="petit secondaire">
@@ -224,7 +224,7 @@ export default function DepotCv() {
         <div className="bandeau bandeau--neutre">
           <p style={{ margin: 0 }}>
             <strong>{cv.nomFichier}</strong>
-            <span className="petit secondaire"> — {cv.longueur.toLocaleString("fr-FR")} caractères lus</span>
+            <span className="petit secondaire"> - {cv.longueur.toLocaleString("fr-FR")} caractères lus</span>
           </p>
           <button className="bouton bouton--secondaire" onClick={retirer}>Retirer mon CV</button>
         </div>
@@ -257,8 +257,8 @@ export default function DepotCv() {
                     style={{ width: `${Math.round(progression.progression * 100)}%` }}
                   />
                 </div>
-                <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
-                  {Math.round(progression.progression * 100)} % — ce document est un scan,
+                <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
+                  {Math.round(progression.progression * 100)} % - ce document est un scan,
                   sa lecture demande un peu plus de temps.
                 </p>
               </>
@@ -276,7 +276,7 @@ export default function DepotCv() {
         <details className="carte" style={{ marginBottom: "2rem" }}>
           <summary>
             Relire le texte lu dans votre document
-            <span className="petit secondaire"> — {cv.longueur.toLocaleString("fr-FR")} caractères</span>
+            <span className="petit secondaire"> - {cv.longueur.toLocaleString("fr-FR")} caractères</span>
           </summary>
           {/* Après une reconnaissance de caractères, l'utilisateur doit pouvoir
               constater ce qui a été compris — et repérer une lecture fautive. */}
@@ -351,8 +351,8 @@ export default function DepotCv() {
               </p>
               <ul className="liste-nue petit">
                 {analyse.certifications.map((c, i) => (
-                  <li key={`${c.typeCode}-${c.categorieCode ?? i}`} style={{ marginBottom: "0.4rem" }}>
-                    <strong>{c.typeCode.replace(/_/g, " ")}{c.categorieCode ? ` — ${c.categorieCode}` : ""}</strong>
+                  <li key={`${c.typeCode}-${c.categorieCode ?? i}`} style={{ marginBottom: "0.5rem" }}>
+                    <strong>{c.typeCode.replace(/_/g, " ")}{c.categorieCode ? ` - ${c.categorieCode}` : ""}</strong>
                     <br />
                     <span className="secondaire">« {c.extrait} »</span>
                   </li>
@@ -389,8 +389,8 @@ export default function DepotCv() {
               const lot = suggestions.filter((s) => s.conformite === cle);
               if (lot.length === 0) return null;
               return (
-                <section key={cle} style={{ marginTop: "1.75rem" }}>
-                  <h4 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                <section key={cle} style={{ marginTop: "1.5rem" }}>
+                  <h4 className="titre-carte" style={{ marginBottom: "0.25rem" }}>
                     {titre} <span className="secondaire">({lot.length})</span>
                   </h4>
                   <p className="petit secondaire" style={{ marginTop: 0 }}>{intro}</p>
@@ -399,7 +399,7 @@ export default function DepotCv() {
                       <li key={s.missionId} className="carte">
                         <div className="ligne-certification">
                           <div>
-                            <h5 style={{ fontSize: "1rem", margin: "0 0 0.2rem" }}>
+                            <h5 className="titre-carte" style={{ margin: "0 0 0.25rem" }}>
                               <a href={`/mes-missions/${s.missionId}`}>{s.titre}</a>
                             </h5>
                             <p className="petit secondaire" style={{ margin: 0 }}>
@@ -407,11 +407,11 @@ export default function DepotCv() {
                               {enDateFr(s.dateFin)}
                             </p>
                             {s.certificationManquante && (
-                              <p className="petit" style={{ margin: "0.4rem 0 0" }}>
-                                <strong>{s.certificationManquante}</strong> — {s.explication}
+                              <p className="petit" style={{ margin: "0.5rem 0 0" }}>
+                                <strong>{s.certificationManquante}</strong> - {s.explication}
                               </p>
                             )}
-                            <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                            <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
                               Termes communs : {s.motsCommuns.join(", ")}
                             </p>
                           </div>

@@ -218,14 +218,14 @@ export default function MesMissionsInterimaire() {
               <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
-                    <h3 style={{ marginBottom: "0.2rem" }}>
+                    <h3 style={{ marginBottom: "0.25rem" }}>
                       <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
                       {m.entreprise} · {m.ville} · du {enDateFr(m.dateDebut)} au {enDateFr(m.dateFin)}
                       {remuneration(m)}
                     </p>
-                    <p className="petit secondaire" style={{ margin: "0.3rem 0 0" }}>
+                    <p className="petit secondaire" style={{ margin: "0.25rem 0 0" }}>
                       À {enKm(m.distanceKm)} de chez vous · vous couvrez {m.joursCouverts} des{" "}
                       {m.joursMission} jours
                     </p>
@@ -239,7 +239,7 @@ export default function MesMissionsInterimaire() {
       </section>
 
       {vusHorsMetier.length > 0 && (
-        <section aria-labelledby="titre-hors-metier" style={{ marginTop: "2.5rem" }}>
+        <section aria-labelledby="titre-hors-metier" style={{ marginTop: "2rem" }}>
           <h2 id="titre-hors-metier">Autres missions ouvertes</h2>
           <p className="secondaire">
             Elles ne relèvent pas des métiers déclarés sur votre profil, donc elles ne
@@ -249,7 +249,7 @@ export default function MesMissionsInterimaire() {
           <ul className="liste-nue liste-cartes">
             {vusHorsMetier.map((m) => (
               <li key={m.id} className="carte">
-                <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                <h3 className="titre-carte" style={{ marginBottom: "0.25rem" }}>
                   <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                 </h3>
                 <p className="petit secondaire" style={{ margin: 0 }}>
@@ -265,7 +265,7 @@ export default function MesMissionsInterimaire() {
       )}
 
       {vusBloquees.length > 0 && (
-        <section aria-labelledby="titre-bloquees" style={{ marginTop: "2.5rem" }}>
+        <section aria-labelledby="titre-bloquees" style={{ marginTop: "2rem" }}>
           <h2 id="titre-bloquees">Missions qu&apos;une habilitation vous rouvrirait</h2>
           <p className="secondaire">
             Elles correspondent à vos métiers, mais un titre manque ou expire trop tôt. Le
@@ -276,7 +276,7 @@ export default function MesMissionsInterimaire() {
               <li key={m.id} className="carte">
                 <div className="ligne-certification">
                   <div>
-                    <h3 style={{ fontSize: "1rem", marginBottom: "0.2rem" }}>
+                    <h3 className="titre-carte" style={{ marginBottom: "0.25rem" }}>
                       <a href={`/mes-missions/${m.id}`}>{m.titre}</a>
                     </h3>
                     <p className="petit secondaire" style={{ margin: 0 }}>
@@ -285,8 +285,8 @@ export default function MesMissionsInterimaire() {
                       {enDateFr(m.dateFin)}
                       {remuneration(m)}
                     </p>
-                    <p className="petit" style={{ margin: "0.4rem 0 0" }}>
-                      <strong>{m.certificationManquante}</strong> — {m.explication}
+                    <p className="petit" style={{ margin: "0.5rem 0 0" }}>
+                      <strong>{m.certificationManquante}</strong> - {m.explication}
                     </p>
                   </div>
                   <span

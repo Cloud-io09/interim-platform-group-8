@@ -29,11 +29,14 @@ const enKm = (km: number) => `${km.toLocaleString("fr-FR", { maximumFractionDigi
  */
 export default async function ProfilPourMission({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; interimaireId: string }>;
+  searchParams: Promise<{ debloque?: string }>;
 }) {
   const session = await exigerSession("entreprise");
   const { id, interimaireId: brut } = await params;
+  const { debloque: vientDeDebloquer } = await searchParams;
   const missionId = Number(id);
   const interimaireId = Number(brut);
   if (!Number.isInteger(missionId) || !Number.isInteger(interimaireId)) notFound();
@@ -43,7 +46,10 @@ export default async function ProfilPourMission({
     const mission = await chargerMission(sql, missionId);
     if (!mission || mission.entrepriseId !== session.compteId) notFound();
 
-    const profils = await chargerProfils(sql, mission.metierCode);
+    // Le profil demandé est chargé même s'il n'a pas déclaré ce métier : il a pu
+    // postuler, et l'écran rendait alors un 404 pour quelqu'un dont la candidature
+    // s'affichait juste à côté.
+    const profils = await chargerProfils(sql, mission.metierCode, [interimaireId]);
     const profil = profils.find((p) => p.interimaireId === interimaireId);
     if (!profil) notFound();
 
@@ -84,6 +90,17 @@ export default async function ProfilPourMission({
     // Le verdict de conformité reste de l'autre côté de la barrière, délibérément :
     // ce produit existe pour empêcher qu'on envoie quelqu'un sans titre valable, et
     // faire payer ce verdict reviendrait à vendre le risque.
+    // **Le nombre d'agences est gratuit, leur identité ne l'est pas.**
+    //
+    // Savoir qu'un profil est déjà inscrit quelque part change la décision : la mise
+    // en place sera rapide, ou il faudra l'inscrire dans sa propre agence. C'est donc
+    // une information de décision, et le produit ne fait jamais payer celles-là.
+    // Savoir *laquelle* et pouvoir l'appeler sert à agir : c'est derrière le
+    // déblocage, avec le téléphone.
+    const agences = await sql<{ nom: string; ville: string | null }[]>`
+      select nom, ville from interimaire_agence
+       where interimaire_id = ${interimaireId} order by nom`;
+
     const debloque = await dejaDebloque(sql, session.compteId, interimaireId, missionId);
     const droits = debloque ? null : await lireDroits(sql, session.compteId);
 
@@ -104,7 +121,7 @@ export default async function ProfilPourMission({
             ) : (
               <>
                 {identite.prenom} {identite.nom.charAt(0)}.
-                <span className="petit secondaire" style={{ marginLeft: "0.6rem", fontWeight: 400 }}>
+                <span className="petit secondaire" style={{ marginLeft: "0.5rem", fontWeight: 400 }}>
                   identité masquée
                 </span>
               </>
@@ -116,7 +133,33 @@ export default async function ProfilPourMission({
               {profil.rayonMobiliteKm} km
             </span>
             <span className="pastille pastille--info">{libelleEtat(etat)}</span>
+            <span className={agences.length > 0 ? "pastille pastille--ok" : "pastille pastille--attention"}>
+              {agences.length > 0
+                ? `✓ inscrit dans ${agences.length} agence${agences.length > 1 ? "s" : ""}`
+                : "△ aucune agence déclarée"}
+            </span>
           </p>
+          {agences.length === 0 && (
+            <p className="petit secondaire">
+              Le contrat de mission passe par une agence d&apos;emploi. Ce profil n&apos;en
+              déclare aucune : il faudra l&apos;inscrire dans la vôtre, ce qui rallonge la
+              mise en place de quelques jours.
+            </p>
+          )}
+
+          {/* Le rechargement effaçait tout message : l'écran changeait sans rien
+              dire, et on se demandait si le crédit était parti. */}
+          {vientDeDebloquer === "1" && debloque && (
+            <p className="bandeau bandeau--ok" role="status">
+              <span>
+                <strong>Coordonnées débloquées.</strong> Ce déblocage vaut pour{" "}
+                {identite.prenom} sur cette mission ; il ne sera pas redemandé.
+              </span>
+              <a className="bouton bouton--secondaire" href="/espace/entreprise/abonnement">
+                Voir mon solde
+              </a>
+            </p>
+          )}
 
           {/* **Ce que le déblocage rend.** Il ne donnait qu'un nom de famille, ce qui
               ne valait pas son prix : on paie pour pouvoir joindre quelqu'un, pas
@@ -145,6 +188,23 @@ export default async function ProfilPourMission({
                   </strong>
                 </li>
               </ul>
+              {agences.length > 0 && (
+                <>
+                  <h3 className="titre-carte">Son agence d&apos;emploi</h3>
+                  <ul className="liste-nue">
+                    {agences.map((a) => (
+                      <li key={`${a.nom}-${a.ville}`} className="ligne">
+                        <span>{a.ville ?? "—"}</span>
+                        <strong>{a.nom}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="petit secondaire">
+                    C&apos;est elle qui établit le contrat de mission : c&apos;est elle
+                    qu&apos;il faut contacter, pas nous.
+                  </p>
+                </>
+              )}
               <p className="petit secondaire">
                 {identite.prenom} sait qu&apos;une entreprise a accédé à ses coordonnées
                 pour cette mission. Elles ne servent qu&apos;à ce chantier.
@@ -204,7 +264,7 @@ export default async function ProfilPourMission({
                     : etat === "declinee"
                       ? `Dossier clos.${candidature?.motif ? ` Motif : ${candidature.motif}` : ""}`
                       : etat === "expiree"
-                        ? "La mission a été pourvue par quelqu'un d'autre."
+                        ? "La mission a été attribuée à quelqu'un d'autre."
                         : `En attente de la réponse de ${identite.prenom}.`
                 }
               />

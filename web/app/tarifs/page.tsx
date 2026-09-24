@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { enEuros, PACKS, PLANS } from "@interimatch/core/offre";
 
 export const metadata: Metadata = {
-  title: "Tarifs — Intérimatch BTP",
+  title: "Tarifs - Intérimatch BTP",
   description:
     "Le rapprochement, le score et la conformité de chaque profil sont gratuits. Seul l'accès aux coordonnées d'un candidat se paie, à l'acte ou par abonnement.",
   alternates: { canonical: "/tarifs" },
@@ -30,7 +30,7 @@ export default function Tarifs() {
         </p>
 
         <div className="grille grille--2" style={{ marginTop: "1.5rem" }}>
-          <div className="carte carte--verdict-ok">
+          <div className="carte">
             <h2 className="titre-carte">Gratuit, et ça le restera</h2>
             <ul className="petit">
               <li>Publier autant de fiches de poste que vous voulez</li>
@@ -39,11 +39,11 @@ export default function Tarifs() {
                 <strong>La conformité de chaque profil, habilitation par habilitation</strong>
               </li>
               <li>La distance au chantier et les disponibilités déclarées</li>
-              <li>Le rappel de vos fiches non pourvues</li>
+              <li>Le rappel de vos fiches encore sans intérimaire</li>
             </ul>
           </div>
 
-          <div className="carte carte--notification">
+          <div className="carte">
             <h2 className="titre-carte">Ce qui se paie</h2>
             <ul className="petit">
               <li>Le nom complet et les coordonnées d&apos;un profil</li>
@@ -60,20 +60,22 @@ export default function Tarifs() {
         {/* La conformité reste du côté gratuit, et ce n'est pas un geste commercial :
             ce produit existe pour empêcher qu'on envoie quelqu'un sur un chantier sans
             titre valable. Faire payer ce verdict reviendrait à vendre le risque. */}
-        <p className="bandeau bandeau--neutre" style={{ marginTop: "1.5rem" }}>
-          <span>
-            <strong>Pourquoi la conformité ne se paie pas.</strong> Une affectation non
-            conforme engage la responsabilité pénale de l&apos;entreprise utilisatrice.
-            Mettre ce verdict derrière un paiement reviendrait à vendre le risque que
-            cette plateforme existe pour supprimer.
-          </span>
+        <p className="carte" style={{ marginTop: "1.5rem" }}>
+          <strong>Pourquoi la conformité ne se paie pas.</strong> Une affectation non
+          conforme engage la responsabilité pénale de l&apos;entreprise utilisatrice.
+          Mettre ce verdict derrière un paiement reviendrait à vendre le risque que
+          cette plateforme existe pour supprimer.
         </p>
 
-        <h2 style={{ marginTop: "2.5rem" }}>Abonnements</h2>
+        <h2 style={{ marginTop: "2rem" }}>Abonnements</h2>
         <ul className="liste-nue grille grille--3">
           {PLANS.map((p) => (
-            <li key={p.code} className="carte">
-              <h3 style={{ fontSize: "1rem", margin: 0 }}>{p.libelle}</h3>
+            <li
+              key={p.code}
+              className={p.code === "chantier" ? "carte carte--recommandee" : "carte"}
+            >
+              {p.code === "chantier" && <span className="etiquette-recommandee">Recommandé</span>}
+              <h3 className="titre-carte" style={{ margin: 0 }}>{p.libelle}</h3>
               <p className="chiffre">
                 {p.prixMensuelCents === 0 ? "Gratuit" : enEuros(p.prixMensuelCents)}
               </p>
@@ -92,7 +94,7 @@ export default function Tarifs() {
           ))}
         </ul>
 
-        <h2 style={{ marginTop: "2.5rem" }}>Sans abonnement</h2>
+        <h2 style={{ marginTop: "2rem" }}>Sans abonnement</h2>
         <p className="secondaire">
           Le bâtiment recrute par à-coups. Ces crédits <strong>n&apos;expirent pas</strong>{" "}
           et se consomment après le quota de votre abonnement, s&apos;il y en a un.
@@ -111,7 +113,7 @@ export default function Tarifs() {
           ))}
         </ul>
 
-        <h2 style={{ marginTop: "2.5rem" }}>Et pour les intérimaires ?</h2>
+        <h2 style={{ marginTop: "2rem" }}>Et pour les intérimaires ?</h2>
         <p className="secondaire">
           Tout est gratuit, sans exception et sans condition. Déclarer ses habilitations,
           consulter les missions, postuler, être prévenu d&apos;une échéance qui approche :

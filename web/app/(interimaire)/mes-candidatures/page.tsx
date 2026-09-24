@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { connexion } from "@interimatch/core/db";
-import { attendUneReponseDe, libelleEtat, type EtatCandidature } from "@interimatch/core";
+import {
+  attendUneReponseDe,
+  libelleEtat,
+  typeCertification,
+  type EtatCandidature,
+} from "@interimatch/core";
 import ActionCandidature from "@/components/ActionCandidature";
 import { exigerSession } from "@/lib/garde";
 
@@ -16,6 +21,8 @@ interface Ligne {
   date_debut: string;
   date_fin: string;
   statut: EtatCandidature;
+  /** Première exigence non couverte pour cette mission, s'il y en a une. */
+  titre_bloquant: string | null;
   motif: string | null;
   decide_par: string | null;
   raison_sociale: string;
@@ -46,7 +53,24 @@ export default async function MesCandidatures() {
   try {
     const lignes = await sql<Ligne[]>`
       select c.mission_id, m.titre, m.ville, m.date_debut::text, m.date_fin::text,
-             c.statut, c.motif, c.decide_par, e.raison_sociale
+             c.statut, c.motif, c.decide_par, e.raison_sociale,
+             -- **Le même verdict, du côté de celui qui postule.** Une candidature
+             -- peut dormir des jours alors qu'un titre a expiré entre-temps : le
+             -- savoir ici, c'est pouvoir le renouveler avant la réponse.
+             (
+               select r.type_code from mission_certification_requise r
+               left join categorie_certification rc on rc.id = r.categorie_id
+               where r.mission_id = c.mission_id
+                 and not exists (
+                   select 1 from certification cert
+                   left join categorie_certification cc on cc.id = cert.categorie_id
+                   where cert.interimaire_id = c.interimaire_id
+                     and cert.type_code = r.type_code
+                     and (rc.code is null or cc.code = rc.code)
+                     and cert.date_echeance >= m.date_fin
+                 )
+               limit 1
+             ) as titre_bloquant
       from candidature c
       join mission m on m.id = c.mission_id
       join entreprise e on e.compte_id = m.entreprise_id
@@ -88,10 +112,10 @@ export default async function MesCandidatures() {
               {triees.map((l) => {
                 const attend = attendUneReponseDe(l.statut, "interimaire");
                 return (
-                  <li key={l.mission_id} className="carte carte-mission">
+                  <li key={l.mission_id} className="carte carte-mission carte--cliquable">
                     <div className="carte-mission-corps">
-                      <h2 style={{ fontSize: "1.0625rem", margin: "0 0 0.2rem" }}>
-                        <a className="lien-bloc" href={`/mes-missions/${l.mission_id}`}>{l.titre}</a>
+                      <h2 className="titre-carte-liste">
+                        <a className="lien-etire" href={`/mes-missions/${l.mission_id}`}>{l.titre}</a>
                       </h2>
                       <p className="petit secondaire ligne-meta">
                         <span>
@@ -101,7 +125,21 @@ export default async function MesCandidatures() {
                         <span className={attend ? "pastille pastille--attention" : "pastille pastille--info"}>
                           {libelleEtat(l.statut)}
                         </span>
+                        <span
+                          className={`etiquette ${l.titre_bloquant ? "etiquette--alerte" : "etiquette--ok"}`}
+                        >
+                          {l.titre_bloquant ? "△ Titre manquant" : "✓ Vous êtes conforme"}
+                        </span>
                       </p>
+                      {l.titre_bloquant && (
+                        <p className="petit" style={{ margin: "0.25rem 0 0" }}>
+                          <strong>
+                            {typeCertification(l.titre_bloquant)?.libelle ?? l.titre_bloquant}
+                          </strong>{" "}
+                          ne couvre pas la fin de ce chantier. L&apos;entreprise ne pourra pas
+                          vous affecter tant qu&apos;il n&apos;est pas à jour.
+                        </p>
+                      )}
                       {l.statut === "declinee" && (
                         <p className="petit secondaire" style={{ margin: "0.5rem 0 0" }}>
                           {l.decide_par === "entreprise"
@@ -112,12 +150,14 @@ export default async function MesCandidatures() {
                       )}
                       {l.statut === "expiree" && (
                         <p className="petit secondaire" style={{ margin: "0.5rem 0 0" }}>
-                          La mission a été pourvue avant que le dossier n&apos;aboutisse.
+                          La mission a été attribuée à quelqu&apos;un d&apos;autre avant que le dossier n&apos;aboutisse.
                         </p>
                       )}
                     </div>
 
-                    <div className="encart-score">
+                    {/* Une action et un lien : rien qui justifie un cadre dans le
+                        cadre de la carte. */}
+                    <div className="carte-mission-action">
                       <ActionCandidature
                         missionId={l.mission_id}
                         acteur="interimaire"
@@ -131,7 +171,7 @@ export default async function MesCandidatures() {
                               : "Dossier clos."
                         }
                       />
-                      <p className="petit secondaire" style={{ margin: "0.75rem 0 0" }}>
+                      <p className="petit secondaire">
                         <a href={`/mes-missions/${l.mission_id}`}>Voir le détail de la mission</a>
                       </p>
                     </div>

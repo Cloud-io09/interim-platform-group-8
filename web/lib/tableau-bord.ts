@@ -290,6 +290,8 @@ export interface FicheSuivie {
   /** Profils conformes au filtre éliminatoire, tous n'étant pas encore contactés. */
   candidatsConformes: number;
   propositionsEnAttente: number;
+  /** Candidatures spontanées qui attendent une réponse de l'entreprise. */
+  candidaturesRecues: number;
   acceptees: number;
 }
 
@@ -313,12 +315,18 @@ export async function tableauBordEntreprise(sql: Sql, compteId: number): Promise
     sql<
       {
         id: number; titre: string; ville: string; date_debut: string; date_fin: string;
-        statut: string; en_attente: number; acceptees: number;
+        statut: string; en_attente: number; acceptees: number; candidatures_recues: number;
       }[]
     >`
       select m.id, m.titre, m.ville, m.date_debut::text, m.date_fin::text, m.statut,
              count(*) filter (where c.statut = 'proposee')::int as en_attente,
-             count(*) filter (where c.statut = 'acceptee')::int as acceptees
+             count(*) filter (where c.statut = 'acceptee')::int as acceptees,
+             -- **Une vraie candidature est à l'état « candidatee ».** Le tableau de
+             -- bord ne comptait que « proposee », c'est-à-dire les rapprochements du
+             -- moteur : une entreprise qui venait de recevoir une candidature lisait
+             -- « aucune proposition en attente » pendant que sa notification disait
+             -- l'inverse. C'est celle-ci qui appelle une réponse.
+             count(*) filter (where c.statut = 'candidatee')::int as candidatures_recues
       from mission m
       left join candidature c on c.mission_id = m.id
       where m.entreprise_id = ${compteId} and m.date_fin >= current_date
@@ -347,6 +355,7 @@ export async function tableauBordEntreprise(sql: Sql, compteId: number): Promise
     joursAvantDebut: joursAvant(l.date_debut),
     candidatsConformes: conformesParMission.get(l.id) ?? 0,
     propositionsEnAttente: l.en_attente,
+    candidaturesRecues: l.candidatures_recues,
     acceptees: l.acceptees,
   }));
 

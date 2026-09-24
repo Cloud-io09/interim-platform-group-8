@@ -66,11 +66,11 @@ export default async function CandidaturesRecues({
 
     if (lignes.length === 0) {
       return (
-        <section aria-labelledby="titre-candidatures" style={{ marginTop: "2.5rem" }}>
+        <section aria-labelledby="titre-candidatures" style={{ marginTop: "2rem" }}>
           <h2 id="titre-candidatures">Candidatures reçues</h2>
           <p className="secondaire">
             Personne ne s&apos;est encore porté candidat sur cette fiche. Les profils
-            rapprochés par le moteur figurent plus bas — vous pouvez les solliciter.
+            rapprochés par le moteur figurent plus bas, vous pouvez les solliciter.
           </p>
         </section>
       );
@@ -88,7 +88,7 @@ export default async function CandidaturesRecues({
     const enAttente = verdicts.filter((v) => v.ligne.statut === "candidatee").length;
 
     return (
-      <section aria-labelledby="titre-candidatures" style={{ marginTop: "2.5rem" }}>
+      <section aria-labelledby="titre-candidatures" style={{ marginTop: "2rem" }}>
         <div className="tete-carte">
           <h2 id="titre-candidatures">Candidatures reçues</h2>
           {enAttente > 0 && (
@@ -106,14 +106,14 @@ export default async function CandidaturesRecues({
           {verdicts.map(({ ligne, conforme, bloquantes }) => (
             <li
               key={ligne.interimaire_id}
-              className={`carte ${conforme ? "carte--verdict-ok" : "carte--verdict-bloque"}`}
+              className={`carte carte--cliquable ${conforme ? "carte--verdict-ok" : "carte--verdict-bloque"}`}
            
             >
               <div className="ligne-certification">
                 <div>
-                  <h3 style={{ fontSize: "1rem", margin: "0 0 0.2rem" }}>
+                  <h3 className="titre-carte" style={{ margin: "0 0 0.25rem" }}>
                     <a
-                      className="lien-bloc"
+                      className="lien-etire"
                       href={`/missions/${missionId}/profils/${ligne.interimaire_id}`}
                     >
                       {ligne.debloque
@@ -125,11 +125,11 @@ export default async function CandidaturesRecues({
                     {ligne.ville} · {libelleEtat(ligne.statut)}
                   </p>
                   {!conforme && bloquantes.length > 0 && (
-                    <p className="petit" style={{ margin: "0.4rem 0 0" }}>
+                    <p className="petit" style={{ margin: "0.5rem 0 0" }}>
                       {/* `precision` dit l'état sans renommer le titre, qu'on vient
                           d'écrire juste avant : « expire le 20/04/2027, avant la fin
                           du chantier » plutôt que de répéter son intitulé. */}
-                      <strong>{bloquantes[0]!.libelleType}</strong> — {bloquantes[0]!.precision}
+                      <strong>{bloquantes[0]!.libelleType}</strong> - {bloquantes[0]!.precision}
                       {bloquantes.length > 1 && ` Et ${bloquantes.length - 1} autre(s).`}
                     </p>
                   )}

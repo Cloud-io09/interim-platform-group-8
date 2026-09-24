@@ -38,7 +38,7 @@ export default function SupprimerCompte() {
 
   return (
     <section className="zone-dangereuse" aria-labelledby="titre-suppression">
-      <h2 id="titre-suppression" style={{ fontSize: "1.05rem" }}>Supprimer mon compte</h2>
+      <h2 id="titre-suppression" className="titre-carte">Supprimer mon compte</h2>
       {!ouvert ? (
         <>
           <p className="petit secondaire" style={{ margin: "0 0 0.75rem" }}>
@@ -56,7 +56,7 @@ export default function SupprimerCompte() {
             <input id={idMotDePasse} name="motDePasse" type="password" required autoComplete="current-password" />
           </div>
           <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
-          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <button className="bouton bouton--danger" type="submit" disabled={enCours}>
               {enCours ? "Suppression…" : "Supprimer définitivement"}
             </button>

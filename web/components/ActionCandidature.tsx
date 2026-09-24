@@ -48,7 +48,7 @@ export default function ActionCandidature({
     }
     setEnCours(true);
     setErreur(null);
-    const { ok, corps } = await envoyerJson("/api/candidatures", "POST", {
+    const { ok, corps } = await envoyerJson<{ avertissement: string | null }>("/api/candidatures", "POST", {
       missionId,
       interimaireId,
       vers,
@@ -59,7 +59,13 @@ export default function ActionCandidature({
       setErreur(corps.message ?? "Action impossible pour le moment.");
       return;
     }
-    rechargerVers(retour);
+    // L'écran est rechargé : un message en état local serait perdu. Il voyage donc
+    // par l'URL, que la page de destination lit puis efface.
+    rechargerVers(
+      corps.avertissement
+        ? `${retour}${retour.includes("?") ? "&" : "?"}avertissement=${encodeURIComponent(corps.avertissement)}`
+        : retour
+    );
   }
 
   if (possibles.length === 0) {

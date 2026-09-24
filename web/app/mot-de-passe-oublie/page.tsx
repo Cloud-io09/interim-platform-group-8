@@ -40,7 +40,7 @@ export default function MotDePasseOublie() {
 
         <p className="petit secondaire" style={{ marginTop: "1.5rem" }}>
           Ni accès à votre boîte, ni code ? Contactez votre agence : elle seule peut
-          vérifier votre identité. Nous ne pouvons pas rendre un accès sans preuve — ce
+          vérifier votre identité. Nous ne pouvons pas rendre un accès sans preuve - ce
           serait le rendre à n&apos;importe qui.
         </p>
         <p className="petit secondaire">

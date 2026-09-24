@@ -4,6 +4,7 @@ import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 import { notifierMissionPubliee } from "@/lib/notifications";
+import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
 
 export const dynamic = "force-dynamic";
@@ -61,14 +62,14 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
   const vise = saisie.statut as Statut | undefined;
   if (!modification && (!vise || !STATUTS.includes(vise))) {
     return erreur("Statut inconnu.", 422, [
-      { champ: "statut", message: "Statuts possibles : brouillon, publiée, pourvue, close." },
+      { champ: "statut", message: "Statuts possibles : brouillon, publiée, attribuée, close." },
     ]);
   }
 
   const sql = connexion();
   try {
-    const [mission] = await sql<{ entreprise_id: number; statut: Statut }[]>`
-      select entreprise_id, statut from mission where id = ${missionId}`;
+    const [mission] = await sql<{ entreprise_id: number; statut: Statut; date_debut: string }[]>`
+      select entreprise_id, statut, date_debut::text from mission where id = ${missionId}`;
     if (!mission) return erreur("Mission introuvable.", 404);
     if (mission.entreprise_id !== garde.session.compteId) {
       return erreur("Cette mission ne vous appartient pas.", 403);
@@ -85,7 +86,10 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
         );
       }
 
-      const problemes = validerMission(saisie);
+      const problemes = validerMission(saisie, {
+        aujourdhui: aujourdhuiParis(),
+        debutActuel: mission.date_debut,
+      });
       if (problemes.length > 0) return erreur("Le formulaire comporte des erreurs.", 422, problemes);
 
       const codePostal = saisie.codePostal!.trim();
@@ -165,6 +169,17 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
           publiee_le = ${vise === "publiee" ? sql`coalesce(publiee_le, now())` : sql`publiee_le`}
       where id = ${missionId}`;
 
+    // **Fermer la fiche ferme aussi les dossiers en cours.** Déclarée pourvue hors de
+    // la plateforme, ou close, elle laissait ses candidatures « en attente » : les
+    // intérimaires attendaient une réponse sur un poste qui n'existait plus. Même
+    // traitement que lorsqu'un autre candidat est retenu.
+    if (vise === "pourvue" || vise === "close") {
+      await sql`
+        update candidature set statut = 'expiree', decide_le = now()
+        where mission_id = ${missionId}
+          and statut in ('proposee', 'candidatee', 'sollicitee')`;
+    }
+
     await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation changement de statut");
     if (vise === "publiee") {
       await sansEchec(() => notifierMissionPubliee(sql, missionId), "notification de publication");
@@ -176,5 +191,5 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
 }
 
 function libelle(statut: Statut): string {
-  return { brouillon: "en brouillon", publiee: "publiée", pourvue: "pourvue", close: "close" }[statut];
+  return { brouillon: "en brouillon", publiee: "publiée", pourvue: "attribuée", close: "close" }[statut];
 }

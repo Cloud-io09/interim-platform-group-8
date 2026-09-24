@@ -34,6 +34,8 @@ interface Saisie {
   /** Un code seul, ou un objet avec l'expérience déclarée sur ce métier. */
   metiers?: (string | { code: string; anneesExperience?: number | null })[];
   competences?: string[];
+  /** Agences d'emploi où l'intérimaire est inscrit, librement saisies. */
+  agences?: { nom?: string; ville?: string }[];
 }
 
 /**
@@ -134,6 +136,25 @@ export async function POST(requete: Request) {
         await tx`
           insert into interimaire_competence (interimaire_id, competence_code)
           select ${compteId}, ${code} where exists (select 1 from competence where code = ${code})`;
+      }
+      // **Les agences, remplacées en bloc comme le reste du profil.**
+      //
+      // Le contrat de mission lie l'agence et le salarié, jamais l'entreprise
+      // utilisatrice : sans cette donnée, une entreprise débloquait un téléphone
+      // puis découvrait qu'il fallait un second appel pour savoir par qui passer.
+      //
+      // Aucun référentiel : il y a des milliers d'agences en France, il changerait
+      // chaque semaine, et le maintenir n'apprendrait rien de plus que le nom saisi.
+      await tx`delete from interimaire_agence where interimaire_id = ${compteId}`;
+      const agences = (saisie.agences ?? [])
+        .map((a) => ({ nom: (a.nom ?? "").trim().slice(0, 120), ville: (a.ville ?? "").trim().slice(0, 80) }))
+        .filter((a) => a.nom.length >= 2)
+        .slice(0, 10);
+      for (const a of agences) {
+        await tx`
+          insert into interimaire_agence (interimaire_id, nom, ville)
+          values (${compteId}, ${a.nom}, ${a.ville || null})
+          on conflict do nothing`;
       }
     });
 

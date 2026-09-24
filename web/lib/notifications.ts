@@ -1,6 +1,6 @@
 import type { Sql } from "postgres";
 import { matcher, type Acteur, type EtatCandidature } from "@interimatch/core";
-import { configDiscord, posterDansSalon, sansEchec } from "@interimatch/core";
+import { configDiscord, posterDansSalon, sansEchec, typeCertification } from "@interimatch/core";
 import { chargerMission, chargerProfils } from "./depot";
 
 /**
@@ -225,7 +225,8 @@ export async function rattraperEcheances(sql: Sql, compteId: number): Promise<nu
     proches.map((c) => ({
       compteId,
       type: "certification_expire" as const,
-      titre: `${c.type_code.replace(/_/g, " ")} expire le ${enDateFr(c.date_echeance)}`,
+      // Le libellé du référentiel, pas le code : « HAB ELEC » s'affichait tel quel.
+      titre: `${typeCertification(c.type_code)?.libelle ?? c.type_code} expire le ${enDateFr(c.date_echeance)}`,
       corps: "Sans renouvellement, vous serez écarté de toute mission qui l'exige.",
       lien: "/espace/interimaire/certifications",
       certificationId: c.id,

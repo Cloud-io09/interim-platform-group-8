@@ -32,7 +32,7 @@ export default function RappelsEspace({
         <p className="bandeau bandeau--attention" role="status">
           <span>
             <strong>Confirmez votre adresse.</strong> Nous avons écrit à {email}. Sans cela,
-            aucun lien de réinitialisation ne pourra y être envoyé — seuls vos codes de
+            aucun lien de réinitialisation ne pourra y être envoyé - seuls vos codes de
             récupération vous permettraient de reprendre la main.
           </span>
           <a className="bouton bouton--secondaire" href={`${base}/securite`}>

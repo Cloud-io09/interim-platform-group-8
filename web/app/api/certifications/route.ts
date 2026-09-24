@@ -2,7 +2,6 @@ import { connexion } from "@interimatch/core/db";
 import {
   chiffrer,
   dechiffrerOptionnel,
-  echeanceTheorique,
   validerCertification,
 } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";

@@ -12,6 +12,7 @@ import {
 import { erreur } from "@/lib/reponses";
 import { sessionOuErreur } from "@/lib/garde";
 import { chargerMission, chargerProfils, type ProfilAvecIdentite } from "@/lib/depot";
+import { deblocagesDeLaMission, lireDroits } from "@/lib/deblocage";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,41 @@ function habiller(resultat: ResultatMatching, profils: ProfilAvecIdentite[]) {
   };
 }
 
+/**
+ * Applique la barrière de déblocage à un résultat, calculé ou lu en cache.
+ *
+ * **Le nom complet fuitait ici.** Il était masqué sur la fiche profil et dans la liste
+ * des candidatures, mais rendu en clair par cette route : l'entreprise lisait
+ * « Claudio ALVADIA » dès la publication, sans rien débloquer. La barrière ne tenait
+ * qu'aux écrans où on avait pensé à la poser.
+ *
+ * Elle s'applique **après** le cache, à chaque requête : le cache garde le calcul, qui
+ * ne dépend pas de qui regarde, et le déblocage change indépendamment de lui.
+ */
+function presenter(
+  corps: ReponseMatching,
+  debloques: Set<number>,
+  droits: Awaited<ReturnType<typeof lireDroits>>
+) {
+  const masquer = <T extends { interimaireId: number; nom?: string }>(p: T) => {
+    const debloque = debloques.has(p.interimaireId);
+    return { ...p, debloque, nom: debloque ? p.nom : p.nom ? `${p.nom.charAt(0)}.` : p.nom };
+  };
+  return {
+    ...corps,
+    retenus: (corps.retenus as { interimaireId: number; nom?: string }[]).map(masquer),
+    ecartes: (corps.ecartes as { interimaireId: number; nom?: string }[]).map(masquer),
+    // Ce qu'il faut pour dire, avant le clic, ce qu'un déblocage va consommer.
+    droits: {
+      plan: droits.plan.libelle,
+      illimite: droits.illimite,
+      quotaRestant: droits.quotaRestant,
+      credits: droits.credits,
+      peutDebloquer: droits.peutDebloquer,
+    },
+  };
+}
+
 export async function GET(requete: Request, contexte: { params: Promise<{ id: string }> }) {
   const garde = await sessionOuErreur("entreprise");
   if ("reponse" in garde) return garde.reponse;
@@ -69,15 +105,29 @@ export async function GET(requete: Request, contexte: { params: Promise<{ id: st
       return erreur("Cette mission ne vous appartient pas.", 403);
     }
 
+    const [debloques, droits] = await Promise.all([
+      deblocagesDeLaMission(sql, garde.session.compteId, missionId),
+      lireDroits(sql, garde.session.compteId),
+    ]);
+
     if (!forcer) {
       const enCache = await sansEchec(() => cache.get(cle.cacheMatching(missionId)), "lecture cache matching");
       if (enCache) {
-        const corps = typeof enCache === "string" ? JSON.parse(enCache) : enCache;
-        return Response.json({ ...corps, depuisCache: true });
+        const corps = (typeof enCache === "string" ? JSON.parse(enCache) : enCache) as ReponseMatching;
+        return Response.json(presenter({ ...corps, depuisCache: true }, debloques, droits));
       }
     }
 
-    const profils = await chargerProfils(sql, mission.metierCode);
+    // Ceux qui ont postulé sont évalués même sans avoir déclaré le métier : sinon
+    // le compteur annonce « 0 profil conforme » à une entreprise qui vient de
+    // recevoir une candidature.
+    const candidats = await sql<{ interimaire_id: number }[]>`
+      select interimaire_id from candidature where mission_id = ${missionId}`;
+    const profils = await chargerProfils(
+      sql,
+      mission.metierCode,
+      candidats.map((c) => c.interimaire_id)
+    );
     const resultat = matcher(mission, profils);
     const habille = habiller(resultat, profils);
 
@@ -118,7 +168,7 @@ export async function GET(requete: Request, contexte: { params: Promise<{ id: st
       "écriture cache et trace matching"
     );
 
-    return Response.json(corps);
+    return Response.json(presenter(corps, debloques, droits));
   } finally {
     await sql.end();
   }

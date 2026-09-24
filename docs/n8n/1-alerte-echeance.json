@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://VOTRE-DOMAINE/api/n8n/certifications-expirantes?jours=90",
+        "url": "https://interim-platform-group-8-web.vercel.app/api/n8n/certifications-expirantes?jours=90",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
