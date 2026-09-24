@@ -21,38 +21,42 @@ raisons des choix sont dans [decisions.md](decisions.md).
 
 ```mermaid
 flowchart LR
-  subgraph Navigateur
-    UI["Interfaces Next.js<br/>entreprise / intérimaire"]
-    OCR["Lecture du CV<br/>(pdf.js, Tesseract WASM)"]
+  subgraph NAV["Navigateur"]
+    UI["Interfaces"]
+    OCR["Lecture du CV<br/>pdf.js, Tesseract WASM"]
   end
 
-  subgraph Vercel["Vercel, région fra1"]
-    APP["Application Next.js<br/>pages + routes d'API"]
-    CORE["@interimatch/core<br/>domaine métier"]
+  subgraph APP["Vercel, région fra1"]
+    WEB["web<br/>pages et routes d'API"]
+    CORE["core<br/>règles métier"]
+    WEB --> CORE
   end
 
+  CLI["CLI ingest<br/>poste de l'équipe"]
+  N8N["n8n"]
   PG[("PostgreSQL<br/>Supabase")]
   RD[("Redis<br/>Upstash")]
-  BAN["API Adresse<br/>(géocodage)"]
-  BREVO["Brevo<br/>(courriel)"]
-  DISCORD["Discord<br/>(bot)"]
-  N8N["n8n"]
+  BAN["API Adresse"]
+  BREVO["Brevo"]
+  DISCORD["Discord"]
   FT["API France Travail"]
-  CLI["CLI ingest"]
 
-  UI --> APP
-  OCR -- texte seul --> APP
-  APP --> CORE
-  CORE --> PG
-  CORE --> RD
-  CORE --> BAN
-  APP --> BREVO
-  APP --> DISCORD
-  N8N -- "GET /api/n8n/*" --> APP
-  N8N --> DISCORD
-  CLI --> FT
+  UI -->|HTTPS| WEB
+  OCR -->|texte seul| WEB
+  APP --> PG
+  APP --> RD
+  APP -->|géocodage| BAN
+  APP -->|courriels| BREVO
+  APP -->|salons, messages d'événement| DISCORD
+  N8N -->|"GET /api/n8n/*"| WEB
+  N8N -->|messages planifiés| DISCORD
+  CLI -->|offres, référentiels| FT
   CLI --> PG
 ```
+
+`web` et `core` sont déployés ensemble et appellent tous deux les services de droite :
+les flèches partent donc du déploiement, pas d'une couche. La CLI d'ingestion tourne sur
+un poste de l'équipe, pas sur Vercel ; elle réutilise le code de `core`.
 
 | Composant | Technologie | Rôle |
 |---|---|---|
@@ -95,7 +99,13 @@ teste unitairement.
 
 ## Modèle de données
 
-22 tables, 15 migrations (`core/migrations/`). Vue simplifiée des relations :
+22 tables métier (plus `schema_migrations`, tenue par le script de migration), 15
+migrations (`core/migrations/`). Les deux diagrammes reprennent **toutes**
+les clés étrangères de la base, relevées dans `information_schema` le 24 septembre
+2026. Un `|o` du côté de la table référencée signale une clé étrangère facultative
+(colonne qui peut être vide).
+
+### Comptes, profils et habilitations
 
 ```mermaid
 erDiagram
@@ -106,24 +116,88 @@ erDiagram
 
   interimaire ||--o{ certification : "déclare"
   interimaire ||--o{ disponibilite : ""
+  interimaire ||--o{ interimaire_agence : ""
   interimaire ||--o{ interimaire_metier : ""
   interimaire ||--o{ interimaire_competence : ""
-  interimaire ||--o{ interimaire_agence : ""
+  metier ||--o{ interimaire_metier : ""
+  competence ||--o{ interimaire_competence : ""
 
   type_certification ||--o{ categorie_certification : ""
   type_certification ||--o{ certification : ""
+  categorie_certification |o--o{ certification : "si le type l'exige"
+  certification |o--o{ notification : "alerte d'échéance"
 
+  compte {
+    int id PK
+    citext email UK
+    text role "entreprise ou intérimaire"
+    timestamptz email_verifie_le "nullable"
+    text discord_salon_id "nullable"
+    text plan_code
+    int credits
+  }
+  certification {
+    int id PK
+    int interimaire_id FK
+    text type_code FK
+    int categorie_id FK "nullable"
+    text numero_chiffre "AES-256-GCM"
+    date date_obtention
+    date date_echeance "comparée à la fin de mission"
+  }
+```
+
+### Missions, candidatures et offres publiques
+
+```mermaid
+erDiagram
   entreprise ||--o{ mission : "publie"
+  metier ||--o{ mission : ""
+  interimaire |o--o{ mission : "affecté"
+
   mission ||--o{ mission_certification_requise : "exige"
+  type_certification ||--o{ mission_certification_requise : ""
+  categorie_certification |o--o{ mission_certification_requise : ""
   mission ||--o{ mission_competence : ""
+  competence ||--o{ mission_competence : ""
+
   mission ||--o{ candidature : ""
   interimaire ||--o{ candidature : ""
   mission ||--o{ deblocage : ""
+  compte ||--o{ deblocage : "entreprise qui débloque"
+  compte ||--o{ deblocage : "intérimaire débloqué"
+  mission |o--o{ notification : ""
 
-  metier ||--o{ mission : ""
-  metier ||--o{ offre_ft : ""
-  offre_ft ||--o{ offre_ft_certification : ""
+  metier |o--o{ offre_ft : ""
+  offre_ft ||--o{ offre_ft_certification : "motifs détectés"
+  type_certification ||--o{ offre_ft_certification : ""
   offre_ft ||--o{ offre_ft_competence : ""
+  competence ||--o{ offre_ft_competence : ""
+
+  mission {
+    int id PK
+    int entreprise_id FK
+    text metier_code FK
+    date date_debut
+    date date_fin "référence du filtre"
+    text statut "brouillon, publiee, pourvue, close"
+    timestamptz publiee_le "nullable"
+    int interimaire_affecte_id FK "nullable"
+  }
+  candidature {
+    int id PK
+    int mission_id FK
+    int interimaire_id FK
+    text statut
+    text decide_par "nullable"
+  }
+  deblocage {
+    int id PK
+    int entreprise_id FK
+    int interimaire_id FK
+    int mission_id FK
+    text source "abonnement ou credit"
+  }
 ```
 
 ### Tables principales
@@ -136,15 +210,16 @@ erDiagram
 | `type_certification` | Liste fermée des 9 types, durée de validité en mois, catégorie exigée ou non, URL de vérification de l'organisme | Données de référence, jamais saisies |
 | `mission` | Poste, lieu géocodé, dates, horaires, rémunération, statut, intérimaire affecté | `date_fin` obligatoire : c'est la référence du filtre. Statut ∈ {brouillon, publiee, pourvue, close} |
 | `mission_certification_requise` | Habilitations exigées par une mission | Mêmes clés étrangères que `certification` |
-| `candidature` | Lien mission × intérimaire, statut, partie qui a décidé, motif | Six statuts (voir [cycle](#cycle-dune-candidature)) ; unique par couple |
+| `candidature` | Lien mission × intérimaire, statut, partie qui a décidé, motif | Une ligne par couple, créée à la première action (voir [cycle](#cycle-dune-candidature)) |
 | `deblocage` | Accès d'une entreprise aux coordonnées d'un profil pour une mission | Unique par triplet entreprise × intérimaire × mission : débloquer deux fois ne débite qu'une fois |
 | `offre_ft` | Offres France Travail nettoyées | Clé : identifiant France Travail ; `empreinte` pour les quasi-doublons |
+| `notification` | Fil d'activité de chaque compte | Quatre types : mission correspondante, échéance, proposition, réponse |
 
 ### Référentiels
 
 | Référentiel | Volume | Source |
 |---|---|---|
-| Métiers | 52, des domaines ROME F13, F15, F16 et F17 | Référentiel des appellations France Travail. La conception (F11) et l'encadrement (F12) ne sont pas semés |
+| Métiers | 52, des domaines ROME F13, F15, F16 et F17 | Référentiel ROME des métiers de l'API France Travail (1 911 entrées), filtré par `seed-metiers`. La conception (F11) et l'encadrement (F12) ne sont pas semés |
 | Types d'habilitation | 9 | Durées CNAM : CACES R482 10 ans, autres CACES 5 ans, habilitation électrique et amiante SS4 3 ans, SST 2 ans, AIPR 5 ans |
 | Compétences | 299 | Compétences des offres ingérées |
 
@@ -207,23 +282,42 @@ rien.
 
 ## Cycle d'une candidature
 
+Deux chemins mènent à une affectation, selon la partie qui fait le premier pas. Chacun
+exige l'accord de l'autre.
+
 ```mermaid
-stateDiagram-v2
-  [*] --> proposee : rapprochement du moteur
-  proposee --> candidatee : l'intérimaire postule
-  proposee --> sollicitee : l'entreprise sollicite
-  proposee --> declinee
-  candidatee --> acceptee : l'entreprise retient
-  candidatee --> declinee : l'entreprise écarte ou l'intérimaire se retire
-  sollicitee --> acceptee : l'intérimaire accepte
-  sollicitee --> declinee : l'intérimaire décline ou l'entreprise se retire
-  proposee --> expiree : mission pourvue par un autre
-  candidatee --> expiree
-  sollicitee --> expiree
-  acceptee --> [*]
-  declinee --> [*]
-  expiree --> [*]
+flowchart LR
+  R(["Rapproché<br/>par le moteur"])
+  C["candidatee<br/>attend l'entreprise"]
+  S["sollicitee<br/>attend l'intérimaire"]
+  A(["acceptee<br/>mission pourvue"])
+  D(["declinee"])
+
+  R -->|"Intérimaire : postuler"| C
+  C -->|"Entreprise : retenir"| A
+  R -->|"Entreprise : solliciter"| S
+  S -->|"Intérimaire : accepter"| A
+
+  R -.->|refus| D
+  C -.->|refus ou retrait| D
+  S -.->|refus ou annulation| D
 ```
+
+**« Rapproché » n'est pas un état stocké.** Aucune ligne n'existe tant que personne n'a
+agi ; la première action crée la ligne directement dans l'état visé. L'écran affiche
+alors « proposée par le moteur ».
+
+Toutes les transitions, par partie (`core/src/candidature.ts`) :
+
+| Depuis | L'intérimaire peut | L'entreprise peut |
+|---|---|---|
+| Rapproché | Postuler → `candidatee` · Décliner → `declinee` | Solliciter → `sollicitee` · Écarter ce profil → `declinee` |
+| `candidatee` | Retirer ma candidature → `declinee` | Retenir ce profil → `acceptee` · Écarter ce profil → `declinee` |
+| `sollicitee` | Accepter la mission → `acceptee` · Décliner → `declinee` | Annuler ma sollicitation → `declinee` |
+| `acceptee`, `declinee`, `expiree` | — | — |
+
+Passage automatique à `expiree` : les candidatures encore en attente d'une mission qui
+devient pourvue (par une acceptation, ou déclarée pourvue hors plateforme) ou close.
 
 - **Aucune partie ne conclut seule.** Une transition demandée par la mauvaise partie
   est refusée (`409`) avec un message qui nomme la partie attendue.
