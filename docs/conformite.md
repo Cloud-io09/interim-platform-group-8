@@ -122,4 +122,4 @@ mission**, vérifiée par un test de mutation.
 | Jeu de données publiques | Fait : `docs/donnees/` |
 | Dossier d'étude de marché | Fait : cahier des charges et [business plan](business-plan.pdf) |
 | Chiffrage réel, écart avec l'estimé | Fait : [chiffrage](chiffrage-g8.pdf) |
-| Support de pitch | Absent du dépôt |
+| Support de pitch | Fait : [présentation](presentation-g8.pdf) |

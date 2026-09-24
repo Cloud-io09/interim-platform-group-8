@@ -104,6 +104,7 @@ Livrables du projet, dans `docs/` :
 | Document | Contenu |
 |---|---|
 | [Cahier des charges](docs/cahier-des-charges-g8.pdf) | Étude de marché, modules, chiffrage prévisionnel |
+| [Présentation](docs/presentation-g8.pdf) | Support de soutenance |
 | [Business plan](docs/business-plan.pdf) | Modèle économique et tarification |
 | [Chiffrage](docs/chiffrage-g8.pdf) | Chiffrage du projet |
 | [Design](docs/design/) | Logo et pistes de design |
