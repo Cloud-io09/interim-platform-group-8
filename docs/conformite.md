@@ -43,7 +43,7 @@ codes de récupération.
 | Création de mission : poste, dates, lieu, compétences, rémunération | Fait | Formulaire prérempli par les données publiques ; modification possible après publication |
 | Profil intérimaire : compétences, disponibilités, zone, expérience | Fait | Expérience déclarée par métier et expérience constatée (missions terminées), montrées séparément |
 | Algorithme de matching avec score | Fait | Filtre éliminatoire puis score par critère. [Moteur](architecture.md#moteur-de-matching) |
-| Tableau de bord de suivi | Fait | Missions brouillon, publiée, pourvue, close ; candidatures par état, des deux côtés |
+| Tableau de bord de suivi | Fait | Missions brouillon, publiée, attribuée, close ; candidatures par état, des deux côtés |
 
 Règle centrale : la validité d'une habilitation est comparée à la **date de fin de
 mission**, vérifiée par un test de mutation.

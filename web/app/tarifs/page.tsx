@@ -39,7 +39,7 @@ export default function Tarifs() {
                 <strong>La conformité de chaque profil, habilitation par habilitation</strong>
               </li>
               <li>La distance au chantier et les disponibilités déclarées</li>
-              <li>Le rappel de vos fiches non pourvues</li>
+              <li>Le rappel de vos fiches encore sans intérimaire</li>
             </ul>
           </div>
 

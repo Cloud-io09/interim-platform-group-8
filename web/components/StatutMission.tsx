@@ -8,7 +8,7 @@ type Statut = "brouillon" | "publiee" | "pourvue" | "close";
 const LIBELLE: Record<Statut, string> = {
   brouillon: "Brouillon",
   publiee: "Publiée",
-  pourvue: "Pourvue",
+  pourvue: "Attribuée",
   close: "Close",
 };
 
@@ -16,7 +16,7 @@ const LIBELLE: Record<Statut, string> = {
 const SENS: Record<Statut, string> = {
   brouillon: "Visible de vous seul. Personne ne la reçoit tant qu'elle n'est pas publiée.",
   publiee: "Proposée aux intérimaires, elle reçoit des candidatures.",
-  pourvue: "Le poste est pourvu : la fiche reste consultable mais n'accepte plus de candidature.",
+  pourvue: "Le poste est attribué : la fiche reste consultable mais n'accepte plus de candidature.",
   close: "Fiche close définitivement. Elle n'évolue plus.",
 };
 
@@ -141,7 +141,7 @@ export default function StatutMission({ missionId, statut }: { missionId: number
             onClick={() => changer(motif)}
             disabled={enCours}
           >
-            {enCours ? "…" : motif === "close" ? "Clore définitivement" : "Marquer le poste comme pourvu"}
+            {enCours ? "…" : motif === "close" ? "Clore définitivement" : "Marquer le poste comme attribué"}
           </button>
         </div>
       </dialog>

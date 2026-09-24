@@ -187,7 +187,7 @@ export async function agir(
       statut: 409,
       message:
         mission.statut === "pourvue"
-          ? "Cette mission est déjà pourvue."
+          ? "Cette mission est déjà attribuée."
           : "Cette mission n'est pas ouverte aux candidatures.",
     };
   }
@@ -213,7 +213,7 @@ export async function agir(
         : depuis === "declinee"
           ? "Cette candidature a été écartée et ne peut plus évoluer."
           : depuis === "expiree"
-            ? "La mission a été pourvue entre-temps : cette candidature est caduque."
+            ? "La mission a été attribuée entre-temps : cette candidature est caduque."
             : "Cette action n'est plus possible sur cette candidature.";
 
     return { ok: false, statut: 409, message };

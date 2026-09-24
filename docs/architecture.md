@@ -180,7 +180,7 @@ erDiagram
     text metier_code FK
     date date_debut
     date date_fin "référence du filtre"
-    text statut "brouillon, publiee, pourvue, close"
+    text statut "brouillon, publiee, pourvue (affiché « attribuée »), close"
     timestamptz publiee_le "nullable"
     int interimaire_affecte_id FK "nullable"
   }
@@ -208,7 +208,7 @@ erDiagram
 | `interimaire` | Identité, commune géocodée, rayon de mobilité, carte BTP, texte de CV chiffré | Rayon par défaut 50 km. Carte BTP dans des colonnes à part, jamais dans `certification` |
 | `certification` | Type, catégorie, organisme, numéro chiffré, dates d'obtention et d'échéance | `date_echeance > date_obtention`. Type et catégorie en clés étrangères : aucun texte libre possible |
 | `type_certification` | Liste fermée des 9 types, durée de validité en mois, catégorie exigée ou non, URL de vérification de l'organisme | Données de référence, jamais saisies |
-| `mission` | Poste, lieu géocodé, dates, horaires, rémunération, statut, intérimaire affecté | `date_fin` obligatoire : c'est la référence du filtre. Statut ∈ {brouillon, publiee, pourvue, close} |
+| `mission` | Poste, lieu géocodé, dates, horaires, rémunération, statut, intérimaire affecté | `date_fin` obligatoire : c'est la référence du filtre. Statut ∈ {brouillon, publiee, pourvue, close} ; `pourvue` s'affiche « attribuée » |
 | `mission_certification_requise` | Habilitations exigées par une mission | Mêmes clés étrangères que `certification` |
 | `candidature` | Lien mission × intérimaire, statut, partie qui a décidé, motif | Une ligne par couple, créée à la première action (voir [cycle](#cycle-dune-candidature)) |
 | `deblocage` | Accès d'une entreprise aux coordonnées d'un profil pour une mission | Unique par triplet entreprise × intérimaire × mission : débloquer deux fois ne débite qu'une fois |
@@ -290,7 +290,7 @@ flowchart LR
   R(["Rapproché<br/>par le moteur"])
   C["candidatee<br/>attend l'entreprise"]
   S["sollicitee<br/>attend l'intérimaire"]
-  A(["acceptee<br/>mission pourvue"])
+  A(["acceptee<br/>mission attribuée"])
   D(["declinee"])
 
   R -->|"Intérimaire : postuler"| C
@@ -317,13 +317,13 @@ Toutes les transitions, par partie (`core/src/candidature.ts`) :
 | `acceptee`, `declinee`, `expiree` | — | — |
 
 Passage automatique à `expiree` : les candidatures encore en attente d'une mission qui
-devient pourvue (par une acceptation, ou déclarée pourvue hors plateforme) ou close.
+devient attribuée (par une acceptation, ou déclarée attribuée hors plateforme) ou close.
 
 - **Aucune partie ne conclut seule.** Une transition demandée par la mauvaise partie
   est refusée (`409`) avec un message qui nomme la partie attendue.
 - **La conformité est vérifiée à nouveau à l'acceptation.** Un titre peut échoir entre
   le rapprochement et la décision.
-- **L'acceptation pourvoit la mission.** Les autres candidatures passent à `expiree`.
+- **L'acceptation attribue la mission.** Les autres candidatures passent à `expiree`.
 - **Solliciter suppose un déblocage.** Le contrôle est fait côté serveur (`402`).
 
 ---
@@ -425,7 +425,7 @@ temps constant.
 |---|---|---|---|
 | Alerte avant expiration | `GET /api/n8n/certifications-expirantes?jours=90` (max 365) | Habilitations qui échoient dans la fenêtre, avec le nombre de missions ouvertes qu'un renouvellement rendrait accessibles | intérimaire |
 | Mission correspondante | `GET /api/n8n/missions-a-notifier?heures=24` (max 720) | Missions publiées dans la fenêtre ; matching rejoué, seuls les retenus | intérimaire |
-| Relance non pourvue | `GET /api/n8n/missions-non-pourvues?jours=7` (max 90) | Missions publiées depuis au moins N jours, chantier non commencé | entreprise |
+| Relance des fiches sans intérimaire | `GET /api/n8n/missions-non-pourvues?jours=7` (max 90) | Missions publiées depuis au moins N jours, chantier non commencé | entreprise |
 
 Chaque flux suit la même chaîne : déclencheur quotidien, appel API, éclatement du
 tableau, filtre sur `discordSalonId` non vide, envoi dans le salon. Le texte du message

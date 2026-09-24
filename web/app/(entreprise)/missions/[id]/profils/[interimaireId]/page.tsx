@@ -264,7 +264,7 @@ export default async function ProfilPourMission({
                     : etat === "declinee"
                       ? `Dossier clos.${candidature?.motif ? ` Motif : ${candidature.motif}` : ""}`
                       : etat === "expiree"
-                        ? "La mission a été pourvue par quelqu'un d'autre."
+                        ? "La mission a été attribuée à quelqu'un d'autre."
                         : `En attente de la réponse de ${identite.prenom}.`
                 }
               />

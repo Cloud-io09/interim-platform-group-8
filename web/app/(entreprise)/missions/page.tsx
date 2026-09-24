@@ -14,7 +14,7 @@ const enDateFr = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateStrin
 const LIBELLE_STATUT: Record<string, string> = {
   brouillon: "Brouillon",
   publiee: "Publiée",
-  pourvue: "Pourvue",
+  pourvue: "Attribuée",
   close: "Close",
 };
 

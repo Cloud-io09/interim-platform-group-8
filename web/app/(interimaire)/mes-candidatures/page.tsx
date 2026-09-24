@@ -150,7 +150,7 @@ export default async function MesCandidatures() {
                       )}
                       {l.statut === "expiree" && (
                         <p className="petit secondaire" style={{ margin: "0.5rem 0 0" }}>
-                          La mission a été pourvue avant que le dossier n&apos;aboutisse.
+                          La mission a été attribuée à quelqu&apos;un d&apos;autre avant que le dossier n&apos;aboutisse.
                         </p>
                       )}
                     </div>

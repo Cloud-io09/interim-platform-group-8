@@ -142,7 +142,7 @@ export default async function DetailMissionInterimaire({
                     : etat === "declinee"
                       ? `Vous avez décliné cette mission.${candidature?.motif ? ` Motif : ${candidature.motif}` : ""}`
                       : etat === "expiree"
-                        ? "Cette mission a été pourvue par quelqu'un d'autre."
+                        ? "Cette mission a été attribuée à quelqu'un d'autre."
                         : "Votre candidature est en cours d'examen par l'entreprise."
                 }
               />

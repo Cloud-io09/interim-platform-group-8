@@ -100,7 +100,7 @@ export async function GET(requete: Request) {
         // Message prêt à poster : n8n n'a pas à connaître nos règles métier.
         message:
           `**${contact.raison_sociale}** — votre fiche **${mission.titre}** (${mission.ville}) ` +
-          `n'est toujours pas pourvue et le chantier démarre dans ${joursAvantDebut} jours.` +
+          `n'est toujours attribuée à personne et le chantier démarre dans ${joursAvantDebut} jours.` +
           suite,
       });
     }

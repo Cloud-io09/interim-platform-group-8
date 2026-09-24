@@ -62,7 +62,7 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
   const vise = saisie.statut as Statut | undefined;
   if (!modification && (!vise || !STATUTS.includes(vise))) {
     return erreur("Statut inconnu.", 422, [
-      { champ: "statut", message: "Statuts possibles : brouillon, publiée, pourvue, close." },
+      { champ: "statut", message: "Statuts possibles : brouillon, publiée, attribuée, close." },
     ]);
   }
 
@@ -191,5 +191,5 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
 }
 
 function libelle(statut: Statut): string {
-  return { brouillon: "en brouillon", publiee: "publiée", pourvue: "pourvue", close: "close" }[statut];
+  return { brouillon: "en brouillon", publiee: "publiée", pourvue: "attribuée", close: "close" }[statut];
 }

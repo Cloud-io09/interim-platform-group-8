@@ -134,7 +134,7 @@ export default async function EspaceEntreprise() {
                 <li>
                   <a className="chiffre-lien" href="/missions">
                     <strong className="chiffre">{b.fiches.filter((f) => f.statut === "pourvue").length}</strong>
-                    <span className="petit secondaire">poste(s) pourvu(s)</span>
+                    <span className="petit secondaire">poste(s) attribué(s)</span>
                   </a>
                 </li>
               </ul>

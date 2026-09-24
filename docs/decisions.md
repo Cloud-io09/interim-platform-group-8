@@ -76,7 +76,7 @@ l'agence, droit de solliciter. Paliers Découverte (3 crédits offerts), Chantie
 12 €.
 
 **Écarté.** Un accès payant aux résultats de matching ; une commission par mission
-pourvue.
+attribuée.
 
 **Motif.** Faire payer le verdict de conformité reviendrait à vendre le risque que le
 produit existe pour supprimer. Un déblocage porte sur un couple profil × mission,
