@@ -343,6 +343,76 @@ npm run ingest -- export              # publie les jeux brut et nettoyé dans do
 npm run ingest -- seed-demo           # jeu de démonstration
 ```
 
+### Cycle de vie de la donnée
+
+```mermaid
+flowchart TD
+  API["API France Travail<br/>Offres d'emploi v2<br/>OAuth2 client_credentials"]
+
+  subgraph C["1. Collecte : ingest fetch"]
+    C1["Offres d'intérim (typeContrat=MIS)<br/>domaines F13, F15, F16, F17<br/>150 par page, 600 max par domaine"]
+    C2["Pagination par l'en-tête Content-Range<br/>(206 = réponse partielle normale)<br/>appels espacés de 140 ms"]
+    C1 --> C2
+  end
+
+  BRUT[("offres-brutes.json<br/>1 800 offres")]
+
+  subgraph N["2. Nettoyage : ingest clean (core/src/ingestion)"]
+    N1{"Doublon exact ?<br/>même identifiant d'offre"}
+    N2{"Code ROME présent ?"}
+    N3{"Domaine de terrain ?<br/>F11 conception et F12 encadrement exclus"}
+    N4["Intitulé normalisé<br/>sur l'appellation du référentiel"]
+    N5["Rémunération : texte libre → taux horaire<br/>mensuel ÷ 151,67 · annuel ÷ 1 820"]
+    N6["Lieu : code postal, commune, département<br/>coordonnées reprises si présentes"]
+    N7["Habilitations : motifs repérés dans le texte<br/>projetés sur la liste fermée"]
+    N8["Compétences : codes et libellés de l'offre"]
+    N9{"Doublon proche ?<br/>empreinte intitulé + commune + entreprise"}
+    N1 -->|non| N2
+    N2 -->|oui| N3
+    N3 -->|oui| N4 --> N5 --> N6 --> N7 --> N8 --> N9
+  end
+
+  REJ["Offres écartées, comptées par motif<br/>ici : 38 doublons proches"]
+  NET[("offres-nettoyees.json<br/>1 762 offres")]
+
+  subgraph L["3. Chargement : ingest load"]
+    L1[("offre_ft")]
+    L2[("offre_ft_certification")]
+    L3[("offre_ft_competence")]
+    L4[("competence<br/>référentiel complété")]
+  end
+
+  subgraph U["4. Usages dans le produit"]
+    U1["Fiche de poste enrichie<br/>intitulés, habilitations typiques,<br/>fourchette de salaire locale"]
+    U2["Compétences du profil intérimaire<br/>classées par fréquence réelle"]
+  end
+
+  subgraph P["Publication : ingest export"]
+    P1["Contacts de recruteurs retirés<br/>courriels et téléphones masqués"]
+    P2["docs/donnees/"]
+    P1 --> P2
+  end
+
+  API --> C1
+  C2 --> BRUT --> N1
+  N1 -->|oui| REJ
+  N2 -->|non| REJ
+  N3 -->|non| REJ
+  N4 -->|intitulé introuvable| REJ
+  N9 -->|oui| REJ
+  N9 -->|non| NET
+  NET --> L1
+  NET --> L2
+  NET --> L3
+  NET --> L4
+  L1 --> U1
+  L2 --> U1
+  L3 --> U2
+  L4 --> U2
+  BRUT -.-> P1
+  NET -.-> P2
+```
+
 ### Particularités de l'API
 
 - Flux `client_credentials`, scope `o2dsoffre api_offresdemploiv2`.
@@ -356,7 +426,7 @@ npm run ingest -- seed-demo           # jeu de démonstration
 |---|---|
 | Intitulés | `romeCode` et appellation vers le libellé du référentiel. Offres hors des domaines de terrain rejetées |
 | Rémunération | `salaire.libelle` est du texte libre (« Mensuel de 1 900 Euros à 2 100 Euros - Panier repas »). Extraction, puis conversion en taux horaire : mensuel ÷ 151,67, annuel ÷ 1 820 |
-| Lieux | Coordonnées de l'offre reprises (97 % des offres en ont) ; les autres géocodées par code postal |
+| Lieux | Code postal, commune et département (déduit du code postal). Coordonnées de l'offre reprises telles quelles quand elles existent (97 % des cas), laissées vides sinon : elles ne servent qu'aux statistiques |
 | Habilitations | Repérage de motifs dans l'intitulé et la description, projeté sur la liste fermée. Le signal n'existe que pour les CACES, l'habilitation électrique et l'AIPR |
 | Doublons | Exact sur l'identifiant d'offre, approché sur une empreinte (intitulé normalisé, commune, entreprise) |
 | Dates | ISO 8601 |
