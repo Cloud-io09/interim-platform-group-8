@@ -19,7 +19,7 @@ Tests, outils de contrôle, accessibilité et éco-conception. Chiffres relevés
 
 | Niveau | Où | Volume | Ce qui est testé |
 |---|---|---|---|
-| Unitaire | `core/test/` | 379 tests | Règles métier : matching, conformité, droit du travail, chiffrement, parseurs d'ingestion, offre commerciale, lecture de CV |
+| Unitaire | `core/test/` | 384 tests | Règles métier : matching, conformité, droit du travail, chiffrement, parseurs d'ingestion, offre commerciale, lecture de CV |
 | Fonctionnel | `web/test/` | 228 tests | L'application construite, lancée par `next start` et interrogée en HTTP |
 
 ```bash
@@ -53,11 +53,11 @@ mission par la date du jour fait échouer deux tests unitaires et un test foncti
 
 ## Couverture
 
-`core`, 379 tests :
+`core`, 384 tests :
 
 | Instructions | Branches | Fonctions | Lignes |
 |---|---|---|---|
-| 96,8 % | 92,4 % | 97,9 % | 98,2 % |
+| 96,8 % | 92,6 % | 97,9 % | 98,2 % |
 
 Seuils configurés dans `core/vitest.config.ts` : 90 % (lignes, fonctions,
 instructions), 85 % (branches). En dessous, la commande échoue. Le rapport HTML est
