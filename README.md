@@ -19,17 +19,25 @@ l'entreprise utilisatrice.
 - Node.js 22 ou plus récent
 - Un projet [Supabase](https://supabase.com) (PostgreSQL)
 - Une base [Upstash](https://upstash.com) (Redis)
-- Facultatif : un compte [francetravail.io](https://francetravail.io) pour l'ingestion,
-  Brevo pour les courriels, un bot Discord pour les notifications
+- Un compte [francetravail.io](https://francetravail.io) avec l'API « Offres d'emploi
+  v2 » : les métiers et les compétences en viennent, une base neuve en a besoin
+- Facultatif : Brevo pour les courriels, un bot Discord pour les notifications
 
 ### Installation
 
 ```bash
 npm install
-cp .env.example .env        # chaque variable y est commentée
-npm run migrate             # crée ou met à jour le schéma
-npm run ingest -- seed-demo # jeu de démonstration (facultatif)
-npm run dev                 # http://localhost:3000
+cp .env.example .env              # chaque variable y est commentée
+npm run migrate                   # schéma et habilitations de référence
+
+# Données publiques, à faire une fois sur une base neuve (quelques minutes)
+npm run ingest -- seed-metiers    # les 52 métiers de terrain
+npm run ingest -- fetch           # offres d'intérim des quatre domaines
+npm run ingest -- clean           # nettoyage et normalisation
+npm run ingest -- load            # chargement : compétences et fiche enrichie
+
+npm run ingest -- seed-demo       # jeu de démonstration (facultatif)
+npm run dev                       # http://localhost:3000
 ```
 
 Deux points d'attention dans `.env` :
