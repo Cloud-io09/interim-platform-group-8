@@ -201,3 +201,37 @@ describe("mise en page des listes", () => {
     }
   });
 });
+
+describe("barrière de déblocage sur les résultats du moteur", () => {
+  it("ne rend pas le nom complet d'un profil non débloqué", async () => {
+    // Masqué sur la fiche et dans la liste des candidatures, le nom sortait en clair
+    // de la route du moteur : l'entreprise le lisait dès la publication.
+    const r = await appel(`/api/missions/${missionId}/matching`, "GET", undefined, ent.cookie);
+    expect(r.statut).toBe(200);
+    const tous = [...r.corps.retenus, ...r.corps.ecartes] as { interimaireId: number; nom: string; debloque: boolean }[];
+    const lui = tous.find((p) => p.interimaireId === horsMetier.id)!;
+    expect(lui.debloque).toBe(false);
+    expect(lui.nom).toBe("M.");
+    expect(JSON.stringify(r.corps)).not.toContain("Metier");
+  });
+
+  it("dit ce que l'entreprise peut encore débloquer", async () => {
+    const r = await appel(`/api/missions/${missionId}/matching`, "GET", undefined, ent.cookie);
+    expect(r.corps.droits).toMatchObject({ plan: expect.any(String), peutDebloquer: expect.any(Boolean) });
+  });
+});
+
+describe("clore une fiche", () => {
+  it("clôt aussi les candidatures en cours", async () => {
+    // Fermée, la fiche laissait ses candidatures « en attente » d'une réponse sur un
+    // poste qui n'existait plus.
+    const r = await appel(`/api/missions/${missionId}`, "PATCH", { statut: "close" }, ent.cookie);
+    expect(r.statut).toBe(200);
+    const c = await appel(`/api/missions/${missionId}/candidatures`, "GET", undefined, ent.cookie);
+    const siennes = (c.corps.candidatures as { interimaireId: number; statut: string }[]).filter(
+      (x) => x.interimaireId === horsMetier.id
+    );
+    expect(siennes.length).toBeGreaterThan(0);
+    expect(siennes.every((x) => x.statut === "expiree")).toBe(true);
+  });
+});

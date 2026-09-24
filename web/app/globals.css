@@ -1419,6 +1419,11 @@ details > summary {
 /* Le focus est porté par la carte, pas par le pseudo-élément qui la recouvre. */
 .lien-etire:focus-visible { outline: none; }
 /* Tout ce qui doit rester cliquable par-dessus la surface du lien. */
+/* **Tout ce qui se saisit passe aussi au-dessus.** Le champ de motif de « Retirer ma
+   candidature » était sous la surface du lien étiré : un clic dans la zone de texte
+   ouvrait la mission au lieu d'y placer le curseur. */
+.carte--cliquable :is(input, textarea, select, label, details, summary),
+.ligne-candidat :is(input, textarea, select, label),
 .carte--cliquable .bouton,
 .carte--cliquable button,
 .carte--cliquable a:not(.lien-etire),
@@ -1611,3 +1616,39 @@ details > summary {
    support d'un texte — donc pas soumise au contraste 3:1 des éléments
    fonctionnels. */
 .sur-titre--accent-jaune::before { background: var(--marque-jaune); }
+
+/* --- Fenêtre de confirmation ------------------------------------------------
+   `<dialog>` natif : le navigateur fournit le piège du focus, Échap et le fond
+   inerte. On ne règle que l'apparence. */
+.fenetre {
+  width: min(32rem, calc(100vw - 2rem));
+  padding: var(--espace-5);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  color: var(--texte);
+  box-shadow: 0 20px 48px rgba(20, 26, 33, 0.22);
+}
+.fenetre::backdrop { background: rgba(20, 26, 33, 0.45); }
+.fenetre ul { margin: 0 0 var(--espace-4); padding-left: var(--espace-5); }
+.fenetre-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espace-2);
+  margin-top: var(--espace-5);
+}
+
+.choix-motif {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--espace-3);
+  align-items: start;
+  padding: var(--espace-3);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  margin-top: var(--espace-2);
+  cursor: pointer;
+}
+.choix-motif:has(input:checked) { border-color: var(--marine); background: var(--marine-tuile); }
+.choix-motif input { margin-top: 0.25rem; }

@@ -8,12 +8,15 @@ import {
   type EtatCandidature,
 } from "@interimatch/core/candidature";
 import { envoyerJson } from "@/lib/client";
+import ConfirmationDeblocage, { type DroitsAffiches } from "./ConfirmationDeblocage";
 
 interface Score {
   interimaireId: number;
   prenom?: string;
   nom?: string;
   ville?: string;
+  /** Le nom n'est complet que si les coordonnées ont été débloquées pour cette mission. */
+  debloque?: boolean;
   competences: number;
   distance: number;
   disponibilite: number;
@@ -46,6 +49,7 @@ interface Resultat {
   evalues: number;
   retenus: Score[];
   ecartes: Exclusion[];
+  droits: DroitsAffiches;
 }
 
 const pourcent = (n: number) => `${Math.round(n * 100)} %`;
@@ -56,7 +60,10 @@ function Critere({ libelle, valeur, poids, detail }: { libelle: string; valeur: 
     <div className="critere">
       <div className="critere-entete">
         <span>
-          {libelle} <span className="secondaire petit">- pondéré {Math.round(poids * 100)} %</span>
+          {libelle}{" "}
+          {/* « pondéré 40 % » ne disait rien : on lisait un second score. C'est la
+              part de ce critère dans le total. */}
+          <span className="secondaire petit">· compte pour {Math.round(poids * 100)} % du score</span>
         </span>
         <strong>{pourcent(valeur)}</strong>
       </div>
@@ -72,7 +79,11 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [candidatures, setCandidatures] = useState<Record<number, EtatCandidature>>({});
   const [enTraitement, setEnTraitement] = useState<number | null>(null);
+  // **Deux erreurs, pas une.** Une seule variable servait au chargement et aux
+  // actions : un refus de sollicitation remplaçait tout l'écran par un encart rouge,
+  // et l'entreprise perdait la liste des candidats sur laquelle elle agissait.
   const [erreur, setErreur] = useState<string | null>(null);
+  const [erreursAction, setErreursAction] = useState<Record<number, string>>({});
   const [enCours, setEnCours] = useState(true);
 
   async function chargerCandidatures() {
@@ -93,7 +104,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
    */
   async function decider(interimaireId: number, vers: EtatCandidature) {
     setEnTraitement(interimaireId);
-    setErreur(null);
+    setErreursAction((a) => ({ ...a, [interimaireId]: "" }));
     const { ok, corps } = await envoyerJson("/api/candidatures", "POST", {
       missionId,
       interimaireId,
@@ -101,7 +112,7 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
     });
     setEnTraitement(null);
     if (!ok) {
-      setErreur(corps.message ?? "Action impossible.");
+      setErreursAction((a) => ({ ...a, [interimaireId]: corps.message ?? "Action impossible." }));
       return;
     }
     setCandidatures((a) => ({ ...a, [interimaireId]: vers }));
@@ -166,6 +177,9 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
                       {s.prenom} {s.nom}
                     </a>
                   </h3>
+                  {!s.debloque && (
+                    <span className="pastille pastille--info">Coordonnées masquées</span>
+                  )}
                   <p className="petit secondaire" style={{ margin: 0 }}>{s.ville}</p>
                 </div>
                 <span className="score-total">{pourcent(s.total)}</span>
@@ -177,17 +191,40 @@ export default function ResultatsMatching({ missionId }: { missionId: number }) 
                 </span>
                 {/* Les boutons viennent de la table de transitions : une action
                     affichée ici mais refusée par le serveur serait une impasse. */}
-                {actionsPossibles(candidatures[s.interimaireId] ?? "proposee", "entreprise").map((vers) => (
-                  <button
-                    key={vers}
-                    className={vers === "declinee" ? "bouton bouton--secondaire" : "bouton"}
-                    onClick={() => decider(s.interimaireId, vers)}
-                    disabled={enTraitement === s.interimaireId}
-                  >
-                    {enTraitement === s.interimaireId ? "…" : libelleAction(vers, "entreprise")}
-                  </button>
-                ))}
+                {actionsPossibles(candidatures[s.interimaireId] ?? "proposee", "entreprise").map((vers) =>
+                  // Solliciter exige un déblocage : le bouton le dit et passe par la
+                  // confirmation, plutôt que d'essuyer un refus du serveur après coup.
+                  vers === "sollicitee" && !s.debloque ? (
+                    <ConfirmationDeblocage
+                      key={vers}
+                      interimaireId={s.interimaireId}
+                      missionId={missionId}
+                      prenom={s.prenom ?? "ce profil"}
+                      droits={resultat.droits}
+                      libelle="Débloquer et solliciter"
+                      apresSollicitation
+                      onTermine={() => {
+                        charger();
+                        chargerCandidatures();
+                      }}
+                    />
+                  ) : (
+                    <button
+                      key={vers}
+                      className={vers === "declinee" ? "bouton bouton--secondaire" : "bouton"}
+                      onClick={() => decider(s.interimaireId, vers)}
+                      disabled={enTraitement === s.interimaireId}
+                    >
+                      {enTraitement === s.interimaireId ? "…" : libelleAction(vers, "entreprise")}
+                    </button>
+                  )
+                )}
               </div>
+              {erreursAction[s.interimaireId] && (
+                <p className="petit message-erreur" role="alert">
+                  {erreursAction[s.interimaireId]}
+                </p>
+              )}
               {/* Le score est exposé par critère, pas seulement en total : on doit
                   pouvoir expliquer pourquoi ce profil est devant un autre. */}
               <Critere
