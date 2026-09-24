@@ -469,9 +469,6 @@ d'erreur liés par `aria-describedby` et cibles tactiles de 44 px dès le premie
 
 ## 7. La maquette et ce qu'elle impose
 
-Captures dans [docs/maquette/](maquette/) : [landing](maquette/01-landing-le-projet.png)
-et [inscription](maquette/02-application-inscription.png).
-
 ### Charte à reprendre
 
 | | |
