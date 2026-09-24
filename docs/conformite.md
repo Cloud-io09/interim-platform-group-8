@@ -104,7 +104,7 @@ mission**, vérifiée par un test de mutation.
 | Base relationnelle | Fait | PostgreSQL : 22 tables, 15 migrations |
 | Base non relationnelle complémentaire | Fait | Redis, dix usages. [Détail](architecture.md#base-non-relationnelle) |
 | Tests unitaires | Fait | 374 dans `core` |
-| Tests fonctionnels : inscription, mission, matching | Fait | 223 dans `web`, contre un serveur réel |
+| Tests fonctionnels : inscription, mission, matching | Fait | 226 dans `web`, contre un serveur réel |
 | Rapport de couverture | Partiel | `core` : 96,8 % des instructions. Pas de rapport pour `web`, délibérément. [D20](decisions.md#d20-pas-de-rapport-de-couverture-pour-web) |
 | Bibliothèque en ligne de commande | Fait | `commander` dans `ingest/` |
 
