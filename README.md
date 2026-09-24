@@ -68,7 +68,7 @@ cas du moteur. Mot de passe commun : `demonstration-interimatch`.
 | `npm run fumee [url]` | Parcours d'authentification |
 | `npm run fumee:notifs [url]` | Notifications, jusqu'au message relu dans Discord |
 | `npm run discord` | Diagnostic de la configuration du bot Discord |
-| `npm run ingest -- <commande>` | CLI France Travail : `seed-metiers`, `fetch`, `clean`, `load`, `stats`, `seed-demo`, `seed-missions` |
+| `npm run ingest -- <commande>` | CLI France Travail : `seed-metiers`, `fetch`, `clean`, `load`, `stats`, `export`, `seed-demo`, `seed-missions` |
 
 ---
 
@@ -108,3 +108,4 @@ Livrables du projet, dans `docs/` :
 | [Chiffrage](docs/chiffrage-g8.pdf) | Chiffrage du projet |
 | [Design](docs/design/) | Logo et pistes de design |
 | [Flux n8n](docs/n8n/) | Exports des trois automatisations |
+| [Données publiques](docs/donnees/) | Jeu collecté (1 800 offres France Travail) et jeu nettoyé (1 762), produits par la CLI `ingest/` |

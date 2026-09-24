@@ -339,6 +339,7 @@ npm run ingest -- fetch -d F13 F17    # collecte brute, mise en cache disque
 npm run ingest -- clean               # nettoyage, hors ligne
 npm run ingest -- load                # chargement en base
 npm run ingest -- stats               # agrégats de contrôle
+npm run ingest -- export              # publie les jeux brut et nettoyé dans docs/donnees
 npm run ingest -- seed-demo           # jeu de démonstration
 ```
 
@@ -363,6 +364,19 @@ npm run ingest -- seed-demo           # jeu de démonstration
 Mesures de l'échantillon initial (600 offres d'intérim, 16 septembre 2026) : la
 description est toujours présente, la rémunération dans 87 % des cas, les coordonnées
 dans 97 %. Aucun champ structuré ne porte les habilitations.
+
+### Jeux de données publiés
+
+`docs/donnees/` contient les deux états du jeu, collecté le 16 septembre 2026 :
+
+| Fichier | Contenu |
+|---|---|
+| `offres-brutes.json` | Les 1 800 offres telles que renvoyées par l'API |
+| `offres-nettoyees.json` | Les 1 762 offres retenues après nettoyage, avec le bilan des rejets |
+
+Avant publication, `export` retire des offres brutes le bloc `contact` et le courriel
+d'agence (noms, courriels et téléphones de recruteurs), et masque les coordonnées
+glissées dans les textes libres. Aucun de ces champs n'entre dans le pipeline.
 
 ### Fonctionnalité alimentée
 

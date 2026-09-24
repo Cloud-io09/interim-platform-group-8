@@ -58,6 +58,7 @@ mission**, vérifiée par un test de mutation.
 | Nettoyer : libellés, doublons, formats | Fait | [Ingestion](architecture.md#ingestion-france-travail) |
 | Alimenter une fonctionnalité visible | Fait | Fiche de poste enrichie ; classement des compétences du profil |
 | Script versionné | Fait | `ingest/`, CLI `commander` |
+| Jeu de données publiques | Fait | `docs/donnees/` : jeu collecté et jeu nettoyé, sans coordonnées personnelles |
 
 ---
 
@@ -118,6 +119,7 @@ mission**, vérifiée par un test de mutation.
 | Dépôt avec README d'installation et de lancement | Fait |
 | Export des scénarios n8n | Fait : `docs/n8n/` |
 | Script de nettoyage des données publiques | Fait : `ingest/` |
+| Jeu de données publiques | Fait : `docs/donnees/` |
 | Dossier d'étude de marché | Fait : cahier des charges et [business plan](business-plan.pdf) |
 | Chiffrage réel, écart avec l'estimé | Fait : [chiffrage](chiffrage-g8.pdf) |
 | Support de pitch | Absent du dépôt |
