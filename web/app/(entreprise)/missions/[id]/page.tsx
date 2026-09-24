@@ -56,11 +56,6 @@ export default async function DetailMission({ params }: { params: Promise<{ id: 
             missionId={missionId}
             statut={mission.statut as "brouillon" | "publiee" | "pourvue" | "close"}
           />
-          {mission.statut !== "pourvue" && mission.statut !== "close" && (
-            <p className="petit" style={{ margin: "0.75rem 0 0" }}>
-              <a href={`/missions/${missionId}/modifier`}>Modifier cette fiche</a>
-            </p>
-          )}
 
           {mission.certificationsRequises.length > 0 && (
             <div className="carte" style={{ marginBottom: "2rem" }}>

@@ -71,6 +71,13 @@ export default function StatutMission({ missionId, statut }: { missionId: number
       </div>
 
       <div className="statut-actions">
+        {/* **Modifier était un lien perdu sous le cadre.** C'est le geste le plus
+            fréquent sur une fiche ouverte : il se place en tête des actions. */}
+        {(statut === "brouillon" || statut === "publiee") && (
+          <a className="bouton" href={`/missions/${missionId}/modifier`}>
+            Modifier la fiche
+          </a>
+        )}
         {statut === "brouillon" && (
           <button className="bouton" onClick={() => changer("publiee")} disabled={enCours}>
             Publier
