@@ -4,7 +4,6 @@ import { validerMission, type ExigenceSaisie } from "@interimatch/core";
 import { corpsJson, erreur, succes } from "@/lib/reponses";
 import { resoudreAdresse, ServiceGeocodageIndisponible } from "@/lib/geocoder";
 import { notifierMissionPubliee } from "@/lib/notifications";
-import { annoncerPublication } from "@/lib/notifications-n8n";
 import { aujourdhuiParis } from "@/lib/dates";
 import { sessionOuErreur } from "@/lib/garde";
 
@@ -184,7 +183,6 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
     await sansEchec(() => redis().del(cle.cacheMatching(missionId)), "invalidation changement de statut");
     if (vise === "publiee") {
       await sansEchec(() => notifierMissionPubliee(sql, missionId), "notification de publication");
-      annoncerPublication(missionId);
     }
     return succes({ id: missionId, statut: vise });
   } finally {
