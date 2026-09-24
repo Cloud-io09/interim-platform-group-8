@@ -18,3 +18,8 @@ next-env.d.ts
 /fra.traineddata
 web/fra.traineddata
 .vitest
+
+# Consignes générées par `next dev` pour les agents : régénérées à chaque
+# lancement, elles n'ont pas leur place dans le dépôt.
+web/AGENTS.md
+web/CLAUDE.md
