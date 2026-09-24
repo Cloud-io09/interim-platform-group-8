@@ -19,8 +19,8 @@ Tests, outils de contrôle, accessibilité et éco-conception. Chiffres relevés
 
 | Niveau | Où | Volume | Ce qui est testé |
 |---|---|---|---|
-| Unitaire | `core/test/` | 374 tests | Règles métier : matching, conformité, droit du travail, chiffrement, parseurs d'ingestion, offre commerciale, lecture de CV |
-| Fonctionnel | `web/test/` | 226 tests | L'application construite, lancée par `next start` et interrogée en HTTP |
+| Unitaire | `core/test/` | 379 tests | Règles métier : matching, conformité, droit du travail, chiffrement, parseurs d'ingestion, offre commerciale, lecture de CV |
+| Fonctionnel | `web/test/` | 230 tests | L'application construite, lancée par `next start` et interrogée en HTTP |
 
 ```bash
 npm run verifier     # typecheck, puis tests de tous les workspaces
@@ -53,7 +53,7 @@ mission par la date du jour fait échouer deux tests unitaires et un test foncti
 
 ## Couverture
 
-`core`, 374 tests :
+`core`, 379 tests :
 
 | Instructions | Branches | Fonctions | Lignes |
 |---|---|---|---|

@@ -417,17 +417,25 @@ recréé à la prochaine ouverture de l'écran de notifications.
 
 ### Flux n8n
 
-n8n **interroge** l'application : il n'a pas besoin d'être joignable depuis
-l'extérieur. Les trois points d'entrée exigent l'en-tête `x-secret-n8n`, comparé en
-temps constant.
+Deux chemins, tous deux protégés par le même secret partagé (en-tête `x-secret-n8n`,
+comparé en temps constant) :
+
+- **Flux planifiés** : n8n **interroge** l'application une fois par jour. Il n'a pas
+  besoin d'être joignable depuis l'extérieur.
+- **Flux à l'événement** : l'application **pousse** vers n8n au moment où une fiche est
+  publiée, si `N8N_WEBHOOK_URL` est posée. n8n doit alors être joignable depuis
+  Internet (tunnel ou hébergement). L'envoi part après la réponse (`after()`), ne
+  bloque jamais la publication et échoue en silence si n8n est éteint.
 
 | Flux | Point d'entrée | Sélection | Destinataire |
 |---|---|---|---|
 | Alerte avant expiration | `GET /api/n8n/certifications-expirantes?jours=90` (max 365) | Habilitations qui échoient dans la fenêtre, avec le nombre de missions ouvertes qu'un renouvellement rendrait accessibles | intérimaire |
 | Mission correspondante | `GET /api/n8n/missions-a-notifier?heures=24` (max 720) | Missions publiées dans la fenêtre ; matching rejoué, seuls les retenus | intérimaire |
 | Relance des fiches sans intérimaire | `GET /api/n8n/missions-non-pourvues?jours=7` (max 90) | Missions publiées depuis au moins N jours, chantier non commencé | entreprise |
+| Mission publiée (à l'événement) | `POST <N8N_WEBHOOK_URL>/mission-publiee`, envoyé par l'application | La fiche qui vient d'être publiée ; destinataires calculés par la même fonction que le flux quotidien (`web/lib/notifications-n8n.ts`) | intérimaire |
 
-Chaque flux suit la même chaîne : déclencheur quotidien, appel API, éclatement du
-tableau, filtre sur `discordSalonId` non vide, envoi dans le salon. Le texte du message
+Chaque flux suit la même chaîne : déclencheur (quotidien, ou webhook pour le
+quatrième), données, éclatement du tableau, filtre sur `discordSalonId` non vide, envoi
+dans le salon. Le texte du message
 est rédigé par l'application ; n8n ne porte aucune règle métier. Mise en place :
 [exploitation.md](exploitation.md#automatisations-n8n).
