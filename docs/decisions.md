@@ -71,9 +71,10 @@ figurer) parce qu'une suggestion fausse coûte plus qu'une suggestion manquante.
 
 **Décision.** Gratuit : rapprochement, score détaillé, conformité habilitation par
 habilitation, présence d'une agence. Payant : nom complet, coordonnées, nom de
-l'agence, droit de solliciter. Paliers Découverte (3 crédits offerts), Chantier
-(89 €/mois, 10 déblocages) et Régie (249 €/mois, illimité) ; crédits à l'acte de 10 à
-12 €.
+l'agence, droit de solliciter, et plus d'une mission en ligne à la fois. Paliers
+Découverte (gratuit, 3 contacts offerts, 1 mission active), Starter (39 €/mois,
+40 contacts, 4 missions actives) et Pro (129 €/mois, illimité) ; contacts à l'acte de
+3,50 à 5 €, sans date d'expiration.
 
 **Écarté.** Un accès payant aux résultats de matching ; une commission par mission
 attribuée.

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { enEuros, PACKS, PLANS } from "@interimatch/core/offre";
+import { contenuPlan, enEuros, MENTION_CREDITS, PACKS, PLANS } from "@interimatch/core/offre";
 
 export const metadata: Metadata = {
   title: "Tarifs - Intérimatch BTP",
   description:
-    "Le rapprochement, le score et la conformité de chaque profil sont gratuits. Seul l'accès aux coordonnées d'un candidat se paie, à l'acte ou par abonnement.",
+    "Le rapprochement, le score et la conformité de chaque profil sont gratuits. L'accès aux coordonnées d'un candidat se paie, à l'acte ou par abonnement.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -33,7 +33,7 @@ export default function Tarifs() {
           <div className="carte">
             <h2 className="titre-carte">Gratuit, et ça le restera</h2>
             <ul className="petit">
-              <li>Publier autant de fiches de poste que vous voulez</li>
+              <li>Rédiger autant de brouillons de fiches que vous voulez</li>
               <li>Voir quels profils le moteur rapproche, et leur score détaillé</li>
               <li>
                 <strong>La conformité de chaque profil, habilitation par habilitation</strong>
@@ -48,9 +48,10 @@ export default function Tarifs() {
             <ul className="petit">
               <li>Le nom complet et les coordonnées d&apos;un profil</li>
               <li>Le droit de le solliciter</li>
+              <li>Plus d&apos;une mission en ligne à la fois</li>
             </ul>
             <p className="petit secondaire">
-              Un déblocage vaut pour <strong>un profil sur une mission</strong>. Nous ne
+              Un contact vaut pour <strong>un profil sur une mission</strong>. Nous ne
               vendons pas l&apos;accès à une base de candidats, et chaque intérimaire voit
               combien d&apos;entreprises ont accédé à ses coordonnées.
             </p>
@@ -72,9 +73,9 @@ export default function Tarifs() {
           {PLANS.map((p) => (
             <li
               key={p.code}
-              className={p.code === "chantier" ? "carte carte--recommandee" : "carte"}
+              className={p.recommande ? "carte carte--recommandee" : "carte"}
             >
-              {p.code === "chantier" && <span className="etiquette-recommandee">Recommandé</span>}
+              {p.recommande && <span className="etiquette-recommandee">Recommandé</span>}
               <h3 className="titre-carte" style={{ margin: 0 }}>{p.libelle}</h3>
               <p className="chiffre">
                 {p.prixMensuelCents === 0 ? "Gratuit" : enEuros(p.prixMensuelCents)}
@@ -82,13 +83,9 @@ export default function Tarifs() {
               <p className="petit secondaire">
                 {p.prixMensuelCents === 0 ? "sans engagement" : "par mois"}
               </p>
-              <p className="petit">
-                {p.quotaMensuel === null
-                  ? "Déblocages sans limite"
-                  : p.quotaMensuel === 0
-                    ? `${p.creditsOfferts} déblocages offerts à l'ouverture du compte`
-                    : `${p.quotaMensuel} déblocages par mois`}
-              </p>
+              {contenuPlan(p).map((ligne) => (
+                <p key={ligne} className="petit" style={{ margin: 0 }}>{ligne}</p>
+              ))}
               <p className="petit secondaire">{p.argument}</p>
             </li>
           ))}
@@ -96,15 +93,16 @@ export default function Tarifs() {
 
         <h2 style={{ marginTop: "2rem" }}>Sans abonnement</h2>
         <p className="secondaire">
-          Le bâtiment recrute par à-coups. Ces crédits <strong>n&apos;expirent pas</strong>{" "}
-          et se consomment après le quota de votre abonnement, s&apos;il y en a un.
+          Le bâtiment recrute par à-coups. Les crédits se consomment après le quota de
+          votre abonnement, s&apos;il y en a un.
         </p>
+        <p className="petit"><strong>{MENTION_CREDITS}</strong></p>
         <ul className="liste-nue grille grille--3">
           {PACKS.map((p) => (
             <li key={p.code} className="carte">
               <p className="chiffre">{p.credits}</p>
               <p className="petit secondaire">
-                déblocage{p.credits > 1 ? "s" : ""} · {enEuros(p.prixCents)}
+                contact{p.credits > 1 ? "s" : ""} · {enEuros(p.prixCents)}
               </p>
               <p className="petit secondaire">
                 soit {enEuros(Math.round(p.prixCents / p.credits))} l&apos;unité

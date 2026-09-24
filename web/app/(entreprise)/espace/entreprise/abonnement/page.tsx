@@ -35,7 +35,7 @@ export default async function Abonnement() {
                 <strong className="chiffre">
                   {droits.illimite ? "∞" : droits.quotaRestant}
                 </strong>
-                <span className="petit secondaire">déblocage(s) inclus ce mois-ci</span>
+                <span className="petit secondaire">contact(s) inclus ce mois-ci</span>
               </div>
             </li>
             <li>
@@ -47,7 +47,7 @@ export default async function Abonnement() {
             <li>
               <div>
                 <strong className="chiffre">{consommes?.n ?? 0}</strong>
-                <span className="petit secondaire">profil(s) débloqué(s) au total</span>
+                <span className="petit secondaire">contact(s) obtenu(s) au total</span>
               </div>
             </li>
           </ul>
