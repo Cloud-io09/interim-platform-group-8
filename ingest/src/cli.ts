@@ -10,6 +10,7 @@ import {
 } from "@interimatch/core";
 import { getAccessToken, getReferentiel } from "interimatch-secteur-scan/client";
 import { CHEMIN_BRUT, CHEMIN_NETTOYE, ecrire, lire } from "./cache";
+import { anonymiser, DESCRIPTION_RETRAITS, publier } from "./export";
 import { DOMAINE_DEMO, MISSION_DEBUT, MISSION_FIN, MOT_DE_PASSE_DEMO, purgerDemo, semerDemo } from "./demo";
 import { DOMAINE_DEMO_ENTREPRISE, purgerMissionsDemo, semerMissions } from "./missions-demo";
 
@@ -334,6 +335,31 @@ program
     } finally {
       await fermerConnexion();
     }
+  });
+
+program
+  .command("export")
+  .description("Publie dans docs/donnees les jeux brut et nettoyé, sans coordonnées personnelles")
+  .action(() => {
+    const brut = lire<{ collecteLe: string; offres: Record<string, unknown>[] }>(CHEMIN_BRUT, "ingest fetch");
+    const nettoye = lire<{ collecteLe: string; nettoyeLe: string; offres: unknown[]; bilan: unknown }>(
+      CHEMIN_NETTOYE,
+      "ingest clean"
+    );
+    const source = "API France Travail « Offres d'emploi v2 », offres d'intérim (typeContrat=MIS) des domaines ROME F13, F15, F16 et F17";
+    const cheminBrut = publier("offres-brutes.json", {
+      source,
+      collecteLe: brut.collecteLe,
+      anonymisation: DESCRIPTION_RETRAITS,
+      offres: brut.offres.map(anonymiser),
+    });
+    const cheminNettoye = publier("offres-nettoyees.json", {
+      source,
+      ...nettoye,
+      produitPar: "npm run ingest -- clean (core/src/ingestion)",
+    });
+    console.log(`${nombre(brut.offres.length)} offres brutes → ${cheminBrut}`);
+    console.log(`${nombre(nettoye.offres.length)} offres nettoyées → ${cheminNettoye}`);
   });
 
 program.parseAsync(process.argv);
