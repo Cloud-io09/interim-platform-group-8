@@ -78,6 +78,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
   // le champ fautif en haut d'un formulaire long.
   const [tauxMin, setTauxMin] = useState(String(initiale?.tauxHoraireMin ?? ""));
   const [tauxMax, setTauxMax] = useState(String(initiale?.tauxHoraireMax ?? ""));
+  // Vrai tant que les taux affichés sont ceux proposés par les offres observées, et
+  // non une saisie : le texte sous les champs le dit, pour qu'on ne publie pas un
+  // chiffre en croyant l'avoir choisi.
+  const [tauxSuggeres, setTauxSuggeres] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const ids = {
@@ -108,6 +112,20 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
       annule = true;
     };
   }, [metierCode, codePostal]);
+
+  // **La fourchette observée arrive dans les champs, pas seulement dans l'encart.**
+  // Elle n'était affichée qu'en haut du formulaire, loin des taux, qui restaient
+  // vides : on lisait deux champs libres sans repère. Ils sont préremplis sur la
+  // moitié centrale des offres du métier, et seulement s'ils sont encore vides — une
+  // saisie n'est jamais écrasée.
+  useEffect(() => {
+    const r = enrichissement?.remuneration;
+    if (!r) return;
+    setTauxMin((m) => (m === "" ? r.q1.toFixed(2) : m));
+    setTauxMax((m) => (m === "" ? r.q3.toFixed(2) : m));
+    setTauxSuggeres((s) => s || (tauxMin === "" && tauxMax === ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enrichissement]);
 
   function basculerExigence(typeCode: string) {
     setExigences((actuelles) => {
@@ -379,7 +397,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
               min="0"
               inputMode="decimal"
               value={tauxMin}
-              onChange={(e) => setTauxMin(e.target.value)}
+              onChange={(e) => {
+                setTauxMin(e.target.value);
+                setTauxSuggeres(false);
+              }}
             />
             {problemeDe("tauxHoraireMin") && <p className="petit message-erreur">{problemeDe("tauxHoraireMin")}</p>}
           </div>
@@ -393,7 +414,10 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
               min="0"
               inputMode="decimal"
               value={tauxMax}
-              onChange={(e) => setTauxMax(e.target.value)}
+              onChange={(e) => {
+                setTauxMax(e.target.value);
+                setTauxSuggeres(false);
+              }}
               aria-invalid={tauxIncoherents || undefined}
               aria-describedby={tauxIncoherents ? `${ids.max}-err` : undefined}
             />
@@ -409,6 +433,28 @@ export default function FormulaireMission({ initiale }: { initiale?: MissionAMod
             )}
           </div>
         </div>
+        {enrichissement?.remuneration ? (
+          <p className="petit secondaire" style={{ margin: 0 }}>
+            {tauxSuggeres ? "Prérempli d'après " : "Repère : "}
+            la moitié centrale des taux observés,{" "}
+            <strong>
+              {enrichissement.remuneration.q1.toFixed(2)} à {enrichissement.remuneration.q3.toFixed(2)} €/h
+            </strong>{" "}
+            (médiane {enrichissement.remuneration.mediane.toFixed(2)} €/h), sur{" "}
+            {enrichissement.remuneration.effectif} offres d&apos;intérim de ce métier
+            {enrichissement.portee === "departement"
+              ? ` dans le département ${enrichissement.departement}`
+              : " en France"}
+            . Modifiable librement.
+          </p>
+        ) : (
+          metierCode && (
+            <p className="petit secondaire" style={{ margin: 0 }}>
+              Aucune offre publique observée pour ce métier : pas de repère de
+              rémunération à proposer.
+            </p>
+          )
+        )}
       </fieldset>
 
       <RetourFormulaire erreur={erreur} succes={null} problemes={problemes} />
