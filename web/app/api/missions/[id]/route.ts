@@ -35,13 +35,14 @@ type Statut = (typeof STATUTS)[number];
  *
  * Une mission close ne redevient pas un brouillon, et une mission pourvue ne
  * retourne pas à l'état brouillon : l'historique d'une affectation ne se réécrit
- * pas. En revanche, dépublier une mission pourvue vers « publiée » reste possible —
- * une affectation peut tomber.
+ * pas. Une mission attribuée ne se republie pas non plus : l'intérimaire affecté et
+ * sa candidature acceptée resteraient en place, et la fiche serait rouverte avec
+ * quelqu'un déjà dessus. Elle ne peut plus qu'être close.
  */
 const TRANSITIONS: Record<Statut, Statut[]> = {
   brouillon: ["publiee", "close"],
   publiee: ["pourvue", "close", "brouillon"],
-  pourvue: ["publiee", "close"],
+  pourvue: ["close"],
   close: [],
 };
 
@@ -164,7 +165,7 @@ export async function PATCH(requete: Request, contexte: { params: Promise<{ id: 
       ]);
     }
 
-    // La remise en ligne (brouillon → publiée, ou attribution tombée) est bornée par
+    // La mise en ligne d'un brouillon est bornée par
     // le palier, dans la même transaction que la mise à jour.
     const refus = await sql.begin(async (tx) => {
       if (vise === "publiee") {

@@ -244,10 +244,12 @@ describe("cycle de vie d'une mission", () => {
     expect(r.statut).toBe(409);
   });
 
-  it("laisse republier une mission pourvue, une affectation pouvant tomber", async () => {
+  it("refuse de republier une mission attribuée", async () => {
+    // Republiée, elle garderait son intérimaire affecté et sa candidature acceptée :
+    // une fiche ouverte avec quelqu'un déjà dessus.
     const ent = await entrepriseAvecMission("statut-republie");
     await appel(`/api/missions/${ent.missionId}`, "PATCH", { statut: "pourvue" }, ent.cookie);
-    expect((await appel(`/api/missions/${ent.missionId}`, "PATCH", { statut: "publiee" }, ent.cookie)).corps.statut).toBe("publiee");
+    expect((await appel(`/api/missions/${ent.missionId}`, "PATCH", { statut: "publiee" }, ent.cookie)).statut).toBe(409);
   });
 
   it("retire une mission close des missions proposées à l'intérimaire", async () => {
